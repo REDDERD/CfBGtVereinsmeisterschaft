@@ -2,19 +2,18 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Users, Trophy, Pyramid, User, Settings, Plus, Edit2, Trash2, Save, X, LogIn, LogOut, Calendar, TrendingUp } from 'lucide-react';
 
 // Firebase würde hier importiert werden
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+// import { initializeApp } from 'firebase/app';
+// import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
+// import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 // Firebase Config - HIER DEINE CONFIG EINTRAGEN
-const firebaseConfig = {
-  apiKey: "AIzaSyArdTajlSvaUqWh4-LFrhJXOKukn9iecZs",
-  authDomain: "cfbgtvereinsmeisterschaft.firebaseapp.com",
-  projectId: "cfbgtvereinsmeisterschaft",
-  storageBucket: "cfbgtvereinsmeisterschaft.firebasestorage.app",
-  messagingSenderId: "527308111102",
-  appId: "1:527308111102:web:ef1b52153dd75a6a0c79af",
-  measurementId: "G-QKGNPLQN20"
+const FIREBASE_CONFIG = {
+  apiKey: "DEINE_API_KEY",
+  authDomain: "DEIN_PROJECT.firebaseapp.com",
+  projectId: "DEIN_PROJECT_ID",
+  storageBucket: "DEIN_PROJECT.appspot.com",
+  messagingSenderId: "DEINE_SENDER_ID",
+  appId: "DEINE_APP_ID"
 };
 
 // Simulated Firebase (für Demo - wird durch echtes Firebase ersetzt)
@@ -436,7 +435,8 @@ const AdminPanel = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     const success = await login(email, password);
     if (!success) {
       setError('Ungültige Anmeldedaten');
@@ -448,7 +448,7 @@ const AdminPanel = () => {
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
-          <div className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
@@ -465,19 +465,18 @@ const AdminPanel = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Passwort (Demo: admin123)"
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
-              onClick={handleLogin}
+              type="submit"
               className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Anmelden
             </button>
-          </div>
+          </form>
         </div>
       </div>
     );

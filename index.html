@@ -246,17 +246,58 @@ const firebaseConfig = {
         }
 
         function pyramidLevelsToArray(pyramidData) {
-            if (!pyramidData) return [];
+            if (!pyramidData) {
+                console.log('pyramidLevelsToArray: no data');
+                return [];
+            }
+            
+            console.log('pyramidLevelsToArray input:', pyramidData);
             
             const levels = [];
             let levelNum = 1;
             
             while (pyramidData[`level${levelNum}`]) {
-                levels.push(pyramidData[`level${levelNum}`]);
+                const levelData = pyramidData[`level${levelNum}`];
+                console.log(`Level ${levelNum}:`, levelData, 'isArray:', Array.isArray(levelData));
+                
+                // Firebase stores it as array already!
+                if (Array.isArray(levelData)) {
+                    levels.push(levelData);
+                } else if (typeof levelData === 'string') {
+                    // Fallback for string format
+                    levels.push(levelData.split(','));
+                } else {
+                    console.warn(`Level ${levelNum} unexpected type:`, levelData);
+                }
                 levelNum++;
             }
             
+            console.log('pyramidLevelsToArray output:', levels);
             return levels;
+        }
+
+        // Load pyramid manually
+        async function loadPyramid() {
+            console.log('📊 Loading pyramid data...');
+            try {
+                const doc = await db.collection('pyramid').doc('current').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    console.log('Pyramid data loaded:', data);
+                    const levelsArray = pyramidLevelsToArray(data);
+                    state.pyramid = {
+                        levels: levelsArray
+                    };
+                    console.log('✅ Pyramid loaded successfully');
+                    render();
+                } else {
+                    console.log('No pyramid data found');
+                    state.pyramid = { levels: [] };
+                    render();
+                }
+            } catch (error) {
+                console.error('❌ Error loading pyramid:', error);
+            }
         }
 
         // ============================================
@@ -537,11 +578,11 @@ const firebaseConfig = {
                             ` : `
                                 <div class="space-y-4">
                                     ${levels.map((level, levelIdx) => `
-                                        <div class="flex justify-center items-center space-x-4" style="margin-left: ${(levels.length - levelIdx - 1) * 60}px">
+                                        <div class="flex justify-center items-center space-x-4" >
                                             ${level.map((playerId, posIdx) => `
                                                 <div class="relative">
                                                     <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-500 rounded-lg px-4 py-3 text-center shadow-md min-w-[120px]">
-                                                        <div class="text-xs text-gray-500 mb-1">Ebene ${levelIdx + 1} / Pos ${posIdx + 1}</div>
+                                                        <div class="text-xs text-gray-500 mb-1">Position ${posIdx + 1}</div>
                                                         <div class="font-bold text-gray-800">${getPlayerName(playerId)}</div>
                                                     </div>
                                                 </div>
@@ -1174,11 +1215,15 @@ const firebaseConfig = {
                     else t2Sets++;
                 });
                 
-                // Determine challenger and challenged (first player of each team)
                 const winnerId = t1Sets > t2Sets ? t1p1 : t2p1;
                 const loserId = t1Sets > t2Sets ? t2p1 : t1p1;
                 
                 await updatePyramidAfterChallenge(winnerId, loserId);
+                
+                // Reload pyramid after update (with delay to ensure Firestore has written)
+                setTimeout(() => {
+                    loadPyramid();
+                }, 1000);
             }
             
             alert('Doppel-Spiel erfolgreich eingetragen!');
@@ -1212,18 +1257,30 @@ const firebaseConfig = {
                 flatPositions[winnerPos] = loserId;
                 flatPositions[loserPos] = winnerId;
                 
-                // Rebuild levels as object
-                const newLevelsObject = buildPyramidLevels(flatPositions);
+                // Rebuild levels as arrays
+                const newPyramidData = {};
+                let idx = 0;
+                let levelNum = 1;
+                
+                while (idx < flatPositions.length) {
+                    const levelPlayers = flatPositions.slice(idx, idx + levelNum);
+                    newPyramidData[`level${levelNum}`] = levelPlayers;
+                    idx += levelNum;
+                    levelNum++;
+                }
                 
                 await db.collection('pyramid').doc('current').set({
-                    ...newLevelsObject,
+                    ...newPyramidData,
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
         }
 
         async function initPyramid() {
+            console.log('=== INIT PYRAMID START ===');
+            
             const doublesPlayers = state.players.filter(p => p.doublesPool);
+            console.log('Doppel-Spieler gefunden:', doublesPlayers);
             
             if (doublesPlayers.length === 0) {
                 alert('Keine Spieler im Doppel-Pool!');
@@ -1233,17 +1290,61 @@ const firebaseConfig = {
             // Shuffle players
             const shuffled = [...doublesPlayers].sort(() => Math.random() - 0.5);
             const positions = shuffled.map(p => p.id);
+            console.log('Positionen (IDs):', positions);
+            
             const levelsObject = buildPyramidLevels(positions);
+            console.log('Levels Object:', levelsObject);
+            
+            const dataToSave = {
+                ...levelsObject,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            console.log('Data to save:', dataToSave);
             
             try {
-                await db.collection('pyramid').doc('current').set({
-                    ...levelsObject,
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                await db.collection('pyramid').doc('current').set(dataToSave);
+                console.log('✅ Pyramide gespeichert!');
                 alert('Pyramide erfolgreich initialisiert!');
+                
+                // Force re-read from Firebase
+                const doc = await db.collection('pyramid').doc('current').get();
+                console.log('Nach Speichern - Firebase Doc exists:', doc.exists);
+                console.log('Nach Speichern - Firebase Data:', doc.data());
             } catch (error) {
-                console.error('Fehler beim Initialisieren:', error);
+                console.error('❌ Fehler beim Initialisieren:', error);
                 alert('Fehler: ' + error.message);
+            }
+        }
+
+        async function debugFirebase() {
+            console.log('=== FIREBASE DEBUG ===');
+            try {
+                const doc = await db.collection('pyramid').doc('current').get();
+                console.log('Doc exists:', doc.exists);
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    console.log('Raw data:', data);
+                    console.log('Data keys:', Object.keys(data));
+                    
+                    // Check each level
+                    for (let i = 1; i <= 10; i++) {
+                        const key = `level${i}`;
+                        if (data[key]) {
+                            console.log(`${key}:`, data[key], 'isArray:', Array.isArray(data[key]));
+                        }
+                    }
+                    
+                    const levels = pyramidLevelsToArray(data);
+                    console.log('Converted to array:', levels);
+                    
+                    alert('Firebase Check:\nDoc exists: ' + doc.exists + '\nKeys: ' + Object.keys(data).join(', ') + '\nLevels array length: ' + levels.length);
+                } else {
+                    alert('Firebase Dokument existiert nicht!');
+                }
+            } catch (error) {
+                console.error('Debug error:', error);
+                alert('Error: ' + error.message);
             }
         }
 
@@ -1308,8 +1409,25 @@ const firebaseConfig = {
         // ============================================
         // INIT
         // ============================================
-        initFirebaseListeners();
+        console.log('🚀 Starting application...');
+        console.log('Firebase initialized:', typeof firebase !== 'undefined');
+        console.log('Firestore initialized:', typeof db !== 'undefined');
+        
+        try {
+            console.log('Attempting to initialize listeners...');
+            initFirebaseListeners();
+            console.log('Listeners initialized successfully');
+        } catch (error) {
+            console.error('❌❌❌ CRITICAL ERROR initializing listeners:', error);
+            console.error('Error stack:', error.stack);
+        }
+        
         render();
+        
+        console.log('✅ Application started');
+        
+        // Load pyramid on startup
+        loadPyramid();
     </script>
 </body>
 </html>

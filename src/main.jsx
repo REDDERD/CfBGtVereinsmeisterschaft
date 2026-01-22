@@ -436,8 +436,7 @@ const AdminPanel = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     const success = await login(email, password);
     if (!success) {
       setError('Ungültige Anmeldedaten');
@@ -449,7 +448,7 @@ const AdminPanel = () => {
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
@@ -466,18 +465,19 @@ const AdminPanel = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Passwort (Demo: admin123)"
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button
-              type="submit"
+              onClick={handleLogin}
               className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Anmelden
             </button>
-          </form>
+          </div>
         </div>
       </div>
     );

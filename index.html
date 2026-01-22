@@ -16,15 +16,14 @@
         // ============================================
         // FIREBASE CONFIGURATION - HIER DEINE CONFIG EINTRAGEN!
         // ============================================
-const firebaseConfig = {
-  apiKey: "AIzaSyArdTajlSvaUqWh4-LFrhJXOKukn9iecZs",
-  authDomain: "cfbgtvereinsmeisterschaft.firebaseapp.com",
-  projectId: "cfbgtvereinsmeisterschaft",
-  storageBucket: "cfbgtvereinsmeisterschaft.firebasestorage.app",
-  messagingSenderId: "527308111102",
-  appId: "1:527308111102:web:ef1b52153dd75a6a0c79af",
-  measurementId: "G-QKGNPLQN20"
-};
+        const firebaseConfig = {
+            apiKey: "DEINE_API_KEY",
+            authDomain: "DEIN_PROJECT.firebaseapp.com",
+            projectId: "DEIN_PROJECT_ID",
+            storageBucket: "DEIN_PROJECT.appspot.com",
+            messagingSenderId: "DEINE_SENDER_ID",
+            appId: "DEINE_APP_ID"
+        };
 
         // Firebase initialisieren
         firebase.initializeApp(firebaseConfig);
@@ -40,59 +39,49 @@ const firebaseConfig = {
             players: [],
             singlesMatches: [],
             doublesMatches: [],
-            pyramid: [],
+            pyramid: { levels: [] },
             challenges: [],
-            singlesConfig: { phase: 'group', groupA: [], groupB: [] },
-            selectedPlayerId: null
+            editingPlayer: null,
+            matchEntry: {
+                set1P1: '', set1P2: '',
+                set2P1: '', set2P2: '',
+                set3P1: '', set3P2: ''
+            }
         };
 
         // ============================================
         // FIREBASE LISTENERS
         // ============================================
         function initFirebaseListeners() {
-            // Auth State
             auth.onAuthStateChanged(user => {
                 state.user = user;
                 render();
             });
 
-            // Players
             db.collection('players').orderBy('name').onSnapshot(snapshot => {
                 state.players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render();
             });
 
-            // Singles Matches
             db.collection('singlesMatches').orderBy('date', 'desc').onSnapshot(snapshot => {
                 state.singlesMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render();
             });
 
-            // Doubles Matches
             db.collection('doublesMatches').orderBy('date', 'desc').onSnapshot(snapshot => {
                 state.doublesMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render();
             });
 
-            // Pyramid
             db.collection('pyramid').doc('current').onSnapshot(doc => {
                 if (doc.exists) {
-                    state.pyramid = doc.data().positions || [];
+                    state.pyramid = doc.data();
                 }
                 render();
             });
 
-            // Challenges
             db.collection('challenges').where('status', '==', 'pending').onSnapshot(snapshot => {
                 state.challenges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                render();
-            });
-
-            // Singles Config
-            db.collection('config').doc('singles').onSnapshot(doc => {
-                if (doc.exists) {
-                    state.singlesConfig = doc.data();
-                }
                 render();
             });
         }
@@ -100,49 +89,63 @@ const firebaseConfig = {
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
-        function calculateStandings(group) {
-            const playerStats = {};
+        function getPlayerName(playerId) {
+            const player = state.players.find(p => p.id === playerId);
+            return player ? player.name : 'Unbekannt';
+        }
+
+        function getGroupPlayers(groupNum) {
+            return state.players.filter(p => p.singlesGroup === groupNum);
+        }
+
+        function calculateStandings(groupNum) {
+            const players = getGroupPlayers(groupNum);
+            const stats = {};
             
-            group.forEach(playerId => {
-                playerStats[playerId] = {
-                    id: playerId,
+            players.forEach(p => {
+                stats[p.id] = {
+                    id: p.id,
+                    name: p.name,
                     matches: 0,
                     points: 0,
                     setsWon: 0,
-                    setsLost: 0,
-                    gamesWon: 0,
-                    gamesLost: 0
+                    setsLost: 0
                 };
             });
 
-            state.singlesMatches
-                .filter(m => m.group === group)
-                .forEach(match => {
-                    if (!match.score) return;
-                    
-                    const [p1Sets, p1Games, p2Sets, p2Games] = parseScore(match.score);
-                    const p1 = match.player1Id;
-                    const p2 = match.player2Id;
+            state.singlesMatches.forEach(match => {
+                if (!match.sets) return;
+                
+                const p1 = match.player1Id;
+                const p2 = match.player2Id;
+                
+                if (!stats[p1] || !stats[p2]) return;
 
-                    if (playerStats[p1] && playerStats[p2]) {
-                        playerStats[p1].matches++;
-                        playerStats[p2].matches++;
-                        playerStats[p1].setsWon += p1Sets;
-                        playerStats[p1].setsLost += p2Sets;
-                        playerStats[p2].setsWon += p2Sets;
-                        playerStats[p2].setsLost += p1Sets;
+                const sets = match.sets;
+                let p1Sets = 0, p2Sets = 0;
 
-                        if (p1Sets > p2Sets) {
-                            playerStats[p1].points += (p1Sets === 2 && p2Sets === 0) ? 3 : 2;
-                            playerStats[p2].points += (p2Sets === 1) ? 1 : 0;
-                        } else {
-                            playerStats[p2].points += (p2Sets === 2 && p1Sets === 0) ? 3 : 2;
-                            playerStats[p1].points += (p1Sets === 1) ? 1 : 0;
-                        }
-                    }
+                sets.forEach(set => {
+                    if (set.p1 > set.p2) p1Sets++;
+                    else p2Sets++;
                 });
 
-            return Object.values(playerStats).sort((a, b) => {
+                stats[p1].matches++;
+                stats[p2].matches++;
+                stats[p1].setsWon += p1Sets;
+                stats[p1].setsLost += p2Sets;
+                stats[p2].setsWon += p2Sets;
+                stats[p2].setsLost += p1Sets;
+
+                if (p1Sets > p2Sets) {
+                    stats[p1].points += (p1Sets === 2 && p2Sets === 0) ? 3 : 2;
+                    stats[p2].points += (p2Sets === 1) ? 1 : 0;
+                } else {
+                    stats[p2].points += (p2Sets === 2 && p1Sets === 0) ? 3 : 2;
+                    stats[p1].points += (p1Sets === 1) ? 1 : 0;
+                }
+            });
+
+            return Object.values(stats).sort((a, b) => {
                 if (b.points !== a.points) return b.points - a.points;
                 const aDiff = a.setsWon - a.setsLost;
                 const bDiff = b.setsWon - b.setsLost;
@@ -150,36 +153,95 @@ const firebaseConfig = {
             });
         }
 
-        function parseScore(scoreStr) {
-            // Format: "21:19, 21:18" oder "21:19, 18:21, 21:15"
-            const sets = scoreStr.split(',').map(s => s.trim());
-            let p1Sets = 0, p2Sets = 0;
-            sets.forEach(set => {
-                const [g1, g2] = set.split(':').map(n => parseInt(n));
-                if (g1 > g2) p1Sets++;
-                else p2Sets++;
-            });
-            return [p1Sets, 0, p2Sets, 0]; // Vereinfacht
+        function validateSet(p1, p2) {
+            const n1 = parseInt(p1);
+            const n2 = parseInt(p2);
+            
+            if (isNaN(n1) || isNaN(n2)) return false;
+            if (n1 < 0 || n2 < 0) return false;
+            
+            // Einer muss mindestens 21 haben
+            if (n1 < 21 && n2 < 21) return false;
+            
+            // Gewinner muss 2 Punkte Vorsprung haben ab 20:20
+            if (n1 >= 20 && n2 >= 20) {
+                if (Math.abs(n1 - n2) < 2) return false;
+            }
+            
+            // Maximal 30 Punkte
+            if (n1 > 30 || n2 > 30) return false;
+            
+            return true;
         }
 
-        function getPlayerName(playerId) {
-            const player = state.players.find(p => p.id === playerId);
-            return player ? player.name : 'Unbekannt';
+        function updateMatchEntry(field, value) {
+            state.matchEntry[field] = value;
+            
+            // Check if third set should be disabled
+            const s1p1 = parseInt(state.matchEntry.set1P1);
+            const s1p2 = parseInt(state.matchEntry.set1P2);
+            const s2p1 = parseInt(state.matchEntry.set2P1);
+            const s2p2 = parseInt(state.matchEntry.set2P2);
+            
+            if (!isNaN(s1p1) && !isNaN(s1p2) && !isNaN(s2p1) && !isNaN(s2p2)) {
+                const set1Winner = s1p1 > s1p2 ? 'p1' : 'p2';
+                const set2Winner = s2p1 > s2p2 ? 'p1' : 'p2';
+                
+                // Disable set 3 if someone won 2:0
+                if (set1Winner === set2Winner) {
+                    state.matchEntry.set3Disabled = true;
+                    state.matchEntry.set3P1 = '';
+                    state.matchEntry.set3P2 = '';
+                } else {
+                    state.matchEntry.set3Disabled = false;
+                }
+            }
+            
+            render();
+        }
+
+        function getPyramidLevelForPosition(position) {
+            let level = 1;
+            let posInLevel = position;
+            
+            while (posInLevel > level) {
+                posInLevel -= level;
+                level++;
+            }
+            
+            return { level, positionInLevel: posInLevel };
+        }
+
+        function buildPyramidLevels(positions) {
+            const levels = [];
+            let idx = 0;
+            let levelNum = 1;
+            
+            while (idx < positions.length) {
+                const levelPlayers = positions.slice(idx, idx + levelNum);
+                levels.push(levelPlayers);
+                idx += levelNum;
+                levelNum++;
+            }
+            
+            return levels;
         }
 
         // ============================================
-        // ICONS (Lucide-style SVG)
+        // ICONS
         // ============================================
         const icons = {
-            trophy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
-            pyramid: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.27 21.7s9.87-3.5 12.73-6.36a2 2 0 0 0 0-2.83L9.36 6.88a2 2 0 0 0-2.83 0L2.27 11.7"/><path d="M14.64 21.7s6.87-3.5 9.73-6.36a2 2 0 0 0 0-2.83l-5.64-5.64a2 2 0 0 0-2.83 0l-4.26 4.26"/></svg>',
-            users: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-            settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
-            plus: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
-            edit: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
-            trash: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
-            login: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>',
-            logout: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>'
+            trophy: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>',
+            pyramid: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>',
+            users: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>',
+            settings: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+            plus: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>',
+            edit: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+            trash: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
+            login: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>',
+            logout: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>',
+            save: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+            x: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
         };
 
         // ============================================
@@ -191,18 +253,18 @@ const firebaseConfig = {
                     <div class="container mx-auto px-4">
                         <div class="flex items-center justify-between h-16">
                             <div class="flex items-center space-x-8">
-                                <h1 class="text-2xl font-bold text-indigo-600">🏸 Vereinsmeisterschaft</h1>
+                                <h1 class="text-2xl font-bold text-indigo-600 cursor-pointer" onclick="navigateTo('home')">🏸 Vereinsmeisterschaft</h1>
                                 
                                 <div class="flex space-x-4">
-                                    <button onclick="navigateTo('singles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'singles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    <button onclick="navigateTo('singles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'singles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
                                         ${icons.trophy}
                                         <span class="font-medium">Einzel</span>
                                     </button>
-                                    <button onclick="navigateTo('doubles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'doubles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    <button onclick="navigateTo('doubles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'doubles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
                                         ${icons.pyramid}
                                         <span class="font-medium">Doppel</span>
                                     </button>
-                                    <button onclick="navigateTo('players')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'players' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    <button onclick="navigateTo('players')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'players' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
                                         ${icons.users}
                                         <span class="font-medium">Spieler</span>
                                     </button>
@@ -211,16 +273,16 @@ const firebaseConfig = {
                             
                             <div class="flex items-center space-x-4">
                                 ${state.user ? `
-                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'admin' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'admin' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
                                         ${icons.settings}
                                         <span class="font-medium">Admin</span>
                                     </button>
-                                    <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                                    <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                         ${icons.logout}
                                         <span>Logout</span>
                                     </button>
                                 ` : `
-                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                                         ${icons.login}
                                         <span>Admin Login</span>
                                     </button>
@@ -234,7 +296,11 @@ const firebaseConfig = {
 
         function HomePage() {
             const recentMatches = [...state.singlesMatches, ...state.doublesMatches]
-                .sort((a, b) => (b.date || 0) - (a.date || 0))
+                .sort((a, b) => {
+                    const aTime = a.date?.seconds || 0;
+                    const bTime = b.date?.seconds || 0;
+                    return bTime - aTime;
+                })
                 .slice(0, 5);
 
             return `
@@ -268,12 +334,17 @@ const firebaseConfig = {
                             <p class="text-gray-500 text-center py-8">Noch keine Spiele eingetragen</p>
                         ` : `
                             <div class="space-y-3">
-                                ${recentMatches.map(match => `
-                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <span class="font-medium">${getPlayerName(match.player1Id)} vs ${getPlayerName(match.player2Id)}</span>
-                                        <span class="text-indigo-600 font-bold">${match.score || 'Ausstehend'}</span>
-                                    </div>
-                                `).join('')}
+                                ${recentMatches.map(match => {
+                                    const scoreText = match.sets ? 
+                                        match.sets.map(s => `${s.p1}:${s.p2}`).join(', ') : 
+                                        'Ausstehend';
+                                    return `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <span class="font-medium">${getPlayerName(match.player1Id)} vs ${getPlayerName(match.player2Id)}</span>
+                                            <span class="text-indigo-600 font-bold">${scoreText}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         `}
                     </div>
@@ -282,70 +353,35 @@ const firebaseConfig = {
         }
 
         function SinglesPage() {
-            const groupA = calculateStandings(state.singlesConfig.groupA || []);
-            const groupB = calculateStandings(state.singlesConfig.groupB || []);
+            const group1 = calculateStandings(1);
+            const group2 = calculateStandings(2);
 
             return `
                 <div class="space-y-6">
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-3xl font-bold text-gray-800">Einzel-Turnier</h2>
-                            <div class="flex space-x-2">
-                                <button onclick="setSinglesPhase('group')" class="px-4 py-2 rounded-lg ${state.singlesConfig.phase === 'group' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}">
-                                    Gruppenphase
-                                </button>
-                                <button onclick="setSinglesPhase('ko')" class="px-4 py-2 rounded-lg ${state.singlesConfig.phase === 'ko' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}">
-                                    K.O.-Runde
-                                </button>
-                            </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Einzel-Turnier</h2>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mb-6">
+                            ${GroupTable(1, group1)}
+                            ${GroupTable(2, group2)}
                         </div>
                         
-                        ${state.singlesConfig.phase === 'group' ? `
-                            <div class="grid md:grid-cols-2 gap-6">
-                                ${GroupTable('A', groupA)}
-                                ${GroupTable('B', groupB)}
-                            </div>
-                            
-                            ${state.user ? `
-                                <div class="mt-6 p-4 bg-indigo-50 rounded-lg">
-                                    <h4 class="font-bold text-gray-800 mb-3">Neues Spiel eintragen</h4>
-                                    <div class="grid grid-cols-4 gap-3">
-                                        <select id="singlesP1" class="px-3 py-2 border rounded-lg">
-                                            <option value="">Spieler 1</option>
-                                            ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                                        </select>
-                                        <select id="singlesP2" class="px-3 py-2 border rounded-lg">
-                                            <option value="">Spieler 2</option>
-                                            ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                                        </select>
-                                        <input type="text" id="singlesScore" placeholder="21:19, 21:18" class="px-3 py-2 border rounded-lg">
-                                        <button onclick="addSinglesMatch()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                            Eintragen
-                                        </button>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        ` : `
-                            <div class="text-center py-12">
-                                <div class="text-yellow-500 mb-4">${icons.trophy}</div>
-                                <h3 class="text-2xl font-bold text-gray-800 mb-2">K.O.-Runde</h3>
-                                <p class="text-gray-600">Wird verfügbar nach Abschluss der Gruppenphase</p>
-                            </div>
-                        `}
+                        ${state.user ? SinglesMatchEntry() : ''}
                     </div>
                 </div>
             `;
         }
 
-        function GroupTable(groupName, standings) {
+        function GroupTable(groupNum, standings) {
             return `
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">Gruppe ${groupName}</h3>
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Gruppe ${groupNum}</h3>
                     <table class="w-full">
                         <thead>
                             <tr class="text-left text-sm text-gray-600 border-b">
                                 <th class="pb-2">Platz</th>
                                 <th class="pb-2">Spieler</th>
+                                <th class="pb-2">Sp</th>
                                 <th class="pb-2">Pkt</th>
                                 <th class="pb-2">Sätze</th>
                             </tr>
@@ -353,13 +389,14 @@ const firebaseConfig = {
                         <tbody>
                             ${standings.length === 0 ? `
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-gray-500">Gruppe noch nicht eingeteilt</td>
+                                    <td colspan="5" class="text-center py-4 text-gray-500">Keine Spieler in Gruppe ${groupNum}</td>
                                 </tr>
                             ` : standings.map((player, idx) => `
                                 <tr class="border-b border-gray-200">
                                     <td class="py-2 font-bold">${idx + 1}</td>
-                                    <td class="py-2">${getPlayerName(player.id)}</td>
-                                    <td class="py-2">${player.points}</td>
+                                    <td class="py-2">${player.name}</td>
+                                    <td class="py-2">${player.matches}</td>
+                                    <td class="py-2 font-semibold">${player.points}</td>
                                     <td class="py-2">${player.setsWon}:${player.setsLost}</td>
                                 </tr>
                             `).join('')}
@@ -369,7 +406,85 @@ const firebaseConfig = {
             `;
         }
 
+        function SinglesMatchEntry() {
+            const group1Players = getGroupPlayers(1);
+            const group2Players = getGroupPlayers(2);
+            const allSinglesPlayers = [...group1Players, ...group2Players];
+
+            return `
+                <div class="p-4 bg-indigo-50 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-3">Neues Einzel-Spiel eintragen</h4>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <select id="singlesP1" class="px-3 py-2 border rounded-lg">
+                            <option value="">Spieler 1 wählen</option>
+                            ${allSinglesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                        </select>
+                        <select id="singlesP2" class="px-3 py-2 border rounded-lg">
+                            <option value="">Spieler 2 wählen</option>
+                            ${allSinglesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-3 mb-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Spieler 1</label>
+                                <input type="number" id="set1P1" min="0" max="30" 
+                                    oninput="updateMatchEntry('set1P1', this.value)"
+                                    class="w-full px-3 py-2 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Spieler 2</label>
+                                <input type="number" id="set1P2" min="0" max="30"
+                                    oninput="updateMatchEntry('set1P2', this.value)"
+                                    class="w-full px-3 py-2 border rounded-lg">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Spieler 1</label>
+                                <input type="number" id="set2P1" min="0" max="30"
+                                    oninput="updateMatchEntry('set2P1', this.value)"
+                                    class="w-full px-3 py-2 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Spieler 2</label>
+                                <input type="number" id="set2P2" min="0" max="30"
+                                    oninput="updateMatchEntry('set2P2', this.value)"
+                                    class="w-full px-3 py-2 border rounded-lg">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Spieler 1</label>
+                                <input type="number" id="set3P1" min="0" max="30"
+                                    oninput="updateMatchEntry('set3P1', this.value)"
+                                    ${state.matchEntry.set3Disabled ? 'disabled' : ''}
+                                    class="w-full px-3 py-2 border rounded-lg ${state.matchEntry.set3Disabled ? 'bg-gray-200' : ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Spieler 2</label>
+                                <input type="number" id="set3P2" min="0" max="30"
+                                    oninput="updateMatchEntry('set3P2', this.value)"
+                                    ${state.matchEntry.set3Disabled ? 'disabled' : ''}
+                                    class="w-full px-3 py-2 border rounded-lg ${state.matchEntry.set3Disabled ? 'bg-gray-200' : ''}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="addSinglesMatch()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        Spiel eintragen
+                    </button>
+                </div>
+            `;
+        }
+
         function DoublesPage() {
+            const levels = state.pyramid.levels || [];
+
             return `
                 <div class="space-y-6">
                     <div class="bg-white rounded-xl shadow-lg p-6">
@@ -377,353 +492,4 @@ const firebaseConfig = {
                         
                         <div class="mb-6">
                             <h3 class="text-xl font-semibold mb-3">Aktuelle Rangfolge</h3>
-                            ${state.pyramid.length === 0 ? `
-                                <div class="text-center py-12 bg-gray-50 rounded-lg">
-                                    <div class="text-blue-500 mb-4">${icons.pyramid}</div>
-                                    <p class="text-gray-600">Pyramide noch nicht initialisiert</p>
-                                    ${state.user ? `
-                                        <button onclick="initPyramid()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                                            Pyramide initialisieren
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            ` : `
-                                <div class="space-y-2">
-                                    ${state.pyramid.map((playerId, idx) => `
-                                        <div class="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-l-4 border-yellow-500" style="margin-left: ${idx * 20}px">
-                                            <div class="flex items-center space-x-3">
-                                                <span class="font-bold text-lg text-gray-700">#${idx + 1}</span>
-                                                <span class="font-medium">${getPlayerName(playerId)}</span>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-xl font-semibold mb-3">Anstehende Herausforderungen</h3>
-                            ${state.challenges.length === 0 ? `
-                                <div class="text-center py-8 bg-gray-50 rounded-lg">
-                                    <p class="text-gray-500">Keine anstehenden Herausforderungen</p>
-                                </div>
-                            ` : `
-                                <div class="space-y-3">
-                                    ${state.challenges.map(challenge => `
-                                        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                                            <div class="flex items-center justify-between">
-                                                <span class="font-medium">${getPlayerName(challenge.challengerId)} fordert ${getPlayerName(challenge.challengedId)} heraus</span>
-                                                <span class="text-sm text-gray-500">Offen</span>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
-                        </div>
-                        
-                        ${state.user && state.pyramid.length > 0 ? `
-                            <div class="mt-6 p-4 bg-indigo-50 rounded-lg">
-                                <h4 class="font-bold text-gray-800 mb-3">Neue Herausforderung eintragen</h4>
-                                <div class="grid grid-cols-3 gap-3">
-                                    <select id="challenger" class="px-3 py-2 border rounded-lg">
-                                        <option value="">Herausforderer</option>
-                                        ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                                    </select>
-                                    <select id="challenged" class="px-3 py-2 border rounded-lg">
-                                        <option value="">Herausgeforderter</option>
-                                        ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-                                    </select>
-                                    <button onclick="addChallenge()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                        Eintragen
-                                    </button>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        function PlayersPage() {
-            return `
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Alle Spieler</h2>
-                    
-                    ${state.players.length === 0 ? `
-                        <p class="text-center py-8 text-gray-500">Noch keine Spieler registriert</p>
-                    ` : `
-                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${state.players.map(player => `
-                                <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onclick="viewPlayer('${player.id}')">
-                                    <h3 class="text-lg font-bold text-gray-800">${player.name}</h3>
-                                    ${player.email ? `<p class="text-sm text-gray-500">${player.email}</p>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    `}
-                </div>
-            `;
-        }
-
-        function AdminPage() {
-            if (!state.user) {
-                return `
-                    <div class="max-w-md mx-auto">
-                        <div class="bg-white rounded-xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="admin@verein.de">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Passwort</label>
-                                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Passwort">
-                                </div>
-                                <div id="loginError" class="text-red-500 text-sm hidden"></div>
-                                <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                                    Anmelden
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="space-y-6">
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Admin-Panel</h2>
-                        
-                        <h3 class="text-xl font-semibold mb-4">Spielerverwaltung</h3>
-                        
-                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                            <div class="flex space-x-3">
-                                <input type="text" id="playerName" placeholder="Name" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
-                                <input type="email" id="playerEmail" placeholder="Email (optional)" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
-                                <button onclick="addPlayer()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
-                                    <span>${icons.plus}</span>
-                                    <span>Hinzufügen</span>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-2">
-                            ${state.players.map(player => `
-                                <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
-                                    <div>
-                                        <span class="font-medium">${player.name}</span>
-                                        ${player.email ? `<span class="text-sm text-gray-500 ml-3">${player.email}</span>` : ''}
-                                    </div>
-                                    <div class="flex space-x-2">
-                                        <button onclick="deletePlayer('${player.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded">
-                                            ${icons.trash}
-                                        </button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-xl font-semibold mb-4">Turnier-Setup</h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <h4 class="font-bold text-gray-800 mb-2">Einzel - Gruppen zuweisen</h4>
-                                <div class="grid md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gruppe A</label>
-                                        <select id="groupAPlayers" multiple class="w-full px-3 py-2 border rounded-lg h-40">
-                                            ${state.players.map(p => `
-                                                <option value="${p.id}" ${(state.singlesConfig.groupA || []).includes(p.id) ? 'selected' : ''}>
-                                                    ${p.name}
-                                                </option>
-                                            `).join('')}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gruppe B</label>
-                                        <select id="groupBPlayers" multiple class="w-full px-3 py-2 border rounded-lg h-40">
-                                            ${state.players.map(p => `
-                                                <option value="${p.id}" ${(state.singlesConfig.groupB || []).includes(p.id) ? 'selected' : ''}>
-                                                    ${p.name}
-                                                </option>
-                                            `).join('')}
-                                        </select>
-                                    </div>
-                                </div>
-                                <button onclick="saveGroups()" class="mt-3 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                                    Gruppen speichern
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // ============================================
-        // EVENT HANDLERS
-        // ============================================
-        function navigateTo(page) {
-            state.currentPage = page;
-            render();
-        }
-
-        function viewPlayer(playerId) {
-            state.selectedPlayerId = playerId;
-            state.currentPage = 'player';
-            render();
-        }
-
-        function setSinglesPhase(phase) {
-            if (state.user) {
-                db.collection('config').doc('singles').update({ phase });
-            }
-        }
-
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const errorDiv = document.getElementById('loginError');
-            
-            try {
-                await auth.signInWithEmailAndPassword(email, password);
-                state.currentPage = 'admin';
-            } catch (error) {
-                errorDiv.textContent = 'Login fehlgeschlagen: ' + error.message;
-                errorDiv.classList.remove('hidden');
-            }
-        }
-
-        async function handleLogout() {
-            await auth.signOut();
-            state.currentPage = 'home';
-        }
-
-        async function addPlayer() {
-            const name = document.getElementById('playerName').value.trim();
-            const email = document.getElementById('playerEmail').value.trim();
-            
-            if (name) {
-                await db.collection('players').add({
-                    name,
-                    email: email || null,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                document.getElementById('playerName').value = '';
-                document.getElementById('playerEmail').value = '';
-            }
-        }
-
-        async function deletePlayer(playerId) {
-            if (confirm('Spieler wirklich löschen?')) {
-                await db.collection('players').doc(playerId).delete();
-            }
-        }
-
-        async function saveGroups() {
-            const groupASelect = document.getElementById('groupAPlayers');
-            const groupBSelect = document.getElementById('groupBPlayers');
-            
-            const groupA = Array.from(groupASelect.selectedOptions).map(opt => opt.value);
-            const groupB = Array.from(groupBSelect.selectedOptions).map(opt => opt.value);
-            
-            await db.collection('config').doc('singles').set({
-                phase: state.singlesConfig.phase || 'group',
-                groupA,
-                groupB
-            }, { merge: true });
-            
-            alert('Gruppen erfolgreich gespeichert!');
-        }
-
-        async function addSinglesMatch() {
-            const p1 = document.getElementById('singlesP1').value;
-            const p2 = document.getElementById('singlesP2').value;
-            const score = document.getElementById('singlesScore').value.trim();
-            
-            if (p1 && p2 && score) {
-                await db.collection('singlesMatches').add({
-                    player1Id: p1,
-                    player2Id: p2,
-                    score,
-                    date: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                document.getElementById('singlesP1').value = '';
-                document.getElementById('singlesP2').value = '';
-                document.getElementById('singlesScore').value = '';
-            }
-        }
-
-        async function initPyramid() {
-            const shuffled = [...state.players].sort(() => Math.random() - 0.5);
-            const positions = shuffled.map(p => p.id);
-            
-            await db.collection('pyramid').doc('current').set({
-                positions,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-
-        async function addChallenge() {
-            const challenger = document.getElementById('challenger').value;
-            const challenged = document.getElementById('challenged').value;
-            
-            if (challenger && challenged && challenger !== challenged) {
-                await db.collection('challenges').add({
-                    challengerId: challenger,
-                    challengedId: challenged,
-                    status: 'pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                document.getElementById('challenger').value = '';
-                document.getElementById('challenged').value = '';
-            }
-        }
-
-        // ============================================
-        // RENDER
-        // ============================================
-        function render() {
-            const app = document.getElementById('app');
-            
-            let content = '';
-            
-            switch (state.currentPage) {
-                case 'singles':
-                    content = SinglesPage();
-                    break;
-                case 'doubles':
-                    content = DoublesPage();
-                    break;
-                case 'players':
-                    content = PlayersPage();
-                    break;
-                case 'admin':
-                    content = AdminPage();
-                    break;
-                default:
-                    content = HomePage();
-            }
-            
-            app.innerHTML = `
-                ${Navigation()}
-                <div class="container mx-auto px-4 py-8 max-w-7xl">
-                    ${content}
-                </div>
-            `;
-        }
-
-        // ============================================
-        // INIT
-        // ============================================
-        initFirebaseListeners();
-        render();
-    </script>
-</body>
-</html>
+                            ${levels.length === 0

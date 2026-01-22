@@ -2,18 +2,19 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Users, Trophy, Pyramid, User, Settings, Plus, Edit2, Trash2, Save, X, LogIn, LogOut, Calendar, TrendingUp } from 'lucide-react';
 
 // Firebase würde hier importiert werden
-// import { initializeApp } from 'firebase/app';
-// import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
-// import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 // Firebase Config - HIER DEINE CONFIG EINTRAGEN
-const FIREBASE_CONFIG = {
-  apiKey: "DEINE_API_KEY",
-  authDomain: "DEIN_PROJECT.firebaseapp.com",
-  projectId: "DEIN_PROJECT_ID",
-  storageBucket: "DEIN_PROJECT.appspot.com",
-  messagingSenderId: "DEINE_SENDER_ID",
-  appId: "DEINE_APP_ID"
+const firebaseConfig = {
+  apiKey: "AIzaSyArdTajlSvaUqWh4-LFrhJXOKukn9iecZs",
+  authDomain: "cfbgtvereinsmeisterschaft.firebaseapp.com",
+  projectId: "cfbgtvereinsmeisterschaft",
+  storageBucket: "cfbgtvereinsmeisterschaft.firebasestorage.app",
+  messagingSenderId: "527308111102",
+  appId: "1:527308111102:web:ef1b52153dd75a6a0c79af",
+  measurementId: "G-QKGNPLQN20"
 };
 
 // Simulated Firebase (für Demo - wird durch echtes Firebase ersetzt)

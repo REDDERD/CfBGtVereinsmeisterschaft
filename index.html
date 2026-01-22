@@ -1,13 +1,729 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Badminton Vereinsmeisterschaft</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton Vereinsmeisterschaft</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app"></div>
+
+    <script>
+        // ============================================
+        // FIREBASE CONFIGURATION - HIER DEINE CONFIG EINTRAGEN!
+        // ============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyArdTajlSvaUqWh4-LFrhJXOKukn9iecZs",
+  authDomain: "cfbgtvereinsmeisterschaft.firebaseapp.com",
+  projectId: "cfbgtvereinsmeisterschaft",
+  storageBucket: "cfbgtvereinsmeisterschaft.firebasestorage.app",
+  messagingSenderId: "527308111102",
+  appId: "1:527308111102:web:ef1b52153dd75a6a0c79af",
+  measurementId: "G-QKGNPLQN20"
+};
+
+        // Firebase initialisieren
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        const state = {
+            currentPage: 'home',
+            user: null,
+            players: [],
+            singlesMatches: [],
+            doublesMatches: [],
+            pyramid: [],
+            challenges: [],
+            singlesConfig: { phase: 'group', groupA: [], groupB: [] },
+            selectedPlayerId: null
+        };
+
+        // ============================================
+        // FIREBASE LISTENERS
+        // ============================================
+        function initFirebaseListeners() {
+            // Auth State
+            auth.onAuthStateChanged(user => {
+                state.user = user;
+                render();
+            });
+
+            // Players
+            db.collection('players').orderBy('name').onSnapshot(snapshot => {
+                state.players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            });
+
+            // Singles Matches
+            db.collection('singlesMatches').orderBy('date', 'desc').onSnapshot(snapshot => {
+                state.singlesMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            });
+
+            // Doubles Matches
+            db.collection('doublesMatches').orderBy('date', 'desc').onSnapshot(snapshot => {
+                state.doublesMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            });
+
+            // Pyramid
+            db.collection('pyramid').doc('current').onSnapshot(doc => {
+                if (doc.exists) {
+                    state.pyramid = doc.data().positions || [];
+                }
+                render();
+            });
+
+            // Challenges
+            db.collection('challenges').where('status', '==', 'pending').onSnapshot(snapshot => {
+                state.challenges = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            });
+
+            // Singles Config
+            db.collection('config').doc('singles').onSnapshot(doc => {
+                if (doc.exists) {
+                    state.singlesConfig = doc.data();
+                }
+                render();
+            });
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
+        function calculateStandings(group) {
+            const playerStats = {};
+            
+            group.forEach(playerId => {
+                playerStats[playerId] = {
+                    id: playerId,
+                    matches: 0,
+                    points: 0,
+                    setsWon: 0,
+                    setsLost: 0,
+                    gamesWon: 0,
+                    gamesLost: 0
+                };
+            });
+
+            state.singlesMatches
+                .filter(m => m.group === group)
+                .forEach(match => {
+                    if (!match.score) return;
+                    
+                    const [p1Sets, p1Games, p2Sets, p2Games] = parseScore(match.score);
+                    const p1 = match.player1Id;
+                    const p2 = match.player2Id;
+
+                    if (playerStats[p1] && playerStats[p2]) {
+                        playerStats[p1].matches++;
+                        playerStats[p2].matches++;
+                        playerStats[p1].setsWon += p1Sets;
+                        playerStats[p1].setsLost += p2Sets;
+                        playerStats[p2].setsWon += p2Sets;
+                        playerStats[p2].setsLost += p1Sets;
+
+                        if (p1Sets > p2Sets) {
+                            playerStats[p1].points += (p1Sets === 2 && p2Sets === 0) ? 3 : 2;
+                            playerStats[p2].points += (p2Sets === 1) ? 1 : 0;
+                        } else {
+                            playerStats[p2].points += (p2Sets === 2 && p1Sets === 0) ? 3 : 2;
+                            playerStats[p1].points += (p1Sets === 1) ? 1 : 0;
+                        }
+                    }
+                });
+
+            return Object.values(playerStats).sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                const aDiff = a.setsWon - a.setsLost;
+                const bDiff = b.setsWon - b.setsLost;
+                return bDiff - aDiff;
+            });
+        }
+
+        function parseScore(scoreStr) {
+            // Format: "21:19, 21:18" oder "21:19, 18:21, 21:15"
+            const sets = scoreStr.split(',').map(s => s.trim());
+            let p1Sets = 0, p2Sets = 0;
+            sets.forEach(set => {
+                const [g1, g2] = set.split(':').map(n => parseInt(n));
+                if (g1 > g2) p1Sets++;
+                else p2Sets++;
+            });
+            return [p1Sets, 0, p2Sets, 0]; // Vereinfacht
+        }
+
+        function getPlayerName(playerId) {
+            const player = state.players.find(p => p.id === playerId);
+            return player ? player.name : 'Unbekannt';
+        }
+
+        // ============================================
+        // ICONS (Lucide-style SVG)
+        // ============================================
+        const icons = {
+            trophy: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+            pyramid: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.27 21.7s9.87-3.5 12.73-6.36a2 2 0 0 0 0-2.83L9.36 6.88a2 2 0 0 0-2.83 0L2.27 11.7"/><path d="M14.64 21.7s6.87-3.5 9.73-6.36a2 2 0 0 0 0-2.83l-5.64-5.64a2 2 0 0 0-2.83 0l-4.26 4.26"/></svg>',
+            users: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+            settings: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+            plus: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+            edit: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
+            trash: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+            login: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>',
+            logout: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>'
+        };
+
+        // ============================================
+        // COMPONENTS
+        // ============================================
+        function Navigation() {
+            return `
+                <nav class="bg-white shadow-lg">
+                    <div class="container mx-auto px-4">
+                        <div class="flex items-center justify-between h-16">
+                            <div class="flex items-center space-x-8">
+                                <h1 class="text-2xl font-bold text-indigo-600">🏸 Vereinsmeisterschaft</h1>
+                                
+                                <div class="flex space-x-4">
+                                    <button onclick="navigateTo('singles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'singles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                        ${icons.trophy}
+                                        <span class="font-medium">Einzel</span>
+                                    </button>
+                                    <button onclick="navigateTo('doubles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'doubles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                        ${icons.pyramid}
+                                        <span class="font-medium">Doppel</span>
+                                    </button>
+                                    <button onclick="navigateTo('players')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'players' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                        ${icons.users}
+                                        <span class="font-medium">Spieler</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4">
+                                ${state.user ? `
+                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 rounded-lg ${state.currentPage === 'admin' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                        ${icons.settings}
+                                        <span class="font-medium">Admin</span>
+                                    </button>
+                                    <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+                                        ${icons.logout}
+                                        <span>Logout</span>
+                                    </button>
+                                ` : `
+                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg">
+                                        ${icons.login}
+                                        <span>Admin Login</span>
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            `;
+        }
+
+        function HomePage() {
+            const recentMatches = [...state.singlesMatches, ...state.doublesMatches]
+                .sort((a, b) => (b.date || 0) - (a.date || 0))
+                .slice(0, 5);
+
+            return `
+                <div class="space-y-8">
+                    <div class="text-center">
+                        <h2 class="text-4xl font-bold text-gray-800 mb-4">Willkommen zur Vereinsmeisterschaft</h2>
+                        <p class="text-xl text-gray-600">Aktuell ${state.players.length} registrierte Spieler</p>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div onclick="navigateTo('singles')" class="bg-white rounded-xl shadow-lg p-8 cursor-pointer hover:shadow-xl transition-shadow">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="text-yellow-500">${icons.trophy}</div>
+                                <h3 class="text-2xl font-bold text-gray-800">Einzel-Turnier</h3>
+                            </div>
+                            <p class="text-gray-600">Gruppenphasen mit anschließendem K.O.-System</p>
+                        </div>
+                        
+                        <div onclick="navigateTo('doubles')" class="bg-white rounded-xl shadow-lg p-8 cursor-pointer hover:shadow-xl transition-shadow">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="text-blue-500">${icons.pyramid}</div>
+                                <h3 class="text-2xl font-bold text-gray-800">Doppel-Pyramide</h3>
+                            </div>
+                            <p class="text-gray-600">Herausforderungs-System mit dynamischer Rangfolge</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Letzte Ergebnisse</h3>
+                        ${recentMatches.length === 0 ? `
+                            <p class="text-gray-500 text-center py-8">Noch keine Spiele eingetragen</p>
+                        ` : `
+                            <div class="space-y-3">
+                                ${recentMatches.map(match => `
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="font-medium">${getPlayerName(match.player1Id)} vs ${getPlayerName(match.player2Id)}</span>
+                                        <span class="text-indigo-600 font-bold">${match.score || 'Ausstehend'}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function SinglesPage() {
+            const groupA = calculateStandings(state.singlesConfig.groupA || []);
+            const groupB = calculateStandings(state.singlesConfig.groupB || []);
+
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-3xl font-bold text-gray-800">Einzel-Turnier</h2>
+                            <div class="flex space-x-2">
+                                <button onclick="setSinglesPhase('group')" class="px-4 py-2 rounded-lg ${state.singlesConfig.phase === 'group' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}">
+                                    Gruppenphase
+                                </button>
+                                <button onclick="setSinglesPhase('ko')" class="px-4 py-2 rounded-lg ${state.singlesConfig.phase === 'ko' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}">
+                                    K.O.-Runde
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${state.singlesConfig.phase === 'group' ? `
+                            <div class="grid md:grid-cols-2 gap-6">
+                                ${GroupTable('A', groupA)}
+                                ${GroupTable('B', groupB)}
+                            </div>
+                            
+                            ${state.user ? `
+                                <div class="mt-6 p-4 bg-indigo-50 rounded-lg">
+                                    <h4 class="font-bold text-gray-800 mb-3">Neues Spiel eintragen</h4>
+                                    <div class="grid grid-cols-4 gap-3">
+                                        <select id="singlesP1" class="px-3 py-2 border rounded-lg">
+                                            <option value="">Spieler 1</option>
+                                            ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                        </select>
+                                        <select id="singlesP2" class="px-3 py-2 border rounded-lg">
+                                            <option value="">Spieler 2</option>
+                                            ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                        </select>
+                                        <input type="text" id="singlesScore" placeholder="21:19, 21:18" class="px-3 py-2 border rounded-lg">
+                                        <button onclick="addSinglesMatch()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                                            Eintragen
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        ` : `
+                            <div class="text-center py-12">
+                                <div class="text-yellow-500 mb-4">${icons.trophy}</div>
+                                <h3 class="text-2xl font-bold text-gray-800 mb-2">K.O.-Runde</h3>
+                                <p class="text-gray-600">Wird verfügbar nach Abschluss der Gruppenphase</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function GroupTable(groupName, standings) {
+            return `
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Gruppe ${groupName}</h3>
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-sm text-gray-600 border-b">
+                                <th class="pb-2">Platz</th>
+                                <th class="pb-2">Spieler</th>
+                                <th class="pb-2">Pkt</th>
+                                <th class="pb-2">Sätze</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${standings.length === 0 ? `
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-gray-500">Gruppe noch nicht eingeteilt</td>
+                                </tr>
+                            ` : standings.map((player, idx) => `
+                                <tr class="border-b border-gray-200">
+                                    <td class="py-2 font-bold">${idx + 1}</td>
+                                    <td class="py-2">${getPlayerName(player.id)}</td>
+                                    <td class="py-2">${player.points}</td>
+                                    <td class="py-2">${player.setsWon}:${player.setsLost}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function DoublesPage() {
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Doppel-Pyramide</h2>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3">Aktuelle Rangfolge</h3>
+                            ${state.pyramid.length === 0 ? `
+                                <div class="text-center py-12 bg-gray-50 rounded-lg">
+                                    <div class="text-blue-500 mb-4">${icons.pyramid}</div>
+                                    <p class="text-gray-600">Pyramide noch nicht initialisiert</p>
+                                    ${state.user ? `
+                                        <button onclick="initPyramid()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                            Pyramide initialisieren
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            ` : `
+                                <div class="space-y-2">
+                                    ${state.pyramid.map((playerId, idx) => `
+                                        <div class="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border-l-4 border-yellow-500" style="margin-left: ${idx * 20}px">
+                                            <div class="flex items-center space-x-3">
+                                                <span class="font-bold text-lg text-gray-700">#${idx + 1}</span>
+                                                <span class="font-medium">${getPlayerName(playerId)}</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-xl font-semibold mb-3">Anstehende Herausforderungen</h3>
+                            ${state.challenges.length === 0 ? `
+                                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                                    <p class="text-gray-500">Keine anstehenden Herausforderungen</p>
+                                </div>
+                            ` : `
+                                <div class="space-y-3">
+                                    ${state.challenges.map(challenge => `
+                                        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-medium">${getPlayerName(challenge.challengerId)} fordert ${getPlayerName(challenge.challengedId)} heraus</span>
+                                                <span class="text-sm text-gray-500">Offen</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                        
+                        ${state.user && state.pyramid.length > 0 ? `
+                            <div class="mt-6 p-4 bg-indigo-50 rounded-lg">
+                                <h4 class="font-bold text-gray-800 mb-3">Neue Herausforderung eintragen</h4>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <select id="challenger" class="px-3 py-2 border rounded-lg">
+                                        <option value="">Herausforderer</option>
+                                        ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                    </select>
+                                    <select id="challenged" class="px-3 py-2 border rounded-lg">
+                                        <option value="">Herausgeforderter</option>
+                                        ${state.players.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                    </select>
+                                    <button onclick="addChallenge()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                                        Eintragen
+                                    </button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function PlayersPage() {
+            return `
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Alle Spieler</h2>
+                    
+                    ${state.players.length === 0 ? `
+                        <p class="text-center py-8 text-gray-500">Noch keine Spieler registriert</p>
+                    ` : `
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${state.players.map(player => `
+                                <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer" onclick="viewPlayer('${player.id}')">
+                                    <h3 class="text-lg font-bold text-gray-800">${player.name}</h3>
+                                    ${player.email ? `<p class="text-sm text-gray-500">${player.email}</p>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function AdminPage() {
+            if (!state.user) {
+                return `
+                    <div class="max-w-md mx-auto">
+                        <div class="bg-white rounded-xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="admin@verein.de">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Passwort</label>
+                                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Passwort">
+                                </div>
+                                <div id="loginError" class="text-red-500 text-sm hidden"></div>
+                                <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                    Anmelden
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Admin-Panel</h2>
+                        
+                        <h3 class="text-xl font-semibold mb-4">Spielerverwaltung</h3>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <div class="flex space-x-3">
+                                <input type="text" id="playerName" placeholder="Name" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                                <input type="email" id="playerEmail" placeholder="Email (optional)" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                                <button onclick="addPlayer()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
+                                    <span>${icons.plus}</span>
+                                    <span>Hinzufügen</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            ${state.players.map(player => `
+                                <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                                    <div>
+                                        <span class="font-medium">${player.name}</span>
+                                        ${player.email ? `<span class="text-sm text-gray-500 ml-3">${player.email}</span>` : ''}
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="deletePlayer('${player.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded">
+                                            ${icons.trash}
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">Turnier-Setup</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-bold text-gray-800 mb-2">Einzel - Gruppen zuweisen</h4>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gruppe A</label>
+                                        <select id="groupAPlayers" multiple class="w-full px-3 py-2 border rounded-lg h-40">
+                                            ${state.players.map(p => `
+                                                <option value="${p.id}" ${(state.singlesConfig.groupA || []).includes(p.id) ? 'selected' : ''}>
+                                                    ${p.name}
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Gruppe B</label>
+                                        <select id="groupBPlayers" multiple class="w-full px-3 py-2 border rounded-lg h-40">
+                                            ${state.players.map(p => `
+                                                <option value="${p.id}" ${(state.singlesConfig.groupB || []).includes(p.id) ? 'selected' : ''}>
+                                                    ${p.name}
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+                                <button onclick="saveGroups()" class="mt-3 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                    Gruppen speichern
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+        function navigateTo(page) {
+            state.currentPage = page;
+            render();
+        }
+
+        function viewPlayer(playerId) {
+            state.selectedPlayerId = playerId;
+            state.currentPage = 'player';
+            render();
+        }
+
+        function setSinglesPhase(phase) {
+            if (state.user) {
+                db.collection('config').doc('singles').update({ phase });
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                state.currentPage = 'admin';
+            } catch (error) {
+                errorDiv.textContent = 'Login fehlgeschlagen: ' + error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            await auth.signOut();
+            state.currentPage = 'home';
+        }
+
+        async function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            const email = document.getElementById('playerEmail').value.trim();
+            
+            if (name) {
+                await db.collection('players').add({
+                    name,
+                    email: email || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('playerName').value = '';
+                document.getElementById('playerEmail').value = '';
+            }
+        }
+
+        async function deletePlayer(playerId) {
+            if (confirm('Spieler wirklich löschen?')) {
+                await db.collection('players').doc(playerId).delete();
+            }
+        }
+
+        async function saveGroups() {
+            const groupASelect = document.getElementById('groupAPlayers');
+            const groupBSelect = document.getElementById('groupBPlayers');
+            
+            const groupA = Array.from(groupASelect.selectedOptions).map(opt => opt.value);
+            const groupB = Array.from(groupBSelect.selectedOptions).map(opt => opt.value);
+            
+            await db.collection('config').doc('singles').set({
+                phase: state.singlesConfig.phase || 'group',
+                groupA,
+                groupB
+            }, { merge: true });
+            
+            alert('Gruppen erfolgreich gespeichert!');
+        }
+
+        async function addSinglesMatch() {
+            const p1 = document.getElementById('singlesP1').value;
+            const p2 = document.getElementById('singlesP2').value;
+            const score = document.getElementById('singlesScore').value.trim();
+            
+            if (p1 && p2 && score) {
+                await db.collection('singlesMatches').add({
+                    player1Id: p1,
+                    player2Id: p2,
+                    score,
+                    date: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('singlesP1').value = '';
+                document.getElementById('singlesP2').value = '';
+                document.getElementById('singlesScore').value = '';
+            }
+        }
+
+        async function initPyramid() {
+            const shuffled = [...state.players].sort(() => Math.random() - 0.5);
+            const positions = shuffled.map(p => p.id);
+            
+            await db.collection('pyramid').doc('current').set({
+                positions,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        async function addChallenge() {
+            const challenger = document.getElementById('challenger').value;
+            const challenged = document.getElementById('challenged').value;
+            
+            if (challenger && challenged && challenger !== challenged) {
+                await db.collection('challenges').add({
+                    challengerId: challenger,
+                    challengedId: challenged,
+                    status: 'pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('challenger').value = '';
+                document.getElementById('challenged').value = '';
+            }
+        }
+
+        // ============================================
+        // RENDER
+        // ============================================
+        function render() {
+            const app = document.getElementById('app');
+            
+            let content = '';
+            
+            switch (state.currentPage) {
+                case 'singles':
+                    content = SinglesPage();
+                    break;
+                case 'doubles':
+                    content = DoublesPage();
+                    break;
+                case 'players':
+                    content = PlayersPage();
+                    break;
+                case 'admin':
+                    content = AdminPage();
+                    break;
+                default:
+                    content = HomePage();
+            }
+            
+            app.innerHTML = `
+                ${Navigation()}
+                <div class="container mx-auto px-4 py-8 max-w-7xl">
+                    ${content}
+                </div>
+            `;
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        initFirebaseListeners();
+        render();
+    </script>
 </body>
 </html>

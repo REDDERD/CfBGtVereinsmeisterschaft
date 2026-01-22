@@ -492,4 +492,583 @@
                         
                         <div class="mb-6">
                             <h3 class="text-xl font-semibold mb-3">Aktuelle Rangfolge</h3>
-                            ${levels.length === 0
+                            ${levels.length === 0 ? `
+                                <div class="text-center py-12 bg-gray-50 rounded-lg">
+                                    <div class="text-blue-500 mb-4">${icons.pyramid}</div>
+                                    <p class="text-gray-600">Pyramide noch nicht initialisiert</p>
+                                    ${state.user ? `
+                                        <button onclick="initPyramid()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                            Pyramide initialisieren
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            ` : `
+                                <div class="space-y-4">
+                                    ${levels.map((level, levelIdx) => `
+                                        <div class="flex justify-center items-center space-x-4" style="margin-left: ${(levels.length - levelIdx - 1) * 60}px">
+                                            ${level.map((playerId, posIdx) => `
+                                                <div class="relative">
+                                                    <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-500 rounded-lg px-4 py-3 text-center shadow-md min-w-[120px]">
+                                                        <div class="text-xs text-gray-500 mb-1">Ebene ${levelIdx + 1} / Pos ${posIdx + 1}</div>
+                                                        <div class="font-bold text-gray-800">${getPlayerName(playerId)}</div>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xl font-semibold mb-3">Anstehende Herausforderungen</h3>
+                            ${state.challenges.length === 0 ? `
+                                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                                    <p class="text-gray-500">Keine anstehenden Herausforderungen</p>
+                                </div>
+                            ` : `
+                                <div class="space-y-3">
+                                    ${state.challenges.map(challenge => `
+                                        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-medium">${getPlayerName(challenge.challengerId)} fordert ${getPlayerName(challenge.challengedId)} heraus</span>
+                                                <span class="text-sm text-gray-500">Offen</span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                        
+                        ${state.user && levels.length > 0 ? DoublesMatchEntry() : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function DoublesMatchEntry() {
+            const doublesPlayers = state.players.filter(p => p.doublesPool);
+
+            return `
+                <div class="space-y-6">
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <h4 class="font-bold text-gray-800 mb-3">Neue Herausforderung eintragen</h4>
+                        <div class="grid grid-cols-3 gap-3">
+                            <select id="challenger" class="px-3 py-2 border rounded-lg">
+                                <option value="">Herausforderer</option>
+                                ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                            </select>
+                            <select id="challenged" class="px-3 py-2 border rounded-lg">
+                                <option value="">Herausgeforderter</option>
+                                ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                            </select>
+                            <button onclick="addChallenge()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                                Eintragen
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-indigo-50 rounded-lg">
+                        <h4 class="font-bold text-gray-800 mb-3">Doppel-Spiel eintragen</h4>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team 1</label>
+                                <select id="doublesT1P1" class="w-full px-3 py-2 border rounded-lg mb-2">
+                                    <option value="">Spieler 1</option>
+                                    ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                </select>
+                                <select id="doublesT1P2" class="w-full px-3 py-2 border rounded-lg">
+                                    <option value="">Spieler 2</option>
+                                    ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Team 2</label>
+                                <select id="doublesT2P1" class="w-full px-3 py-2 border rounded-lg mb-2">
+                                    <option value="">Spieler 1</option>
+                                    ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                </select>
+                                <select id="doublesT2P2" class="w-full px-3 py-2 border rounded-lg">
+                                    <option value="">Spieler 2</option>
+                                    ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="isChallenge" class="rounded">
+                                <span class="text-sm text-gray-700">Dies ist eine Herausforderung (zählt für Pyramide)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="space-y-3 mb-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Team 1</label>
+                                    <input type="number" id="doublesSet1T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Team 2</label>
+                                    <input type="number" id="doublesSet1T2" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Team 1</label>
+                                    <input type="number" id="doublesSet2T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Team 2</label>
+                                    <input type="number" id="doublesSet2T2" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Team 1</label>
+                                    <input type="number" id="doublesSet3T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Team 2</label>
+                                    <input type="number" id="doublesSet3T2" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="addDoublesMatch()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            Doppel-Spiel eintragen
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function PlayersPage() {
+            return `
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Alle Spieler</h2>
+                    
+                    ${state.players.length === 0 ? `
+                        <p class="text-center py-8 text-gray-500">Noch keine Spieler registriert</p>
+                    ` : `
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${state.players.map(player => `
+                                <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+                                    <h3 class="text-lg font-bold text-gray-800">${player.name}</h3>
+                                    <div class="text-sm text-gray-600 mt-2 space-y-1">
+                                        ${player.singlesGroup ? `<div>Einzel: Gruppe ${player.singlesGroup}</div>` : ''}
+                                        ${player.doublesPool ? `<div>Doppel: Pool ${player.doublesPool}</div>` : ''}
+                                        ${!player.singlesGroup && !player.doublesPool ? '<div class="text-gray-400">Kein Turnier</div>' : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function AdminPage() {
+            if (!state.user) {
+                return `
+                    <div class="max-w-md mx-auto">
+                        <div class="bg-white rounded-xl shadow-lg p-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="admin@verein.de">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Passwort</label>
+                                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Passwort">
+                                </div>
+                                <div id="loginError" class="text-red-500 text-sm hidden"></div>
+                                <button onclick="handleLogin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                    Anmelden
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Spielerverwaltung</h2>
+                        
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-3">Neuen Spieler hinzufügen</h4>
+                            <div class="flex space-x-3">
+                                <input type="text" id="playerName" placeholder="Name" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
+                                <button onclick="addPlayer()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
+                                    ${icons.plus}
+                                    <span>Hinzufügen</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            ${state.players.map(player => `
+                                ${state.editingPlayer === player.id ? `
+                                    <div class="p-4 bg-blue-50 border-2 border-blue-500 rounded-lg">
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                                <input type="text" id="editName_${player.id}" value="${player.name}" class="w-full px-3 py-2 border rounded-lg">
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Einzel-Gruppe</label>
+                                                    <select id="editSingles_${player.id}" class="w-full px-3 py-2 border rounded-lg">
+                                                        <option value="">Nicht dabei</option>
+                                                        <option value="1" ${player.singlesGroup === 1 ? 'selected' : ''}>Gruppe 1</option>
+                                                        <option value="2" ${player.singlesGroup === 2 ? 'selected' : ''}>Gruppe 2</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div>
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Doppel-Pool</label>
+                                                    <select id="editDoubles_${player.id}" class="w-full px-3 py-2 border rounded-lg">
+                                                        <option value="">Nicht dabei</option>
+                                                        <option value="A" ${player.doublesPool === 'A' ? 'selected' : ''}>Pool A (stark)</option>
+                                                        <option value="B" ${player.doublesPool === 'B' ? 'selected' : ''}>Pool B (schwach)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex space-x-2">
+                                                <button onclick="savePlayer('${player.id}')" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2">
+                                                    ${icons.save}
+                                                    <span>Speichern</span>
+                                                </button>
+                                                <button onclick="cancelEdit()" class="flex-1 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 flex items-center justify-center space-x-2">
+                                                    ${icons.x}
+                                                    <span>Abbrechen</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300">
+                                        <div>
+                                            <span class="font-medium text-gray-800">${player.name}</span>
+                                            <div class="text-sm text-gray-500 mt-1">
+                                                ${player.singlesGroup ? `Einzel: Gruppe ${player.singlesGroup}` : ''}
+                                                ${player.singlesGroup && player.doublesPool ? ' • ' : ''}
+                                                ${player.doublesPool ? `Doppel: Pool ${player.doublesPool}` : ''}
+                                                ${!player.singlesGroup && !player.doublesPool ? 'Nimmt nicht teil' : ''}
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button onclick="editPlayer('${player.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                                                ${icons.edit}
+                                            </button>
+                                            <button onclick="deletePlayer('${player.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded transition-colors">
+                                                ${icons.trash}
+                                            </button>
+                                        </div>
+                                    </div>
+                                `}
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // EVENT HANDLERS
+        // ============================================
+        function navigateTo(page) {
+            state.currentPage = page;
+            render();
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                state.currentPage = 'admin';
+            } catch (error) {
+                errorDiv.textContent = 'Login fehlgeschlagen: ' + error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            await auth.signOut();
+            state.currentPage = 'home';
+        }
+
+        async function addPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            
+            if (name) {
+                await db.collection('players').add({
+                    name,
+                    singlesGroup: null,
+                    doublesPool: null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('playerName').value = '';
+            }
+        }
+
+        function editPlayer(playerId) {
+            state.editingPlayer = playerId;
+            render();
+        }
+
+        function cancelEdit() {
+            state.editingPlayer = null;
+            render();
+        }
+
+        async function savePlayer(playerId) {
+            const name = document.getElementById(`editName_${playerId}`).value.trim();
+            const singlesGroup = document.getElementById(`editSingles_${playerId}`).value;
+            const doublesPool = document.getElementById(`editDoubles_${playerId}`).value;
+            
+            if (name) {
+                await db.collection('players').doc(playerId).update({
+                    name,
+                    singlesGroup: singlesGroup ? parseInt(singlesGroup) : null,
+                    doublesPool: doublesPool || null
+                });
+                
+                state.editingPlayer = null;
+                render();
+            }
+        }
+
+        async function deletePlayer(playerId) {
+            if (confirm('Spieler wirklich löschen?')) {
+                await db.collection('players').doc(playerId).delete();
+            }
+        }
+
+        async function addSinglesMatch() {
+            const p1 = document.getElementById('singlesP1').value;
+            const p2 = document.getElementById('singlesP2').value;
+            
+            const set1P1 = parseInt(document.getElementById('set1P1').value);
+            const set1P2 = parseInt(document.getElementById('set1P2').value);
+            const set2P1 = parseInt(document.getElementById('set2P1').value);
+            const set2P2 = parseInt(document.getElementById('set2P2').value);
+            const set3P1 = parseInt(document.getElementById('set3P1').value);
+            const set3P2 = parseInt(document.getElementById('set3P2').value);
+            
+            if (!p1 || !p2 || p1 === p2) {
+                alert('Bitte zwei verschiedene Spieler auswählen');
+                return;
+            }
+            
+            if (!validateSet(set1P1, set1P2) || !validateSet(set2P1, set2P2)) {
+                alert('Ungültige Satz-Ergebnisse in Satz 1 oder 2');
+                return;
+            }
+            
+            const sets = [
+                { p1: set1P1, p2: set1P2 },
+                { p1: set2P1, p2: set2P2 }
+            ];
+            
+            const set1Winner = set1P1 > set1P2 ? 'p1' : 'p2';
+            const set2Winner = set2P1 > set2P2 ? 'p1' : 'p2';
+            
+            // Check if set 3 is needed
+            if (set1Winner !== set2Winner) {
+                if (!isNaN(set3P1) && !isNaN(set3P2)) {
+                    if (!validateSet(set3P1, set3P2)) {
+                        alert('Ungültiges Satz-Ergebnis in Satz 3');
+                        return;
+                    }
+                    sets.push({ p1: set3P1, p2: set3P2 });
+                } else {
+                    alert('Dritter Satz ist erforderlich (Spielstand 1:1)');
+                    return;
+                }
+            } else if (!isNaN(set3P1) || !isNaN(set3P2)) {
+                alert('Dritter Satz nicht erlaubt (Spielstand bereits 2:0)');
+                return;
+            }
+            
+            await db.collection('singlesMatches').add({
+                player1Id: p1,
+                player2Id: p2,
+                sets,
+                date: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Reset form
+            document.getElementById('singlesP1').value = '';
+            document.getElementById('singlesP2').value = '';
+            document.getElementById('set1P1').value = '';
+            document.getElementById('set1P2').value = '';
+            document.getElementById('set2P1').value = '';
+            document.getElementById('set2P2').value = '';
+            document.getElementById('set3P1').value = '';
+            document.getElementById('set3P2').value = '';
+            
+            state.matchEntry = {
+                set1P1: '', set1P2: '',
+                set2P1: '', set2P2: '',
+                set3P1: '', set3P2: '',
+                set3Disabled: false
+            };
+            
+            alert('Spiel erfolgreich eingetragen!');
+            render();
+        }
+
+        async function addDoublesMatch() {
+            const t1p1 = document.getElementById('doublesT1P1').value;
+            const t1p2 = document.getElementById('doublesT1P2').value;
+            const t2p1 = document.getElementById('doublesT2P1').value;
+            const t2p2 = document.getElementById('doublesT2P2').value;
+            const isChallenge = document.getElementById('isChallenge').checked;
+            
+            const set1T1 = parseInt(document.getElementById('doublesSet1T1').value);
+            const set1T2 = parseInt(document.getElementById('doublesSet1T2').value);
+            const set2T1 = parseInt(document.getElementById('doublesSet2T1').value);
+            const set2T2 = parseInt(document.getElementById('doublesSet2T2').value);
+            const set3T1 = parseInt(document.getElementById('doublesSet3T1').value);
+            const set3T2 = parseInt(document.getElementById('doublesSet3T2').value);
+            
+            if (!t1p1 || !t1p2 || !t2p1 || !t2p2) {
+                alert('Bitte alle 4 Spieler auswählen');
+                return;
+            }
+            
+            if (!validateSet(set1T1, set1T2) || !validateSet(set2T1, set2T2)) {
+                alert('Ungültige Satz-Ergebnisse');
+                return;
+            }
+            
+            const sets = [
+                { t1: set1T1, t2: set1T2 },
+                { t1: set2T1, t2: set2T2 }
+            ];
+            
+            const set1Winner = set1T1 > set1T2 ? 't1' : 't2';
+            const set2Winner = set2T1 > set2T2 ? 't1' : 't2';
+            
+            if (set1Winner !== set2Winner) {
+                if (!isNaN(set3T1) && !isNaN(set3T2)) {
+                    if (!validateSet(set3T1, set3T2)) {
+                        alert('Ungültiges Satz-Ergebnis in Satz 3');
+                        return;
+                    }
+                    sets.push({ t1: set3T1, t2: set3T2 });
+                } else {
+                    alert('Dritter Satz ist erforderlich');
+                    return;
+                }
+            }
+            
+            await db.collection('doublesMatches').add({
+                team1: { player1Id: t1p1, player2Id: t1p2 },
+                team2: { player1Id: t2p1, player2Id: t2p2 },
+                sets,
+                isChallenge,
+                date: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // TODO: Update pyramid if isChallenge
+            
+            alert('Doppel-Spiel erfolgreich eingetragen!');
+            render();
+        }
+
+        async function initPyramid() {
+            const doublesPlayers = state.players.filter(p => p.doublesPool);
+            
+            if (doublesPlayers.length === 0) {
+                alert('Keine Spieler im Doppel-Pool!');
+                return;
+            }
+            
+            // Shuffle players
+            const shuffled = [...doublesPlayers].sort(() => Math.random() - 0.5);
+            const positions = shuffled.map(p => p.id);
+            const levels = buildPyramidLevels(positions);
+            
+            await db.collection('pyramid').doc('current').set({
+                levels,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+
+        async function addChallenge() {
+            const challenger = document.getElementById('challenger').value;
+            const challenged = document.getElementById('challenged').value;
+            
+            if (!challenger || !challenged || challenger === challenged) {
+                alert('Bitte zwei verschiedene Spieler auswählen');
+                return;
+            }
+            
+            await db.collection('challenges').add({
+                challengerId: challenger,
+                challengedId: challenged,
+                status: 'pending',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            document.getElementById('challenger').value = '';
+            document.getElementById('challenged').value = '';
+            
+            alert('Herausforderung eingetragen!');
+        }
+
+        // ============================================
+        // RENDER
+        // ============================================
+        function render() {
+            const app = document.getElementById('app');
+            
+            let content = '';
+            
+            switch (state.currentPage) {
+                case 'singles':
+                    content = SinglesPage();
+                    break;
+                case 'doubles':
+                    content = DoublesPage();
+                    break;
+                case 'players':
+                    content = PlayersPage();
+                    break;
+                case 'admin':
+                    content = AdminPage();
+                    break;
+                default:
+                    content = HomePage();
+            }
+            
+            app.innerHTML = `
+                ${Navigation()}
+                <div class="container mx-auto px-4 py-8 max-w-7xl">
+                    ${content}
+                </div>
+            `;
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        initFirebaseListeners();
+        render();
+    </script>
+</body>
+</html>

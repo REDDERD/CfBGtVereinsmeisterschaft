@@ -285,9 +285,63 @@ const firebaseConfig = {
                     const data = doc.data();
                     console.log('Pyramid data loaded:', data);
                     const levelsArray = pyramidLevelsToArray(data);
-                    state.pyramid = {
-                        levels: levelsArray
-                    };
+                    
+                    // Check if there are new players that need to be added
+                    const doublesPlayers = state.players.filter(p => p.doublesPool);
+                    const doublesPlayerIds = doublesPlayers.map(p => p.id);
+                    
+                    // Get current players in pyramid
+                    let flatPositions = [];
+                    levelsArray.forEach(level => {
+                        level.forEach(playerId => {
+                            flatPositions.push(playerId);
+                        });
+                    });
+                    
+                    // Find new players not in pyramid
+                    const newPlayers = doublesPlayerIds.filter(id => !flatPositions.includes(id));
+                    
+                    if (newPlayers.length > 0) {
+                        console.log('🆕 New players found, adding to bottom of pyramid:', newPlayers);
+                        
+                        // Add new players to the bottom
+                        flatPositions = [...flatPositions, ...newPlayers];
+                        
+                        // Rebuild pyramid structure
+                        const newPyramidData = {};
+                        let idx = 0;
+                        let levelNum = 1;
+                        
+                        while (idx < flatPositions.length) {
+                            const levelPlayers = flatPositions.slice(idx, idx + levelNum);
+                            newPyramidData[`level${levelNum}`] = levelPlayers;
+                            idx += levelNum;
+                            levelNum++;
+                        }
+                        
+                        // Save updated pyramid
+                        await db.collection('pyramid').doc('current').set({
+                            ...newPyramidData,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        console.log('✅ Pyramid updated with new players');
+                        
+                        // Reload after update
+                        const updatedDoc = await db.collection('pyramid').doc('current').get();
+                        if (updatedDoc.exists) {
+                            const updatedData = updatedDoc.data();
+                            const updatedLevels = pyramidLevelsToArray(updatedData);
+                            state.pyramid = {
+                                levels: updatedLevels
+                            };
+                        }
+                    } else {
+                        state.pyramid = {
+                            levels: levelsArray
+                        };
+                    }
+                    
                     console.log('✅ Pyramid loaded successfully');
                     render();
                 } else {
@@ -578,11 +632,11 @@ const firebaseConfig = {
                             ` : `
                                 <div class="space-y-4">
                                     ${levels.map((level, levelIdx) => `
-                                        <div class="flex justify-center items-center space-x-4" >
+                                        <div class="flex justify-center items-center space-x-4">
                                             ${level.map((playerId, posIdx) => `
                                                 <div class="relative">
                                                     <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-500 rounded-lg px-4 py-3 text-center shadow-md min-w-[120px]">
-                                                        <div class="text-xs text-gray-500 mb-1">Position ${posIdx + 1}</div>
+                                                        <div class="text-xs text-gray-500 mb-1">Ebene ${levelIdx + 1} / Pos ${posIdx + 1}</div>
                                                         <div class="font-bold text-gray-800">${getPlayerName(playerId)}</div>
                                                     </div>
                                                 </div>
@@ -667,13 +721,6 @@ const firebaseConfig = {
                                     ${doublesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
                                 </select>
                             </div>
-                        </div>
-                        
-                        <div class="mb-2">
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="isChallenge" class="rounded">
-                                <span class="text-sm text-gray-700">Dies ist eine Herausforderung (zählt für Pyramide)</span>
-                            </label>
                         </div>
                         
                         <div class="space-y-3 mb-4">
@@ -862,7 +909,6 @@ const firebaseConfig = {
                                                         <div>
                                                             <div class="font-medium">mit ${partner}</div>
                                                             <div class="text-sm text-gray-600">vs ${opponents}</div>
-                                                            ${match.isChallenge ? '<div class="text-xs text-blue-600 mt-1">⚡ Herausforderung</div>' : ''}
                                                         </div>
                                                         <div class="text-right">
                                                             <span class="font-bold ${result === 'Sieg' ? 'text-green-600' : result === 'Niederlage' ? 'text-red-600' : 'text-gray-600'}">${result || 'Offen'}</span>
@@ -1063,6 +1109,9 @@ const firebaseConfig = {
             const doublesPool = document.getElementById(`editDoubles_${playerId}`).value;
             
             if (name) {
+                const oldPlayer = state.players.find(p => p.id === playerId);
+                const oldDoublesPool = oldPlayer ? oldPlayer.doublesPool : null;
+                
                 await db.collection('players').doc(playerId).update({
                     name,
                     singlesGroup: singlesGroup ? parseInt(singlesGroup) : null,
@@ -1070,6 +1119,15 @@ const firebaseConfig = {
                 });
                 
                 state.editingPlayer = null;
+                
+                // If player was added to doubles pool, reload pyramid to add them
+                if (!oldDoublesPool && doublesPool) {
+                    console.log('Player added to doubles pool, reloading pyramid...');
+                    setTimeout(() => {
+                        loadPyramid();
+                    }, 500);
+                }
+                
                 render();
             }
         }
@@ -1159,7 +1217,6 @@ const firebaseConfig = {
             const t1p2 = document.getElementById('doublesT1P2').value;
             const t2p1 = document.getElementById('doublesT2P1').value;
             const t2p2 = document.getElementById('doublesT2P2').value;
-            const isChallenge = document.getElementById('isChallenge').checked;
             
             const set1T1 = parseInt(document.getElementById('doublesSet1T1').value);
             const set1T2 = parseInt(document.getElementById('doublesSet1T2').value);
@@ -1203,42 +1260,44 @@ const firebaseConfig = {
                 team1: { player1Id: t1p1, player2Id: t1p2 },
                 team2: { player1Id: t2p1, player2Id: t2p2 },
                 sets,
-                isChallenge,
                 date: firebase.firestore.FieldValue.serverTimestamp()
             });
             
-            // Update pyramid if isChallenge
-            if (isChallenge) {
-                let t1Sets = 0, t2Sets = 0;
-                sets.forEach(set => {
-                    if (set.t1 > set.t2) t1Sets++;
-                    else t2Sets++;
-                });
-                
-                const winnerId = t1Sets > t2Sets ? t1p1 : t2p1;
-                const loserId = t1Sets > t2Sets ? t2p1 : t1p1;
-                
-                await updatePyramidAfterChallenge(winnerId, loserId);
-                
-                // Reload pyramid after update (with delay to ensure Firestore has written)
-                setTimeout(() => {
-                    loadPyramid();
-                }, 1000);
-            }
+            // EVERY doubles match updates the pyramid
+            let t1Sets = 0, t2Sets = 0;
+            sets.forEach(set => {
+                if (set.t1 > set.t2) t1Sets++;
+                else t2Sets++;
+            });
+            
+            const winnerId = t1Sets > t2Sets ? t1p1 : t2p1;
+            const loserId = t1Sets > t2Sets ? t2p1 : t1p1;
+            
+            await updatePyramidAfterChallenge(winnerId, loserId);
+            
+            // Reload pyramid after update (with delay to ensure Firestore has written)
+            setTimeout(() => {
+                loadPyramid();
+            }, 1000);
             
             alert('Doppel-Spiel erfolgreich eingetragen!');
             render();
         }
 
         async function updatePyramidAfterChallenge(winnerId, loserId) {
+            console.log('🔄 Updating pyramid after challenge...');
+            console.log('Winner:', winnerId, 'Loser:', loserId);
+            
             const pyramidDoc = await db.collection('pyramid').doc('current').get();
-            if (!pyramidDoc.exists) return;
+            if (!pyramidDoc.exists) {
+                console.log('Pyramid doc does not exist');
+                return;
+            }
             
             const pyramidData = pyramidDoc.data();
             const levels = pyramidLevelsToArray(pyramidData);
             
-            // Find positions
-            let winnerPos = -1, loserPos = -1;
+            // Flatten to get positions
             let flatPositions = [];
             levels.forEach(level => {
                 level.forEach(playerId => {
@@ -1246,18 +1305,32 @@ const firebaseConfig = {
                 });
             });
             
-            winnerPos = flatPositions.indexOf(winnerId);
-            loserPos = flatPositions.indexOf(loserId);
+            console.log('Current positions:', flatPositions);
             
-            if (winnerPos === -1 || loserPos === -1) return;
+            const winnerPos = flatPositions.indexOf(winnerId);
+            const loserPos = flatPositions.indexOf(loserId);
             
-            // Winner was below loser and won, so swap them
+            console.log('Winner position:', winnerPos, 'Loser position:', loserPos);
+            
+            if (winnerPos === -1 || loserPos === -1) {
+                console.log('Winner or loser not found in pyramid');
+                return;
+            }
+            
+            // Only update if winner was below loser (higher position number = lower in pyramid)
             if (winnerPos > loserPos) {
-                // Swap positions
-                flatPositions[winnerPos] = loserId;
-                flatPositions[loserPos] = winnerId;
+                console.log('Winner was below loser, updating pyramid...');
                 
-                // Rebuild levels as arrays
+                // Remove winner from current position
+                const winner = flatPositions[winnerPos];
+                flatPositions.splice(winnerPos, 1);
+                
+                // Insert winner at loser's position (pushing loser and everyone between down)
+                flatPositions.splice(loserPos, 0, winner);
+                
+                console.log('New positions:', flatPositions);
+                
+                // Rebuild pyramid structure
                 const newPyramidData = {};
                 let idx = 0;
                 let levelNum = 1;
@@ -1269,10 +1342,16 @@ const firebaseConfig = {
                     levelNum++;
                 }
                 
+                console.log('New pyramid data:', newPyramidData);
+                
                 await db.collection('pyramid').doc('current').set({
                     ...newPyramidData,
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                console.log('✅ Pyramid updated successfully');
+            } else {
+                console.log('Winner was already above loser, no pyramid update needed');
             }
         }
 

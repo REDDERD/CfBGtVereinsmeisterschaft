@@ -48,6 +48,7 @@
       adminTab: 'players', // Current admin tab: 'players', 'singles', or 'doubles'
       singlesSearchQuery: '',
       doublesSearchQuery: '',
+      mobileMenuOpen: false,
       matchEntry: {
         set1P1: '', set1P2: '',
         set2P1: '', set2P2: '',
@@ -370,42 +371,45 @@
       return `
                 <nav class="bg-white shadow-lg">
                     <div class="container mx-auto px-4">
-                        <div class="flex items-center justify-between h-16">
-                            <div class="flex items-center space-x-8">
-                                <h1 class="text-2xl font-bold text-indigo-600 cursor-pointer" onclick="navigateTo('home')">🏸 Vereinsmeisterschaft</h1>
-                                
-                                <div class="flex space-x-4">
-                                    <button onclick="navigateTo('singles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'singles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
-                                        ${icons.trophy}
-                                        <span class="font-medium">Einzel</span>
-                                    </button>
-                                    <button onclick="navigateTo('doubles')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'doubles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
-                                        ${icons.pyramid}
-                                        <span class="font-medium">Doppel</span>
-                                    </button>
-                                    <button onclick="navigateTo('challenges')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'challenges' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        <span class="font-medium">Herausforderungen</span>
-                                    </button>
-                                    <button onclick="navigateTo('players')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'players' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
-                                        ${icons.users}
-                                        <span class="font-medium">Spieler</span>
-                                    </button>
-                                </div>
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between py-4 md:h-16">
+                            <div class="flex items-center justify-between mb-4 md:mb-0">
+                                <h1 class="text-xl md:text-2xl font-bold text-indigo-600 cursor-pointer" onclick="navigateTo('home')">🏸 Vereinsmeisterschaft</h1>
+                                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                    </svg>
+                                </button>
                             </div>
                             
-                            <div class="flex items-center space-x-4">
+                            <div id="mobileMenu" class="flex-col md:flex-row md:flex items-start md:items-center space-y-2 md:space-y-0 md:space-x-2 ${state.mobileMenuOpen ? 'flex' : 'hidden md:flex'}">
+                                <button onclick="navigateTo('singles')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'singles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    ${icons.trophy}
+                                    <span class="font-medium">Einzel</span>
+                                </button>
+                                <button onclick="navigateTo('doubles')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'doubles' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    ${icons.pyramid}
+                                    <span class="font-medium">Doppel</span>
+                                </button>
+                                <button onclick="navigateTo('challenges')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'challenges' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span class="font-medium">Herausforderungen</span>
+                                </button>
+                                <button onclick="navigateTo('players')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'players' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    ${icons.users}
+                                    <span class="font-medium">Spieler</span>
+                                </button>
+                                
                                 ${state.user ? `
-                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'admin' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
+                                    <button onclick="navigateTo('admin')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${state.currentPage === 'admin' ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}">
                                         ${icons.settings}
                                         <span class="font-medium">Admin</span>
                                     </button>
-                                    <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <button onclick="handleLogout()" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                         ${icons.logout}
                                         <span>Logout</span>
                                     </button>
                                 ` : `
-                                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                                    <button onclick="navigateTo('admin')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                                         ${icons.login}
                                         <span>Admin Login</span>
                                     </button>
@@ -440,13 +444,13 @@
       return `
                 <div class="space-y-8">
                     <div class="text-center">
-                        <h2 class="text-4xl font-bold text-gray-800 mb-4">Willkommen zur Vereinsmeisterschaft</h2>
-                        <p class="text-xl text-gray-600">Aktuell ${state.players.length} registrierte Spieler</p>
+                        <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-4">Willkommen zur Vereinsmeisterschaft</h2>
+                        <p class="text-lg md:text-xl text-gray-600">Aktuell ${state.players.length} registrierte Spieler</p>
                     </div>
                     
                     ${upcomingChallenges.length > 0 ? `
                         <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-lg p-6">
-                            <h3 class="text-2xl font-bold text-gray-800 mb-4">🔥 Anstehende & überfällige Herausforderungen</h3>
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">🔥 Anstehende & überfällige Herausforderungen</h3>
                             <div class="space-y-3">
                                 ${upcomingChallenges.map(challenge => {
         const challengeDate = challenge.date?.seconds || 0;
@@ -480,7 +484,7 @@
                         <div onclick="navigateTo('singles')" class="bg-white rounded-xl shadow-lg p-8 cursor-pointer hover:shadow-xl transition-shadow">
                             <div class="flex items-center space-x-4 mb-4">
                                 <div class="text-yellow-500">${icons.trophy}</div>
-                                <h3 class="text-2xl font-bold text-gray-800">Einzel-Turnier</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-800">Einzel-Turnier</h3>
                             </div>
                             <p class="text-gray-600">Gruppenphasen mit anschließendem K.O.-System</p>
                         </div>
@@ -488,14 +492,14 @@
                         <div onclick="navigateTo('doubles')" class="bg-white rounded-xl shadow-lg p-8 cursor-pointer hover:shadow-xl transition-shadow">
                             <div class="flex items-center space-x-4 mb-4">
                                 <div class="text-blue-500">${icons.pyramid}</div>
-                                <h3 class="text-2xl font-bold text-gray-800">Doppel-Pyramide</h3>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-800">Doppel-Pyramide</h3>
                             </div>
                             <p class="text-gray-600">Herausforderungs-System mit dynamischer Rangfolge</p>
                         </div>
                     </div>
                     
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Letzte Ergebnisse</h3>
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">Letzte Ergebnisse</h3>
                         ${recentMatches.length === 0 ? `
                             <p class="text-gray-500 text-center py-8">Noch keine Spiele eingetragen</p>
                         ` : `
@@ -525,7 +529,7 @@
       return `
                 <div class="space-y-6">
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Einzel-Turnier</h2>
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Einzel-Turnier</h2>
                         
                         <div class="grid md:grid-cols-2 gap-6 mb-6">
                             ${GroupTable(1, group1)}
@@ -581,7 +585,7 @@
                 <div class="p-4 bg-indigo-50 rounded-lg">
                     <h4 class="font-bold text-gray-800 mb-3">Neues Einzel-Spiel eintragen</h4>
                     
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <select id="singlesP1" class="px-3 py-2 border rounded-lg">
                             <option value="">Spieler 1 wählen</option>
                             ${allSinglesPlayers.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
@@ -593,7 +597,7 @@
                     </div>
                     
                     <div class="space-y-3 mb-4">
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Spieler 1</label>
                                 <input type="number" id="set1P1" min="0" max="30" 
@@ -608,7 +612,7 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Spieler 1</label>
                                 <input type="number" id="set2P1" min="0" max="30"
@@ -623,7 +627,7 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Spieler 1</label>
                                 <input type="number" id="set3P1" min="0" max="30"
@@ -654,7 +658,7 @@
       return `
                 <div class="space-y-6">
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Doppel-Pyramide</h2>
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Doppel-Pyramide</h2>
                         
                         <div class="mb-6">
                             <h3 class="text-xl font-semibold mb-3">Aktuelle Rangfolge</h3>
@@ -671,12 +675,12 @@
                             ` : `
                                 <div class="space-y-4">
                                     ${levels.map((level, levelIdx) => `
-                                        <div class="flex justify-center items-center space-x-4">
+                                        <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-4">
                                             ${level.map((playerId, posIdx) => `
                                                 <div class="relative">
-                                                    <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-500 rounded-lg px-4 py-3 text-center shadow-md min-w-[120px]">
-                                                         
-                                                        <div class="font-bold text-gray-800">${getPlayerName(playerId)}</div>
+                                                    <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-500 rounded-lg px-3 py-2 sm:px-4 sm:py-3 text-center shadow-md min-w-[100px] sm:min-w-[120px]">
+                                                        <div class="text-xs text-gray-500 mb-1">Ebene ${levelIdx + 1} / Pos ${posIdx + 1}</div>
+                                                        <div class="font-bold text-gray-800 text-sm sm:text-base break-words">${getPlayerName(playerId)}</div>
                                                     </div>
                                                 </div>
                                             `).join('')}
@@ -696,7 +700,7 @@
                                 <div class="space-y-3">
                                     ${state.challenges.map(challenge => `
                                         <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                                            <div class="flex items-center justify-between">
+                                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                                                 <span class="font-medium">${getPlayerName(challenge.challengerId)} fordert ${getPlayerName(challenge.challengedId)} heraus</span>
                                                 <span class="text-sm text-gray-500">Offen</span>
                                             </div>
@@ -728,7 +732,7 @@
                         </div>
                     ` : ''}
                     
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Team 1</label>
                             <select id="doublesT1P1" class="w-full px-3 py-2 border rounded-lg mb-2">
@@ -754,7 +758,7 @@
                     </div>
                     
                     <div class="space-y-3 mb-4">
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Team 1</label>
                                 <input type="number" id="doublesSet1T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
@@ -765,7 +769,7 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Team 1</label>
                                 <input type="number" id="doublesSet2T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
@@ -776,7 +780,7 @@
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Team 1</label>
                                 <input type="number" id="doublesSet3T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
@@ -805,7 +809,7 @@
                 <div class="space-y-6">
                     ${state.user ? `
                         <div class="bg-white rounded-xl shadow-lg p-6">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Neue Herausforderung eintragen</h2>
+                            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">Neue Herausforderung eintragen</h2>
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                                 <select id="newChallenger" class="px-3 py-2 border rounded-lg">
                                     <option value="">Herausforderer</option>
@@ -824,7 +828,7 @@
                     ` : ''}
                     
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Alle Herausforderungen</h2>
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4">Alle Herausforderungen</h2>
                         ${state.challenges.length === 0 ? `
                             <p class="text-center py-8 text-gray-500">Noch keine Herausforderungen eingetragen</p>
                         ` : `
@@ -852,7 +856,7 @@
 
         return `
                                         <div class="p-4 ${statusColor} border-l-4 rounded-lg">
-                                            <div class="flex items-center justify-between">
+                                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                                 <div class="flex-1">
                                                     <div class="font-bold text-gray-800">
                                                         ${getPlayerName(challenge.challengerId)} vs ${getPlayerName(challenge.challengedId)}
@@ -862,11 +866,11 @@
                                                     </div>
                                                 </div>
                                                 ${state.user && challenge.status !== 'completed' ? `
-                                                    <div class="flex space-x-2">
-                                                        <button onclick="enterResultFromChallenge('${challenge.id}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                                                    <div class="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-2">
+                                                        <button onclick="enterResultFromChallenge('${challenge.id}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm whitespace-nowrap">
                                                             Ergebnis eintragen
                                                         </button>
-                                                        <button onclick="markChallengeCompleted('${challenge.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                                                        <button onclick="markChallengeCompleted('${challenge.id}')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm whitespace-nowrap">
                                                             Als erledigt markieren
                                                         </button>
                                                     </div>
@@ -885,7 +889,7 @@
     function PlayersPage() {
       return `
                 <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Alle Spieler</h2>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Alle Spieler</h2>
                     
                     ${state.players.length === 0 ? `
                         <p class="text-center py-8 text-gray-500">Noch keine Spieler registriert</p>
@@ -944,16 +948,16 @@
                     </button>
 
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">${player.name}</h2>
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">${player.name}</h2>
                         
                         <div class="grid md:grid-cols-2 gap-4 mb-6">
                             <div class="p-4 bg-blue-50 rounded-lg">
                                 <div class="text-sm text-gray-600 mb-1">Einzel-Bilanz</div>
-                                <div class="text-2xl font-bold text-gray-800">${singlesWins}:${singlesLosses}</div>
+                                <div class="text-xl md:text-2xl font-bold text-gray-800">${singlesWins}:${singlesLosses}</div>
                             </div>
                             <div class="p-4 bg-green-50 rounded-lg">
                                 <div class="text-sm text-gray-600 mb-1">Doppel-Spiele</div>
-                                <div class="text-2xl font-bold text-gray-800">${doublesMatches.length}</div>
+                                <div class="text-xl md:text-2xl font-bold text-gray-800">${doublesMatches.length}</div>
                             </div>
                         </div>
 
@@ -1054,7 +1058,7 @@
         return `
                     <div class="max-w-md mx-auto">
                         <div class="bg-white rounded-xl shadow-lg p-8">
-                            <h2 class="text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
+                            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6">Admin Login</h2>
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
@@ -1077,17 +1081,17 @@
       return `
                 <div class="space-y-6">
                     <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-6">Admin-Bereich</h2>
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Admin-Bereich</h2>
                         
                         <!-- Tab Navigation -->
-                        <div class="flex space-x-2 mb-6 border-b border-gray-200">
-                            <button onclick="setAdminTab('players')" class="px-4 py-2 ${state.adminTab === 'players' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-800'}">
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6 border-b border-gray-200">
+                            <button onclick="setAdminTab('players')" class="px-4 py-2 text-left sm:text-center ${state.adminTab === 'players' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-800'}">
                                 Spieler
                             </button>
-                            <button onclick="setAdminTab('singles')" class="px-4 py-2 ${state.adminTab === 'singles' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-800'}">
+                            <button onclick="setAdminTab('singles')" class="px-4 py-2 text-left sm:text-center ${state.adminTab === 'singles' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-800'}">
                                 Einzel-Ergebnisse
                             </button>
-                            <button onclick="setAdminTab('doubles')" class="px-4 py-2 ${state.adminTab === 'doubles' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-800'}">
+                            <button onclick="setAdminTab('doubles')" class="px-4 py-2 text-left sm:text-center ${state.adminTab === 'doubles' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-800'}">
                                 Doppel-Ergebnisse
                             </button>
                         </div>
@@ -1105,7 +1109,7 @@
                 <div>
                     <div class="mb-6 p-4 bg-gray-50 rounded-lg">
                         <h4 class="font-semibold text-gray-800 mb-3">Neuen Spieler hinzufügen</h4>
-                        <div class="flex space-x-3">
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                             <input type="text" id="playerName" placeholder="Name" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">
                             <button onclick="addPlayer()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
                                 ${icons.plus}
@@ -1124,7 +1128,7 @@
                                             <input type="text" id="editName_${player.id}" value="${player.name}" class="w-full px-3 py-2 border rounded-lg">
                                         </div>
                                         
-                                        <div class="grid grid-cols-2 gap-3">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-700 mb-1">Einzel-Gruppe</label>
                                                 <select id="editSingles_${player.id}" class="w-full px-3 py-2 border rounded-lg">
@@ -1159,7 +1163,7 @@
                             ` : `
                                 <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300">
                                     <div>
-                                        <span class="font-medium text-gray-800">${player.name}</span>
+                                        <span class="font-medium text-gray-800 break-words">${player.name}</span>
                                         <div class="text-sm text-gray-500 mt-1">
                                             ${player.singlesGroup ? `Einzel: Gruppe ${player.singlesGroup}` : ''}
                                             ${player.singlesGroup && player.doublesPool ? ' • ' : ''}
@@ -1196,7 +1200,7 @@
 
       return `
                 <div>
-                    <div class="mb-6 flex space-x-3">
+                    <div class="mb-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                         <input 
                             type="text" 
                             id="singlesSearchInput" 
@@ -1205,7 +1209,7 @@
                             oninput="updateSinglesSearch(this.value)"
                             class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                         >
-                        <button onclick="exportSinglesMatches()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
+                        <button onclick="exportSinglesMatches()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2 whitespace-nowrap">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -1266,7 +1270,7 @@
 
       return `
                 <div>
-                    <div class="mb-6 flex space-x-3">
+                    <div class="mb-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                         <input 
                             type="text" 
                             id="doublesSearchInput" 
@@ -1275,7 +1279,7 @@
                             oninput="updateDoublesSearch(this.value)"
                             class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                         >
-                        <button onclick="exportDoublesMatches()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2">
+                        <button onclick="exportDoublesMatches()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2 whitespace-nowrap">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -1330,6 +1334,7 @@
       state.currentPage = page;
       state.selectedPlayerId = null;
       state.prefilledDoubles = null; // Clear prefilled data when navigating
+      state.mobileMenuOpen = false; // Close mobile menu when navigating
       render();
     }
 
@@ -1383,6 +1388,11 @@
 
     function setAdminTab(tab) {
       state.adminTab = tab;
+      render();
+    }
+
+    function toggleMobileMenu() {
+      state.mobileMenuOpen = !state.mobileMenuOpen;
       render();
     }
 
@@ -1900,7 +1910,7 @@
 
       app.innerHTML = `
                 ${Navigation()}
-                <div class="container mx-auto px-4 py-8 max-w-7xl">
+                <div class="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
                     ${content}
                 </div>
             `;

@@ -1,0 +1,42 @@
+// js/state.js
+// Zentrales State Management
+
+const state = {
+  currentPage: "home",
+  user: null,
+  players: [],
+  singlesMatches: [],
+  doublesMatches: [],
+  knockoutMatches: [],
+  pyramid: { levels: [] },
+  challenges: [],
+  editingPlayer: null,
+  selectedPlayerId: null,
+  prefilledDoubles: null,
+  adminTab: "players",
+  singlesSearchQuery: "",
+  doublesSearchQuery: "",
+  mobileMenuOpen: false,
+  singlesPhase: "group",
+  knockoutPhaseActive: false,
+  knockoutBracket: {
+    round16: [],
+    quarter: [],
+    semi: [],
+    thirdPlace: {},
+    final: {},
+  },
+  knockoutConfig: {},
+  frozenStandings: null,
+  singlesView: "group",
+  knockoutEntryMatch: null,
+  matchEntry: {
+    set1P1: "",
+    set1P2: "",
+    set2P1: "",
+    set2P2: "",
+    set3P1: "",
+    set3P2: "",
+    set3Disabled: false,
+  },
+};

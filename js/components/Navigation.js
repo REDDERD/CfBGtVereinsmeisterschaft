@@ -7,7 +7,7 @@ function Navigation() {
       <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between py-4 md:h-16">
           <div class="flex items-center justify-between mb-4 md:mb-0">
-            <h1 class="text-xl md:text-2xl font-bold text-indigo-600 cursor-pointer" onclick="navigateTo('home')">🏸 Vereinsmeisterschaft</h1>
+            <h1 class="text-xl md:text-2xl font-bold text-indigo-600 cursor-pointer" onclick="navigateTo('home')">CfB Gütersloh Vereinsmeisterschaft</h1>
             <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-700">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -23,7 +23,7 @@ function Navigation() {
                 ? "bg-indigo-600 text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }">
-              ${icons.trophy}
+              ${icons.user}
               <span class="font-medium">Einzel</span>
             </button>
             <button onclick="navigateTo('doubles')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
@@ -31,7 +31,7 @@ function Navigation() {
                 ? "bg-indigo-600 text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }">
-              ${icons.pyramid}
+              ${icons.users}
               <span class="font-medium">Doppel</span>
             </button>
             <button onclick="navigateTo('challenges')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
@@ -47,7 +47,7 @@ function Navigation() {
                 ? "bg-indigo-600 text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }">
-              ${icons.users}
+              ${icons.usergroup}
               <span class="font-medium">Spieler</span>
             </button>
             

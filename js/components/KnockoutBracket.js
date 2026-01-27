@@ -141,7 +141,7 @@ function KnockoutBracketView() {
     <div class="space-y-6">
       ${state.knockoutEntryMatch ? KnockoutMatchEntryModal() : ""}
       <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg border-2 border-yellow-400">
-        <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6">🏆 K.O.-Phase</h3>
+        <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6">K.O.-Phase</h3>
         <div class="mb-6">
           <h4 class="font-bold text-gray-700 mb-3">Viertelfinale</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">

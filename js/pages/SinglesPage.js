@@ -17,7 +17,7 @@ function SinglesPage() {
         ${state.knockoutPhaseActive ? `
           <div class="mb-6 flex flex-col sm:flex-row gap-2">
             <button onclick="showFrozenGroupPhase()" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${state.singlesView === "group" ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}">
-              Gruppenphase (eingefroren)
+              Gruppenphase (beendet)
             </button>
             <button onclick="setSinglesView('knockout')" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${state.singlesView === "knockout" ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}">
               K.O.-Phase

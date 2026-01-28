@@ -4,11 +4,6 @@ function SinglesPage() {
   const group1 = calculateStandings(1);
   const group2 = calculateStandings(2);
 
-  // Automatisch K.O.-Phase anzeigen wenn aktiv
-  if (state.knockoutPhaseActive && state.singlesView === "group") {
-    state.singlesView = "knockout";
-  }
-
   return `
     <div class="space-y-6">
       <div class="bg-white rounded-xl shadow-lg p-6">
@@ -28,7 +23,7 @@ function SinglesPage() {
         ${state.singlesView === "group" ? `
           ${state.knockoutPhaseActive && state.frozenStandings ? `
             <div class="mb-4 p-3 bg-blue-50 border border-blue-300 rounded-lg">
-              <p class="text-sm text-blue-800">📋 Diese Tabelle zeigt den Stand zum Zeitpunkt des Starts der K.O.-Phase.</p>
+              <p class="text-sm text-blue-800">Diese Tabelle zeigt den Stand zum Zeitpunkt des Starts der K.O.-Phase.</p>
             </div>
             <div class="grid md:grid-cols-2 gap-6 mb-6">
               ${FrozenGroupTable(1, state.frozenStandings.group1)}
@@ -39,7 +34,7 @@ function SinglesPage() {
               ${GroupTable(1, group1)}
               ${GroupTable(2, group2)}
             </div>
-            ${state.user ? SinglesMatchEntry() : ""}
+            ${state.user && !state.knockoutPhaseActive ? SinglesMatchEntry() : ""}
           `}
         ` : `
           ${KnockoutBracketView()}

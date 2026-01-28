@@ -51,6 +51,52 @@ function updateMatchEntry(field, value) {
   }
 }
 
+function updateKnockoutMatchEntry(field, value) {
+  // Initialize knockoutEntry state if it doesn't exist
+  if (!state.knockoutEntry) {
+    state.knockoutEntry = {};
+  }
+  
+  state.knockoutEntry[field] = value;
+
+  // Check if third set should be disabled
+  const s1p1 = parseInt(state.knockoutEntry.koSet1P1);
+  const s1p2 = parseInt(state.knockoutEntry.koSet1P2);
+  const s2p1 = parseInt(state.knockoutEntry.koSet2P1);
+  const s2p2 = parseInt(state.knockoutEntry.koSet2P2);
+
+  if (!isNaN(s1p1) && !isNaN(s1p2) && !isNaN(s2p1) && !isNaN(s2p2)) {
+    const set1Winner = s1p1 > s1p2 ? "p1" : "p2";
+    const set2Winner = s2p1 > s2p2 ? "p1" : "p2";
+
+    // Disable set 3 if someone won 2:0
+    if (set1Winner === set2Winner) {
+      state.knockoutEntry.set3Disabled = true;
+    } else {
+      state.knockoutEntry.set3Disabled = false;
+    }
+  }
+
+  // Don't render, just update the disabled state
+  const set3P1Input = document.getElementById("koSet3P1");
+  const set3P2Input = document.getElementById("koSet3P2");
+  if (set3P1Input && set3P2Input) {
+    if (state.knockoutEntry.set3Disabled) {
+      set3P1Input.disabled = true;
+      set3P2Input.disabled = true;
+      set3P1Input.value = "";
+      set3P2Input.value = "";
+      set3P1Input.classList.add("bg-gray-200");
+      set3P2Input.classList.add("bg-gray-200");
+    } else {
+      set3P1Input.disabled = false;
+      set3P2Input.disabled = false;
+      set3P1Input.classList.remove("bg-gray-200");
+      set3P2Input.classList.remove("bg-gray-200");
+    }
+  }
+}
+
 function resetMatchEntry() {
   state.matchEntry = {
     set1P1: "",

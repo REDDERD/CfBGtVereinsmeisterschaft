@@ -70,20 +70,17 @@ async function saveKnockoutMatch() {
   try {
     // Prüfe ob bereits ein Ergebnis für dieses Spiel existiert
     const existingMatch = state.knockoutMatches.find(
-      (m) => m.round === round && m.matchNum === matchNum
+      (m) => m.round === round && m.matchNum === matchNum,
     );
 
     if (existingMatch) {
       // Update existing match
-      await db
-        .collection("knockoutMatches")
-        .doc(existingMatch.id)
-        .update({
-          player1Id,
-          player2Id,
-          sets,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+      await db.collection("knockoutMatches").doc(existingMatch.id).update({
+        player1Id,
+        player2Id,
+        sets,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
     } else {
       // Create new match
       await db.collection("knockoutMatches").add({
@@ -110,14 +107,14 @@ async function cancelKnockoutMatch(round, matchNum) {
 
   if (!canCancel) {
     alert(
-      "Dieses Spiel kann nicht mehr storniert werden, da bereits ein nachfolgendes Spiel stattgefunden hat."
+      "Dieses Spiel kann nicht mehr storniert werden, da bereits ein nachfolgendes Spiel stattgefunden hat.",
     );
     return;
   }
 
   if (
     !confirm(
-      "Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt."
+      "Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt.",
     )
   ) {
     return;
@@ -125,7 +122,7 @@ async function cancelKnockoutMatch(round, matchNum) {
 
   try {
     const match = state.knockoutMatches.find(
-      (m) => m.round === round && m.matchNum === matchNum
+      (m) => m.round === round && m.matchNum === matchNum,
     );
     if (match) {
       await db.collection("knockoutMatches").doc(match.id).delete();
@@ -141,7 +138,7 @@ async function cancelKnockoutMatch(round, matchNum) {
 function checkCanCancelMatch(round, matchNum) {
   const getKnockoutMatch = (r, m) =>
     state.knockoutMatches.find(
-      (match) => match.round === r && match.matchNum === m
+      (match) => match.round === r && match.matchNum === m,
     );
 
   // Finale und Platz 3 können immer storniert werden
@@ -170,7 +167,7 @@ function checkCanCancelMatch(round, matchNum) {
 async function activateKnockoutPhase() {
   if (
     !confirm(
-      "K.O.-Phase jetzt starten? Die aktuellen Gruppenphase-Tabellen werden eingefroren und können nicht mehr geändert werden."
+      "K.O.-Phase jetzt starten? Die aktuellen Gruppenphase-Tabellen werden eingefroren und können nicht mehr geändert werden.",
     )
   ) {
     return;
@@ -202,7 +199,7 @@ async function activateKnockoutPhase() {
 async function deactivateKnockoutPhase() {
   if (
     !confirm(
-      "K.O.-Phase wirklich deaktivieren? Alle K.O.-Spiele-Ergebnisse bleiben erhalten, aber die eingefrorenen Tabellen werden verworfen."
+      "K.O.-Phase wirklich deaktivieren? Die Ergebnisse der Gruppenphase bleiben erhalten, aber alle Spiele der K.O.-Phase werden verworfen.",
     )
   ) {
     return;
@@ -218,6 +215,16 @@ async function deactivateKnockoutPhase() {
     frozenStandings: null,
     deactivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
+
+  // Delete all knockoutMatches from Firebase
+  await db
+    .collection("knockoutMatches")
+    .get()
+    .then((res) => {
+      res.forEach((element) => {
+        element.ref.delete();
+      });
+    });
 
   alert("K.O.-Phase deaktiviert.");
   render();

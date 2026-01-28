@@ -10,6 +10,27 @@ function getGroupPlayers(groupNum) {
   return state.players.filter((p) => p.singlesGroup === groupNum);
 }
 
+function updateSinglesPlayerSelection(field, value) {
+  // Initialize matchEntry if needed
+  if (!state.matchEntry) {
+    state.matchEntry = {
+      set1P1: "",
+      set1P2: "",
+      set2P1: "",
+      set2P2: "",
+      set3P1: "",
+      set3P2: "",
+      set3Disabled: false,
+    };
+  }
+  
+  // Store the selected player
+  state.matchEntry[field] = value;
+  
+  // Re-render to update the available options in the other dropdown
+  render();
+}
+
 function updateMatchEntry(field, value) {
   state.matchEntry[field] = value;
 
@@ -99,6 +120,8 @@ function updateKnockoutMatchEntry(field, value) {
 
 function resetMatchEntry() {
   state.matchEntry = {
+    singlesP1: "",
+    singlesP2: "",
     set1P1: "",
     set1P2: "",
     set2P1: "",

@@ -6,18 +6,42 @@ function SinglesMatchEntry() {
   const group2Players = getGroupPlayers(2);
   const allSinglesPlayers = [...group1Players, ...group2Players];
 
+  // Get currently selected players
+  const selectedP1 = state.matchEntry.singlesP1 || "";
+  const selectedP2 = state.matchEntry.singlesP2 || "";
+
+  // Determine which players to show based on selection
+  let availableP1 = allSinglesPlayers;
+  let availableP2 = allSinglesPlayers;
+
+  if (selectedP1) {
+    const p1 = state.players.find(p => p.id === selectedP1);
+    if (p1) {
+      // Filter to same group and exclude the selected player
+      availableP2 = getGroupPlayers(p1.singlesGroup).filter(p => p.id !== selectedP1);
+    }
+  }
+
+  if (selectedP2) {
+    const p2 = state.players.find(p => p.id === selectedP2);
+    if (p2) {
+      // Filter to same group and exclude the selected player
+      availableP1 = getGroupPlayers(p2.singlesGroup).filter(p => p.id !== selectedP2);
+    }
+  }
+
   return `
     <div class="p-4 bg-indigo-50 rounded-lg">
       <h4 class="font-bold text-gray-800 mb-3">Neues Einzel-Spiel eintragen</h4>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <select id="singlesP1" class="px-3 py-2 border rounded-lg">
+        <select id="singlesP1" onchange="updateSinglesPlayerSelection('singlesP1', this.value)" class="px-3 py-2 border rounded-lg">
           <option value="">Spieler 1 wählen</option>
-          ${allSinglesPlayers.map((p) => `<option value="${p.id}">${p.name}</option>`).join("")}
+          ${availableP1.map((p) => `<option value="${p.id}" ${selectedP1 === p.id ? "selected" : ""}>${p.name}</option>`).join("")}
         </select>
-        <select id="singlesP2" class="px-3 py-2 border rounded-lg">
+        <select id="singlesP2" onchange="updateSinglesPlayerSelection('singlesP2', this.value)" class="px-3 py-2 border rounded-lg">
           <option value="">Spieler 2 wählen</option>
-          ${allSinglesPlayers.map((p) => `<option value="${p.id}">${p.name}</option>`).join("")}
+          ${availableP2.map((p) => `<option value="${p.id}" ${selectedP2 === p.id ? "selected" : ""}>${p.name}</option>`).join("")}
         </select>
       </div>
       

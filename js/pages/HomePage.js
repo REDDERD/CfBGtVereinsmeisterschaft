@@ -71,7 +71,7 @@ function HomePage() {
         ` : `
           <div class="space-y-3">
             ${recentMatches.map((match) => {
-              const scoreText = match.sets ? match.sets.map((s) => `${s.p1 || s.t1}:${s.p2 || s.t2}`).join(", ") : "Ausstehend";
+              const scoreText = match.sets ? match.sets.map((s) => `${s.p1 ?? s.t1}:${s.p2 ?? s.t2}`).join(", ") : "Ausstehend";
               return `
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <span class="font-medium">${getPlayerName(match.player1Id || match.team1?.player1Id)} vs ${getPlayerName(match.player2Id || match.team2?.player1Id)}</span>

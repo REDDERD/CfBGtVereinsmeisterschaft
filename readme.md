@@ -1,3 +1,0 @@
-## Anforderungen & Bugs
-
-- Auf der Singles-Page: Sobald die K.O.-Phase läuft und die Gruppenphase somit beendet ist, erscheint ja der Button "Gruppenphase (beendet)", über welchen man sich nochmal die Ergebnisse der Gruppenphase anschauen kann. Wenn ich auf diesen Button klicke, passiert aber nichts. Ich habe bereits getestet: Die Funktion showFrozenGroupPhase wird ausgelöst (per console.log getestet. Aber sie macht scheinbar nicht das nötige.)

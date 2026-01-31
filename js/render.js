@@ -19,6 +19,9 @@ function render() {
     case "players":
       content = PlayersPage();
       break;
+    case "matches":
+      content = MatchesPage();
+      break;
     case "playerProfile":
       content = PlayerProfilePage(state.selectedPlayerId);
       break;

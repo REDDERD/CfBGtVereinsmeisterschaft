@@ -86,3 +86,8 @@ function updateDoublesSearch(query) {
     }, 0);
   }
 }
+
+function setMatchesView(view) {
+  state.matchesView = view;
+  render();
+}

@@ -30,6 +30,7 @@ const state = {
   frozenStandings: null,
   singlesView: "group",
   knockoutEntryMatch: null,
+  matchesView: "singles",
   matchEntry: {
     set1P1: "",
     set1P2: "",

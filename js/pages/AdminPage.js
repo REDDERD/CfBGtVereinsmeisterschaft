@@ -24,10 +24,8 @@ function AdminPage() {
 
   const tabs = [
     { id: "players", label: "Spieler" },
-    { id: "singles", label: "Einzel-Ergebnisse" },
-    { id: "singlesTable", label: "Einzel-Tabelle" },
-    { id: "doubles", label: "Doppel-Ergebnisse" },
-    { id: "doublesRanking", label: "Doppel-Rangfolge" },
+    { id: "singlesTable", label: "Einzel" },
+    { id: "doublesRanking", label: "Doppel" },
   ];
 
   return `
@@ -44,9 +42,7 @@ function AdminPage() {
         </div>
 
         ${state.adminTab === "players" ? AdminPlayersTab() : ""}
-        ${state.adminTab === "singles" ? AdminSinglesTab() : ""}
         ${state.adminTab === "singlesTable" ? AdminSinglesTableTab() : ""}
-        ${state.adminTab === "doubles" ? AdminDoublesTab() : ""}
         ${state.adminTab === "doublesRanking" ? AdminDoublesRankingTab() : ""}
       </div>
     </div>`;

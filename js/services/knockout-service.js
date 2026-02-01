@@ -36,12 +36,12 @@ async function saveKnockoutMatch() {
   const set3P2 = parseInt(document.getElementById("koSet3P2").value);
 
   if (!player1Id || !player2Id) {
-    alert("Spieler nicht verfügbar");
+    Toast.error("Spieler nicht verfügbar");
     return;
   }
 
   if (!validateSet(set1P1, set1P2) || !validateSet(set2P1, set2P2)) {
-    alert("Ungültige Satz-Ergebnisse in Satz 1 oder 2");
+    Toast.error("Ungültige Satz-Ergebnisse in Satz 1 oder 2");
     return;
   }
 
@@ -57,12 +57,12 @@ async function saveKnockoutMatch() {
   if (set1Winner !== set2Winner) {
     if (!isNaN(set3P1) && !isNaN(set3P2)) {
       if (!validateSet(set3P1, set3P2)) {
-        alert("Ungültiges Satz-Ergebnis in Satz 3");
+        Toast.error("Ungültiges Satz-Ergebnis in Satz 3");
         return;
       }
       sets.push({ p1: set3P1, p2: set3P2 });
     } else {
-      alert("Dritter Satz ist erforderlich (Spielstand 1:1)");
+      Toast.warning("Dritter Satz ist erforderlich (Spielstand 1:1)");
       return;
     }
   }
@@ -94,11 +94,11 @@ async function saveKnockoutMatch() {
     }
 
     state.knockoutEntryMatch = null;
-    alert("K.O.-Spiel erfolgreich eingetragen!");
+    Toast.success("K.O.-Spiel erfolgreich eingetragen!");
     render();
   } catch (error) {
     console.error("Fehler beim Speichern:", error);
-    alert("Fehler beim Speichern: " + error.message);
+    Toast.error("Fehler beim Speichern: " + error.message);
   }
 }
 
@@ -106,17 +106,22 @@ async function cancelKnockoutMatch(round, matchNum) {
   const canCancel = checkCanCancelMatch(round, matchNum);
 
   if (!canCancel) {
-    alert(
+    Toast.warning(
       "Dieses Spiel kann nicht mehr storniert werden, da bereits ein nachfolgendes Spiel stattgefunden hat.",
+      4000
     );
     return;
   }
 
-  if (
-    !confirm(
-      "Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt.",
-    )
-  ) {
+  const confirmed = await Modal.confirm({
+    title: 'Spielergebnis stornieren?',
+    message: 'Möchtest du das Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt.',
+    confirmText: 'Stornieren',
+    cancelText: 'Abbrechen',
+    type: 'warning'
+  });
+
+  if (!confirmed) {
     return;
   }
 
@@ -126,12 +131,12 @@ async function cancelKnockoutMatch(round, matchNum) {
     );
     if (match) {
       await db.collection("knockoutMatches").doc(match.id).delete();
-      alert("Spielergebnis storniert.");
+      Toast.success("Spielergebnis storniert.");
       render();
     }
   } catch (error) {
     console.error("Fehler beim Stornieren:", error);
-    alert("Fehler beim Stornieren: " + error.message);
+    Toast.error("Fehler beim Stornieren: " + error.message);
   }
 }
 
@@ -165,11 +170,15 @@ function checkCanCancelMatch(round, matchNum) {
 }
 
 async function activateKnockoutPhase() {
-  if (
-    !confirm(
-      "K.O.-Phase jetzt starten? Die aktuellen Gruppenphase-Tabellen werden eingefroren und können nicht mehr geändert werden.",
-    )
-  ) {
+  const confirmed = await Modal.confirm({
+    title: 'K.O.-Phase starten?',
+    message: 'Möchtest du die K.O.-Phase jetzt starten? Die aktuellen Gruppenphase-Tabellen werden eingefroren und können nicht mehr geändert werden.',
+    confirmText: 'K.O.-Phase starten',
+    cancelText: 'Abbrechen',
+    type: 'warning'
+  });
+
+  if (!confirmed) {
     return;
   }
 
@@ -192,16 +201,20 @@ async function activateKnockoutPhase() {
     activatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  alert("K.O.-Phase aktiviert! Die Gruppenphase-Tabellen wurden eingefroren.");
+  Toast.success("K.O.-Phase aktiviert! Die Gruppenphase-Tabellen wurden eingefroren.", 4000);
   render();
 }
 
 async function deactivateKnockoutPhase() {
-  if (
-    !confirm(
-      "K.O.-Phase wirklich deaktivieren? Die Ergebnisse der Gruppenphase bleiben erhalten, aber alle Spiele der K.O.-Phase werden verworfen.",
-    )
-  ) {
+  const confirmed = await Modal.confirm({
+    title: 'K.O.-Phase deaktivieren?',
+    message: 'Möchtest du die K.O.-Phase wirklich deaktivieren? Die Ergebnisse der Gruppenphase bleiben erhalten, aber alle Spiele der K.O.-Phase werden verworfen.',
+    confirmText: 'Deaktivieren',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  });
+
+  if (!confirmed) {
     return;
   }
 
@@ -226,7 +239,7 @@ async function deactivateKnockoutPhase() {
       });
     });
 
-  alert("K.O.-Phase deaktiviert.");
+  Toast.success("K.O.-Phase deaktiviert.");
   render();
 }
 
@@ -251,10 +264,10 @@ async function saveKnockoutConfig() {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
 
-    alert("Paarungen erfolgreich gespeichert!");
+    Toast.success("Paarungen erfolgreich gespeichert!");
   } catch (error) {
     console.error("Fehler beim Speichern:", error);
-    alert("Fehler beim Speichern: " + error.message);
+    Toast.error("Fehler beim Speichern: " + error.message);
   }
 }
 
@@ -320,5 +333,5 @@ async function saveDoublesRanking() {
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-  alert("Rangfolge gespeichert!");
+  Toast.success("Rangfolge gespeichert!");
 }

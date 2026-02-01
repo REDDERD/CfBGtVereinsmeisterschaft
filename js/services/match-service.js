@@ -13,12 +13,12 @@ async function addSinglesMatch() {
   const set3P2 = parseInt(document.getElementById("set3P2").value);
 
   if (!p1 || !p2 || p1 === p2) {
-    alert("Bitte zwei verschiedene Spieler auswählen");
+    Toast.error("Bitte zwei verschiedene Spieler auswählen");
     return;
   }
 
   if (!validateSet(set1P1, set1P2) || !validateSet(set2P1, set2P2)) {
-    alert("Ungültige Satz-Ergebnisse in Satz 1 oder 2");
+    Toast.error("Ungültige Satz-Ergebnisse in Satz 1 oder 2");
     return;
   }
 
@@ -34,16 +34,16 @@ async function addSinglesMatch() {
   if (set1Winner !== set2Winner) {
     if (!isNaN(set3P1) && !isNaN(set3P2)) {
       if (!validateSet(set3P1, set3P2)) {
-        alert("Ungültiges Satz-Ergebnis in Satz 3");
+        Toast.error("Ungültiges Satz-Ergebnis in Satz 3");
         return;
       }
       sets.push({ p1: set3P1, p2: set3P2 });
     } else {
-      alert("Dritter Satz ist erforderlich (Spielstand 1:1)");
+      Toast.warning("Dritter Satz ist erforderlich (Spielstand 1:1)");
       return;
     }
   } else if (!isNaN(set3P1) || !isNaN(set3P2)) {
-    alert("Dritter Satz nicht erlaubt (Spielstand bereits 2:0)");
+    Toast.warning("Dritter Satz nicht erlaubt (Spielstand bereits 2:0)");
     return;
   }
 
@@ -66,7 +66,7 @@ async function addSinglesMatch() {
 
   resetMatchEntry();
 
-  alert("Spiel erfolgreich eingetragen!");
+  Toast.success("Spiel erfolgreich eingetragen!");
   render();
 }
 
@@ -84,12 +84,12 @@ async function addDoublesMatch() {
   const set3T2 = parseInt(document.getElementById("doublesSet3T2").value);
 
   if (!t1p1 || !t1p2 || !t2p1 || !t2p2) {
-    alert("Bitte alle 4 Spieler auswählen");
+    Toast.error("Bitte alle 4 Spieler auswählen");
     return;
   }
 
   if (!validateSet(set1T1, set1T2) || !validateSet(set2T1, set2T2)) {
-    alert("Ungültige Satz-Ergebnisse");
+    Toast.error("Ungültige Satz-Ergebnisse");
     return;
   }
 
@@ -104,12 +104,12 @@ async function addDoublesMatch() {
   if (set1Winner !== set2Winner) {
     if (!isNaN(set3T1) && !isNaN(set3T2)) {
       if (!validateSet(set3T1, set3T2)) {
-        alert("Ungültiges Satz-Ergebnis in Satz 3");
+        Toast.error("Ungültiges Satz-Ergebnis in Satz 3");
         return;
       }
       sets.push({ t1: set3T1, t2: set3T2 });
     } else {
-      alert("Dritter Satz ist erforderlich");
+      Toast.warning("Dritter Satz ist erforderlich");
       return;
     }
   }
@@ -153,7 +153,7 @@ async function addDoublesMatch() {
     loadPyramid();
   }, 1000);
 
-  alert("Doppel-Spiel erfolgreich eingetragen!");
+  Toast.success("Doppel-Spiel erfolgreich eingetragen!");
   render();
 }
 

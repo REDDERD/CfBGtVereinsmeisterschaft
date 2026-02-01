@@ -8,7 +8,7 @@ async function addPlayer() {
   const doublesPool = document.getElementById("newPlayerDoublesPool").checked;
 
   if (!name) {
-    alert("Bitte Namen eingeben");
+    Toast.error("Bitte Namen eingeben");
     return;
   }
 
@@ -23,7 +23,7 @@ async function addPlayer() {
   document.getElementById("newPlayerSinglesGroup").value = "";
   document.getElementById("newPlayerDoublesPool").checked = false;
 
-  alert("Spieler erfolgreich hinzugefügt!");
+  Toast.success("Spieler erfolgreich hinzugefügt!");
 }
 
 function editPlayer(playerId) {
@@ -46,7 +46,7 @@ async function savePlayer(playerId) {
   ).checked;
 
   if (!name) {
-    alert("Bitte Namen eingeben");
+    Toast.error("Bitte Namen eingeben");
     return;
   }
 
@@ -64,10 +64,16 @@ async function deletePlayer(playerId) {
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return;
 
-  if (
-    confirm(`Möchtest du "${player.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)
-  ) {
+  const confirmed = await Modal.confirm({
+    title: 'Spieler löschen?',
+    message: `Möchtest du "${player.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  });
+
+  if (confirmed) {
     await db.collection("players").doc(playerId).delete();
-    alert("Spieler gelöscht");
+    Toast.success("Spieler gelöscht");
   }
 }

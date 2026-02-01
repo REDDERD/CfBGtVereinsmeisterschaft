@@ -7,12 +7,12 @@ async function addChallenge() {
   const dateStr = document.getElementById("challengeDate").value;
 
   if (!challenger || !challenged || !dateStr) {
-    alert("Bitte alle Felder ausfüllen");
+    Toast.error("Bitte alle Felder ausfüllen");
     return;
   }
 
   if (challenger === challenged) {
-    alert("Herausforderer und Herausgeforderter müssen unterschiedlich sein");
+    Toast.error("Herausforderer und Herausgeforderter müssen unterschiedlich sein");
     return;
   }
 
@@ -22,7 +22,7 @@ async function addChallenge() {
   today.setHours(0, 0, 0, 0);
 
   if (selectedDate < today) {
-    alert("Das Datum darf nicht in der Vergangenheit liegen");
+    Toast.warning("Das Datum darf nicht in der Vergangenheit liegen");
     return;
   }
 
@@ -41,16 +41,24 @@ async function addChallenge() {
   document.getElementById("newChallenged").value = "";
   document.getElementById("challengeDate").value = "";
 
-  alert("Herausforderung erfolgreich eingetragen!");
+  Toast.success("Herausforderung erfolgreich eingetragen!");
 }
 
 async function markChallengeCompleted(challengeId) {
-  if (confirm("Herausforderung als erledigt markieren?")) {
+  const confirmed = await Modal.confirm({
+    title: 'Herausforderung abschließen?',
+    message: 'Möchtest du diese Herausforderung als erledigt markieren?',
+    confirmText: 'Als erledigt markieren',
+    cancelText: 'Abbrechen',
+    type: 'info'
+  });
+  
+  if (confirmed) {
     await db.collection("challenges").doc(challengeId).update({
       status: "completed",
       completedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    alert("Herausforderung als erledigt markiert");
+    Toast.success("Herausforderung als erledigt markiert");
   }
 }
 
@@ -71,7 +79,7 @@ async function initPyramid() {
   const doublesPlayers = state.players.filter((p) => p.doublesPool);
 
   if (doublesPlayers.length === 0) {
-    alert("Keine Spieler im Doppel-Pool!");
+    Toast.error("Keine Spieler im Doppel-Pool!");
     return;
   }
 
@@ -88,13 +96,13 @@ async function initPyramid() {
 
   try {
     await db.collection("pyramid").doc("current").set(dataToSave);
-    alert("Pyramide erfolgreich initialisiert!");
+    Toast.success("Pyramide erfolgreich initialisiert!");
 
     // Force re-read from Firebase
     const doc = await db.collection("pyramid").doc("current").get();
   } catch (error) {
     console.error("❌ Fehler beim Initialisieren:", error);
-    alert("Fehler: " + error.message);
+    Toast.error("Fehler: " + error.message);
   }
 }
 
@@ -106,19 +114,20 @@ async function debugFirebase() {
       const data = doc.data();
       const levels = pyramidLevelsToArray(data);
 
-      alert(
-        "Firebase Check:\nDoc exists: " +
+      Toast.info(
+        "Firebase Check: Doc exists: " +
           doc.exists +
-          "\nKeys: " +
+          " | Keys: " +
           Object.keys(data).join(", ") +
-          "\nLevels array length: " +
-          levels.length
+          " | Levels: " +
+          levels.length,
+        5000
       );
     } else {
-      alert("Firebase Dokument existiert nicht!");
+      Toast.error("Firebase Dokument existiert nicht!");
     }
   } catch (error) {
     console.error("Debug error:", error);
-    alert("Error: " + error.message);
+    Toast.error("Error: " + error.message);
   }
 }

@@ -47,6 +47,10 @@ function initFirebaseListeners() {
     .onSnapshot((doc) => {
       if (doc.exists) {
         state.pyramid = doc.data();
+        state.pyramidInitialized = true;
+        state.pyramidLoading = false;
+      } else {
+        state.pyramidInitialized = false;
       }
       render();
     });
@@ -98,6 +102,9 @@ function initFirebaseListeners() {
 // Load pyramid manually
 async function loadPyramid() {
   try {
+    state.pyramidLoading = true;
+    render();
+
     const doc = await db.collection("pyramid").doc("current").get();
     if (doc.exists) {
       const data = doc.data();
@@ -142,9 +149,16 @@ async function loadPyramid() {
           levels: levelsArray,
         };
       }
+      state.pyramidInitialized = true;
+      state.pyramidLoading = false;
+      render();
+    } else {
+      state.pyramidLoading = false;
       render();
     }
   } catch (error) {
     console.error("Error loading pyramid:", error);
+    state.pyramidLoading = false;
+    render();
   }
 }

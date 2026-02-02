@@ -96,6 +96,7 @@ async function initPyramid() {
 
   try {
     await db.collection("pyramid").doc("current").set(dataToSave);
+    state.pyramidInitialized = true;
     Toast.success("Pyramide erfolgreich initialisiert!");
 
     // Force re-read from Firebase

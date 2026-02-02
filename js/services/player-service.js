@@ -2,10 +2,14 @@
 // Spieler-bezogene Funktionen
 
 async function addPlayer() {
-  const name = document.getElementById("newPlayerName").value.trim();
-  const singlesGroup =
-    parseInt(document.getElementById("newPlayerSinglesGroup").value) || null;
-  const doublesPool = document.getElementById("newPlayerDoublesPool").checked;
+  const nameInput = document.getElementById("playerName");
+  
+  if (!nameInput) {
+    Toast.error("Namensfeld nicht gefunden");
+    return;
+  }
+  
+  const name = nameInput.value.trim();
 
   if (!name) {
     Toast.error("Bitte Namen eingeben");
@@ -14,14 +18,12 @@ async function addPlayer() {
 
   await db.collection("players").add({
     name,
-    singlesGroup,
-    doublesPool,
+    singlesGroup: null,
+    doublesPool: null,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  document.getElementById("newPlayerName").value = "";
-  document.getElementById("newPlayerSinglesGroup").value = "";
-  document.getElementById("newPlayerDoublesPool").checked = false;
+  nameInput.value = "";
 
   Toast.success("Spieler erfolgreich hinzugefügt!");
 }
@@ -38,12 +40,11 @@ function cancelEditPlayer() {
 
 async function savePlayer(playerId) {
   const name = document.getElementById(`editName_${playerId}`).value.trim();
-  const singlesGroup =
-    parseInt(document.getElementById(`editSinglesGroup_${playerId}`).value) ||
-    null;
-  const doublesPool = document.getElementById(
-    `editDoublesPool_${playerId}`
-  ).checked;
+  const singlesGroupSelect = document.getElementById(`editSingles_${playerId}`);
+  const doublesPoolSelect = document.getElementById(`editDoubles_${playerId}`);
+  
+  const singlesGroup = singlesGroupSelect.value ? parseInt(singlesGroupSelect.value) : null;
+  const doublesPool = doublesPoolSelect.value || null;
 
   if (!name) {
     Toast.error("Bitte Namen eingeben");

@@ -9,6 +9,8 @@ const state = {
   doublesMatches: [],
   knockoutMatches: [],
   pyramid: { levels: [] },
+  pyramidLoading: false,
+  pyramidInitialized: false,
   challenges: [],
   editingPlayer: null,
   selectedPlayerId: null,

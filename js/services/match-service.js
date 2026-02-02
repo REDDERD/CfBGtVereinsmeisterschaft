@@ -47,6 +47,48 @@ async function addSinglesMatch() {
     return;
   }
 
+  // Neue Validierungen für Einzel-Gruppenspiele
+  const player1 = state.players.find(player => player.id === p1);
+  const player2 = state.players.find(player => player.id === p2);
+
+  if (!player1 || !player2) {
+    Toast.error("Spieler nicht gefunden");
+    return;
+  }
+
+  // Validierung 1: Spieler müssen in derselben Gruppe sein
+  if (player1.singlesGroup !== player2.singlesGroup) {
+    const confirmed = await Modal.warn({
+      title: 'Spieler in unterschiedlichen Gruppen',
+      message: `${player1.name} ist in Gruppe ${player1.singlesGroup} und ${player2.name} ist in Gruppe ${player2.singlesGroup}. Gruppenspiele sollten nur innerhalb derselben Gruppe stattfinden. Möchtest du das Spiel trotzdem eintragen?`,
+      confirmText: 'Ja, eintragen',
+      cancelText: 'Abbrechen'
+    });
+    
+    if (!confirmed) {
+      return;
+    }
+  }
+
+  // Validierung 2: Prüfe, ob diese Paarung bereits 2x gespielt wurde
+  const existingMatches = state.singlesMatches.filter(match => 
+    (match.player1Id === p1 && match.player2Id === p2) || 
+    (match.player1Id === p2 && match.player2Id === p1)
+  );
+
+  if (existingMatches.length >= 2) {
+    const confirmed = await Modal.warn({
+      title: 'Paarung bereits 2x gespielt',
+      message: `${player1.name} und ${player2.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Da es nur Hin- und Rückrunde gibt, macht es wenig Sinn, mehr als 2 Spiele pro Paarung einzutragen. Möchtest du das Spiel trotzdem eintragen?`,
+      confirmText: 'Ja, eintragen',
+      cancelText: 'Abbrechen'
+    });
+    
+    if (!confirmed) {
+      return;
+    }
+  }
+
   await db.collection("singlesMatches").add({
     player1Id: p1,
     player2Id: p2,
@@ -88,6 +130,14 @@ async function addDoublesMatch() {
     return;
   }
 
+  // Validierung: Kein Spieler darf in beiden Teams sein
+  const allPlayers = [t1p1, t1p2, t2p1, t2p2];
+  const uniquePlayers = new Set(allPlayers);
+  if (uniquePlayers.size !== 4) {
+    Toast.error("Ein Spieler kann nicht in beiden Teams spielen. Bitte wähle 4 verschiedene Spieler aus.");
+    return;
+  }
+
   if (!validateSet(set1T1, set1T2) || !validateSet(set2T1, set2T2)) {
     Toast.error("Ungültige Satz-Ergebnisse");
     return;
@@ -114,6 +164,76 @@ async function addDoublesMatch() {
     }
   }
 
+  // Neue Validierungen für Doppel-Spiele
+  const t1player1 = state.players.find(p => p.id === t1p1);
+  const t1player2 = state.players.find(p => p.id === t1p2);
+  const t2player1 = state.players.find(p => p.id === t2p1);
+  const t2player2 = state.players.find(p => p.id === t2p2);
+
+  if (!t1player1 || !t1player2 || !t2player1 || !t2player2) {
+    Toast.error("Einer oder mehrere Spieler nicht gefunden");
+    return;
+  }
+
+  // Validierung: Jede Kombination muss aus zwei Spielern unterschiedlicher Pools bestehen
+  const validatePoolCombination = (player1, player2, teamName) => {
+    if (!player1.doublesPool || !player2.doublesPool) {
+      return { valid: false, message: `Beide Spieler in ${teamName} müssen einem Doppel-Pool zugeordnet sein.` };
+    }
+    if (player1.doublesPool === player2.doublesPool) {
+      return { valid: false, message: `${teamName}: ${player1.name} und ${player2.name} sind beide in Pool ${player1.doublesPool}. Jedes Team muss einen Spieler aus Pool A und einen aus Pool B haben.` };
+    }
+    return { valid: true };
+  };
+
+  const team1Validation = validatePoolCombination(t1player1, t1player2, "Team 1");
+  if (!team1Validation.valid) {
+    Toast.error(team1Validation.message);
+    return;
+  }
+
+  const team2Validation = validatePoolCombination(t2player1, t2player2, "Team 2");
+  if (!team2Validation.valid) {
+    Toast.error(team2Validation.message);
+    return;
+  }
+
+  // Validierung: Prüfe ob eine Challenge für Spieler 1 der beiden Teams existiert
+  let challengeToComplete = null;
+  if (state.challenges && state.challenges.length > 0) {
+    challengeToComplete = state.challenges.find(challenge => 
+      challenge.status === 'pending' &&
+      ((challenge.challengerId === t1p1 && challenge.challengedId === t2p1) ||
+       (challenge.challengerId === t2p1 && challenge.challengedId === t1p1))
+    );
+
+    if (challengeToComplete) {
+      const challenger = state.players.find(p => p.id === challengeToComplete.challengerId);
+      const challenged = state.players.find(p => p.id === challengeToComplete.challengedId);
+      
+      const confirmed = await Modal.confirm({
+        title: 'Herausforderung gefunden',
+        message: `Es gibt eine offene Herausforderung zwischen ${challenger?.name || 'Spieler 1'} und ${challenged?.name || 'Spieler 2'}. Soll diese Herausforderung als erledigt markiert werden?`,
+        confirmText: 'Ja, als erledigt markieren',
+        cancelText: 'Nein, offen lassen',
+        type: 'info'
+      });
+
+      if (confirmed) {
+        // Markiere Challenge als completed nach dem Spiel
+        await db
+          .collection("challenges")
+          .doc(challengeToComplete.id)
+          .update({
+            status: "completed",
+            completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+      } else {
+        challengeToComplete = null; // Don't mark as completed
+      }
+    }
+  }
+
   await db.collection("doublesMatches").add({
     team1: { player1Id: t1p1, player2Id: t1p2 },
     team2: { player1Id: t2p1, player2Id: t2p2 },
@@ -134,7 +254,7 @@ async function addDoublesMatch() {
 
   await updatePyramidAfterChallenge(winnerId, loserId);
 
-  // If this was from a challenge, mark it as completed
+  // If this was from a challenge (via prefilled data), mark it as completed
   if (state.prefilledDoubles && state.prefilledDoubles.challengeId) {
     await db
       .collection("challenges")

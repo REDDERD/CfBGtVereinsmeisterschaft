@@ -68,5 +68,40 @@ const Modal = {
         if (confirmBtn) confirmBtn.focus();
       }, 100);
     });
+  },
+
+  warn: function(options) {
+    return this.confirm({
+      ...options,
+      type: 'warning',
+      confirmText: options.confirmText || 'Trotzdem fortfahren',
+      cancelText: options.cancelText || 'Abbrechen'
+    });
+  },
+
+  open: function(content) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'customModal';
+    overlay.innerHTML = `
+      <div class="modal-container">
+        ${content}
+      </div>
+    `;
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+      }
+    });
+
+    document.body.appendChild(overlay);
+  },
+
+  close: function() {
+    const modal = document.getElementById('customModal');
+    if (modal) {
+      modal.remove();
+    }
   }
 };

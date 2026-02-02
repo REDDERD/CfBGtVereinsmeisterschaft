@@ -38,7 +38,7 @@ function HomePage() {
                       <div class="font-bold text-gray-800">${getPlayerName(challenge.challengerId)} vs ${getPlayerName(challenge.challengedId)}</div>
                       <div class="text-sm ${isOverdue ? "text-red-600 font-semibold" : "text-gray-600"}">${dateStr} ${isOverdue ? "ÜBERFÄLLIG" : "Heute"}</div>
                     </div>
-                    <button onclick="enterResultFromChallenge('${challenge.id}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">Ergebnis eintragen</button>
+                    ${state.user && !state.knockoutPhaseActive ? "<button onclick='enterResultFromChallenge('${challenge.id}')' class='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm'>Ergebnis eintragen</button>" : "" }
                   </div>
                 </div>`;
             }).join("")}

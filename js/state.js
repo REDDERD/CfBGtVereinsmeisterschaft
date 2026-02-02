@@ -16,6 +16,7 @@ const state = {
   adminTab: "players",
   singlesSearchQuery: "",
   doublesSearchQuery: "",
+  challengesSinglesSearchQuery: "",
   mobileMenuOpen: false,
   singlesPhase: "group",
   knockoutPhaseActive: false,
@@ -31,6 +32,7 @@ const state = {
   singlesView: "group",
   knockoutEntryMatch: null,
   matchesView: "singles",
+  challengesView: "singles",
   matchEntry: {
     set1P1: "",
     set1P2: "",

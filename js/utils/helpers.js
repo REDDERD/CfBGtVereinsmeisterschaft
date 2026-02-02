@@ -3,7 +3,7 @@
 
 function getPlayerName(playerId) {
   const player = state.players.find((p) => p.id === playerId);
-  return player ? player.name : "Unbekannt";
+  return player ? player.name : "Gelöschter Spieler";
 }
 
 function getGroupPlayers(groupNum) {

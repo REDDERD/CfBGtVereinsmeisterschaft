@@ -31,6 +31,37 @@ function updateSinglesPlayerSelection(field, value) {
   render();
 }
 
+function updateDoublesPlayerSelection(field, value) {
+  // Initialize matchEntry if needed
+  if (!state.matchEntry) {
+    state.matchEntry = {
+      set1P1: "",
+      set1P2: "",
+      set2P1: "",
+      set2P2: "",
+      set3P1: "",
+      set3P2: "",
+      set3Disabled: true,
+      doublesT1P1: "",
+      doublesT1P2: "",
+      doublesT2P1: "",
+      doublesT2P2: "",
+      doublesSet1T1: "",
+      doublesSet1T2: "",
+      doublesSet2T1: "",
+      doublesSet2T2: "",
+      doublesSet3T1: "",
+      doublesSet3T2: "",
+    };
+  }
+  
+  // Store the selected player
+  state.matchEntry[field] = value;
+  
+  // Re-render to update the labels with player names
+  render();
+}
+
 function updateMatchEntry(field, value) {
   // Initialize matchEntry if needed
   if (!state.matchEntry) {
@@ -42,6 +73,10 @@ function updateMatchEntry(field, value) {
       set3P1: "",
       set3P2: "",
       set3Disabled: true,
+      doublesT1P1: "",
+      doublesT1P2: "",
+      doublesT2P1: "",
+      doublesT2P2: "",
       doublesSet1T1: "",
       doublesSet1T2: "",
       doublesSet2T1: "",
@@ -183,6 +218,10 @@ function resetMatchEntry() {
     set3P1: "",
     set3P2: "",
     set3Disabled: true, // Start disabled
+    doublesT1P1: "",
+    doublesT1P2: "",
+    doublesT2P1: "",
+    doublesT2P2: "",
     doublesSet1T1: "",
     doublesSet1T2: "",
     doublesSet2T1: "",

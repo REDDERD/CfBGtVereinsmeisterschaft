@@ -10,7 +10,7 @@ function Navigation() {
             <!-- Logo - wird bei kleinen Screens ausgeblendet wenn Navigation buttons Platz brauchen -->
             <div class="cursor-pointer flex items-center" onclick="navigateTo('home')">
               <img src="logo.gif" alt="CfB Gütersloh Logo" class="h-10 md:h-12 hidden sm:block" />
-              <span class="text-lg font-bold text-indigo-600 sm:hidden">CfB</span>
+              <span class="text-lg font-bold text-indigo-600 sm:hidden">Vereinsmeisterschaften</span>
             </div>
             <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-700 flex-shrink-0">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

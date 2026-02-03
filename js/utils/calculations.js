@@ -13,6 +13,8 @@ function calculateStandings(groupNum) {
       points: 0,
       setsWon: 0,
       setsLost: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
     };
   });
 
@@ -27,8 +29,12 @@ function calculateStandings(groupNum) {
     const sets = match.sets;
     let p1Sets = 0,
       p2Sets = 0;
+    let p1PointsTotal = 0,
+      p2PointsTotal = 0;
 
     sets.forEach((set) => {
+      p1PointsTotal += set.p1;
+      p2PointsTotal += set.p2;
       if (set.p1 > set.p2) p1Sets++;
       else p2Sets++;
     });
@@ -39,6 +45,10 @@ function calculateStandings(groupNum) {
     stats[p1].setsLost += p2Sets;
     stats[p2].setsWon += p2Sets;
     stats[p2].setsLost += p1Sets;
+    stats[p1].pointsFor += p1PointsTotal;
+    stats[p1].pointsAgainst += p2PointsTotal;
+    stats[p2].pointsFor += p2PointsTotal;
+    stats[p2].pointsAgainst += p1PointsTotal;
 
     if (p1Sets > p2Sets) {
       stats[p1].points += p1Sets === 2 && p2Sets === 0 ? 3 : 2;
@@ -49,11 +59,21 @@ function calculateStandings(groupNum) {
     }
   });
 
-  return Object.values(stats).sort((a, b) => {
+  // Berechne Gesamtspiele (wie in ChallengesPage): pro Gegnerkombination 2 Spiele (Hin- und Rückspiel)
+  const groupPlayers = getGroupPlayers(groupNum);
+  const totalGamesPerPlayer = (groupPlayers.length - 1) * 2;
+
+  // Sortierung: 1. Punkte, 2. Satzdifferenz, 3. Punktedifferenz
+  return Object.values(stats).map(player => ({
+    ...player,
+    totalGames: totalGamesPerPlayer,
+    pointDiff: player.pointsFor - player.pointsAgainst
+  })).sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
-    const aDiff = a.setsWon - a.setsLost;
-    const bDiff = b.setsWon - b.setsLost;
-    return bDiff - aDiff;
+    const aSetDiff = a.setsWon - a.setsLost;
+    const bSetDiff = b.setsWon - b.setsLost;
+    if (bSetDiff !== aSetDiff) return bSetDiff - aSetDiff;
+    return b.pointDiff - a.pointDiff;
   });
 }
 

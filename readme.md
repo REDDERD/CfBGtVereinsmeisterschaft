@@ -1,337 +1,82 @@
-# Admin-Anleitung: Badminton Vereinsmeisterschaft
+# Admin-Anleitung: CfB Gütersloh Vereinsmeisterschaft
 
 ## Inhaltsverzeichnis
 1. [Anmeldung](#anmeldung)
-2. [Spielerverwaltung](#spielerverwaltung)
-3. [Einzel-Verwaltung](#einzel-verwaltung)
-4. [Doppel-Verwaltung](#doppel-verwaltung)
-5. [Herausforderungen verwalten](#herausforderungen-verwalten)
-6. [Datenexport](#datenexport)
-7. [Passwort zurücksetzen](#passwort-zurücksetzen)
+2. [Admin-Funktionen](#admin-funktionen)
+3. [Einzel](#einzel)
+4. [Doppel](#doppel)
+5. [Herausforderungen](#herausforderungen)
+6. [Spiele](#spiele)
+7. [Spieler](#spieler)
+8. [Kontakt & Support](#kontakt--support)
 
----
 
 ## Anmeldung
 
-### Erstmalige Anmeldung
-1. Navigiere zur **Admin**-Seite über die Navigation
-2. Gib deine Admin-Email-Adresse und das Passwort ein
-3. Optional: Setze das Häkchen bei "Angemeldet bleiben", um dauerhaft angemeldet zu bleiben
-4. Klicke auf **Anmelden**
+Die Anmeldung erfolgt über Email und Passwort. Wenn du berechtigt bist dich anzumelden, solltest du bereits deine Zugangsdaten erhalten haben. Andernfalls melde dich bitte bei Daniel R. Im besten Fall änderst du dein Initialpasswort direkt beim ersten Einloggen über die Funktion "Passwort vergessen" im Anmeldescreen. Diesen erreichst du über den Button "Admin Login" oben rechts.  
+Der Login ist erforderlich, um Ergebnisse eintragen zu können und die Verwaltung der Vereinsmeisterschaften vorzunehmen. (Mehr dazu unter [Admin-Funktionen](#admin-funktionen))
 
-### Passwort-Sichtbarkeit
-- Klicke auf das Augen-Symbol rechts im Passwort-Feld, um das Passwort sichtbar zu machen
+### Notwendigkeit
+Damit schreibende Änderungen eingetragen werden können, muss man als Admin eingeloggt sein. Das liegt daran, dass die Tabellen und die Pyramide absichtlich öffentlich sind, damit sie jeder (auch ohne Login) einsehen kann. Damit aber nicht wahrlos oder von Dritten Ergebnisse eingetragen werden, ist der Login pflicht. Ist man nicht eingeloggt, die man die Bedienflächen zum Schreiben oder Exportieren garnicht.
 
-### Abmelden
-- Klicke auf den **Logout**-Button oben rechts in der Navigation
+Sollte sich dieses Konzept (dass immer ein Admin eingeloggt sein muss) als unpraktikabel oder kompliziert zum Eintragen in der Halle erweisen, können wir die Anwendung so umbauen, dass es auch einen "einfachen" Nutzer gibt. In der Halle könnte man sich dann immer über einen QR-Code einloggen und hätte nur die Berechtigung, Ergebnisse und Herausforderungen einzutragen, ohne das etwas an den Einstellungen kaputt gemacht werden kann.
 
----
-
-## Spielerverwaltung
-
-### Neuen Spieler hinzufügen
-1. Wechsle zum Tab **Spieler verwalten**
-2. Gib den Namen des Spielers in das Eingabefeld ein
-3. Klicke auf **Spieler hinzufügen**
-4. Der neue Spieler erscheint in der Liste
-
-**Hinweis:** Neu hinzugefügte Spieler nehmen zunächst weder am Einzel noch am Doppel teil. Dies muss durch Bearbeiten konfiguriert werden.
-
-### Spieler bearbeiten
-1. Klicke auf das **Stift-Symbol** (🖊️) neben dem Spieler
-2. Du kannst folgende Daten ändern:
-   - **Name** des Spielers
-   - **Einzel-Gruppe** (1 oder 2, oder "Nicht dabei")
-   - **Doppel-Pool** (A für stark, B für schwach, oder "Nicht dabei")
-3. Klicke auf **Speichern** um die Änderungen zu übernehmen
-4. Oder auf **Abbrechen** um die Änderungen zu verwerfen
-
-### Spieler löschen
-1. Klicke auf das **Papierkorb-Symbol** (🗑️) neben dem Spieler
-2. Bestätige die Sicherheitsabfrage mit **Löschen**
-3. Der Spieler wird dauerhaft aus der Datenbank entfernt
-
-**⚠️ Wichtig:** Das Löschen eines Spielers kann nicht rückgängig gemacht werden. Alle Spiele mit diesem Spieler bleiben aber erhalten.
-
----
-
-## Einzel-Verwaltung
-
-### Gruppeneinteilung
-Die Einzel-Meisterschaft besteht aus zwei Gruppen:
-- **Gruppe 1**: Normalerweise die stärkeren Spieler
-- **Gruppe 2**: Normalerweise die schwächeren Spieler
-
-Weise jedem Spieler über **Spieler verwalten** → Bearbeiten eine Gruppe zu.
-
-### Einzel-Tabellen ansehen
-1. Wechsle zum Tab **Einzel-Tabellen**
-2. Du siehst beide Gruppentabellen mit:
-   - Platzierung
-   - Spielername
-   - Anzahl Spiele
-   - Siege / Niederlagen
-   - Gewonnene/verlorene Sätze
-   - Satz-Differenz
-   - Punkte
-
-Die Tabellen werden automatisch nach Punkten, Satz-Differenz und direktem Vergleich sortiert.
-
-### K.O.-Phase konfigurieren
-
-#### Vorbereitung
-Bevor die K.O.-Phase gestartet wird:
-1. Stelle sicher, dass die Gruppenphase vollständig gespielt wurde
-2. Überprüfe die Platzierungen in beiden Gruppen
-
-#### K.O.-Phase einrichten
-1. Wechsle zum Tab **Einzel-Tabellen**
-2. Scrolle runter zum Bereich **K.O.-Phase konfigurieren**
-3. Für jedes der 4 Viertelfinale-Spiele:
-   - Wähle aus, welche Position gegen welche antritt
-   - Beispiel: "1. Platz Gruppe 1" gegen "4. Platz Gruppe 2"
-4. Klicke auf **Paarungen speichern**
-
-**Standard-Setup (empfohlen):**
-- VF1: 1. Platz G1 vs. 4. Platz G2
-- VF2: 2. Platz G1 vs. 3. Platz G2
-- VF3: 1. Platz G2 vs. 4. Platz G1
-- VF4: 2. Platz G2 vs. 3. Platz G1
-
-#### K.O.-Phase aktivieren
-1. Nach dem Speichern der Paarungen klicke auf **K.O.-Phase starten**
-2. Die Gruppenphase wird "eingefroren" - keine weiteren Gruppen-Ergebnisse können mehr eingetragen werden
-3. Die K.O.-Spiele werden nun mit den aktuellen Platzierungen befüllt
-
-**⚠️ Wichtig:** 
-- Nach Aktivierung können die Paarungen nicht mehr geändert werden
-- Stelle sicher, dass alle Gruppenspiele eingetragen sind!
-- Die Spieler können noch am Einzel-Tab sehen, wie die Gruppenphase ausgegangen ist
-
-#### K.O.-Phase deaktivieren
-Falls etwas schiefgelaufen ist:
-1. Klicke auf **K.O.-Phase deaktivieren**
-2. Die Gruppenphase wird wieder bearbeitbar
-3. Alle K.O.-Ergebnisse bleiben erhalten, werden aber ignoriert
-4. Du kannst die K.O.-Phase neu konfigurieren und erneut starten
-
-### Tabellen exportieren
-1. Klicke auf **Tabellen exportieren** (oben rechts bei den Einzel-Tabellen)
-2. Eine Excel-Datei wird heruntergeladen mit:
-   - Tabelle Gruppe 1
-   - Tabelle Gruppe 2
-   - Alle Einzel-Spiele
-
----
-
-## Doppel-Verwaltung
-
-### Doppel-Pools
-Das Doppel-System funktioniert über Pools:
-- **Pool A**: Stärkere Spieler
-- **Pool B**: Schwächere Spieler
-
-Weise jedem Spieler über **Spieler verwalten** einen Pool zu.
-
-### Pyramiden-System
-
-#### Was ist die Pyramide?
-Die Pyramide ist eine Rangfolge aller Doppel-Spieler:
-- Spieler können nur Spieler herausfordern, die maximal **2 Positionen** über ihnen stehen
-- Nach einem gewonnenen Herausforderungsspiel tauschen die Spieler ihre Positionen
-- Die Pyramide zeigt die aktuelle Stärke-Hierarchie
-
-#### Pyramide initialisieren
-**Nur beim ersten Mal nötig:**
-1. Wechsle zum Tab **Doppel-Rangfolge**
-2. Klicke auf **Pyramide initialisieren**
-3. Alle Spieler mit Doppel-Pool werden zufällig verteilt
-
-#### Rangfolge bearbeiten
-1. Wechsle zum Tab **Doppel-Rangfolge**
-2. Nutze die **Pfeil-Buttons** um Spieler nach oben/unten zu verschieben
-3. Nutze das **Papierkorb-Symbol** um einen Spieler komplett aus der Rangfolge zu entfernen
-4. Klicke auf **Rangfolge speichern** um die Änderungen zu übernehmen
-
-**Anwendungsfälle:**
-- Neue Spieler in die Rangfolge einfügen
-- Rangfolge anpassen basierend auf Spielstärke
-- Spieler aus der Rangfolge nehmen (z.B. bei Verletzung)
-
-#### Pyramide zurücksetzen
-Falls du komplett neu anfangen willst:
-1. Lösche alle Spieler aus der Rangfolge einzeln (Papierkorb-Symbol)
-2. Wenn die Rangfolge leer ist, kannst du auf **Pyramide initialisieren** klicken
-3. Die Spieler werden neu und zufällig verteilt
-
----
-
-## Herausforderungen verwalten
-
-### Was sind Herausforderungen?
-Herausforderungen sind geplante Doppel-Spiele zwischen zwei Spielern, die noch ausgetragen werden müssen.
-
-### Neue Herausforderung eintragen
-1. Navigiere zur Seite **Herausforderungen**
-2. Wähle den **Herausforderer** (der Spieler, der herausfordert)
-3. Wähle den **Herausgeforderten** (der Gegner)
-4. Wähle ein **Datum** für das geplante Spiel
-   - Das Datum darf nicht in der Vergangenheit liegen
-5. Klicke auf **Herausforderung eintragen**
-
-**Validierungen:**
-- Herausforderer und Herausgeforderter müssen unterschiedlich sein
-- Datum muss heute oder in der Zukunft liegen
-
-### Herausforderungen ansehen
-Auf der **Herausforderungen**-Seite siehst du:
-- **Offene Herausforderungen** (noch nicht gespielt)
-  - Spieler-Namen
-  - Geplantes Datum
-  - Differenz-Symbol zeigt die Position in der Pyramide (z.B. "+2" = 2 Plätze Unterschied)
-- **Erledigte Herausforderungen** (bereits gespielt)
-  - Ausgegraut dargestellt
-  - Sieger ist hervorgehoben
-
-### Ergebnis eintragen
-1. Klicke bei einer offenen Herausforderung auf **Ergebnis eintragen**
-2. Du wirst zur Doppel-Seite weitergeleitet
-3. Das Formular ist bereits mit den beiden Spielern vorausgefüllt
-4. Wähle die jeweiligen Partner aus
-5. Trage das Ergebnis ein wie gewohnt
-6. Nach dem Speichern wird die Herausforderung automatisch als "erledigt" markiert
-
-### Herausforderung als erledigt markieren
-Falls ein Spiel nicht ausgetragen werden kann (z.B. Absage, Verletzung):
-1. Klicke auf **Als erledigt markieren**
-2. Bestätige die Aktion
-3. Die Herausforderung wandert zu den erledigten, ohne dass ein Ergebnis eingetragen wurde
-
----
-
-## Datenexport
-
-### Einzel-Spiele exportieren
-1. Navigiere zur Seite **Spiele** → **Einzel**
-2. Optional: Nutze die Suchfunktion um nach bestimmten Spielern zu filtern
-3. Klicke auf **Einzel-Ergebnisse exportieren**
-4. Eine Excel-Datei wird heruntergeladen mit allen (gefilterten) Spielen
-
-**Export enthält:**
-- Datum des Spiels
-- Spieler 1 Name
-- Spieler 2 Name
-- Gesamtergebnis (z.B. 2:1)
-- Detaillierte Sätze (z.B. "21:19, 18:21, 21:15")
-
-### Doppel-Spiele exportieren
-1. Navigiere zur Seite **Spiele** → **Doppel**
-2. Optional: Nutze die Suchfunktion
-3. Klicke auf **Doppel-Ergebnisse exportieren**
-4. Eine Excel-Datei wird heruntergeladen
-
-**Export enthält:**
-- Datum des Spiels
-- Team 1 Spieler (beide Namen)
-- Team 2 Spieler (beide Namen)
-- Gesamtergebnis
-- Detaillierte Sätze
-- Herausforderungs-Status (falls zutreffend)
-
-### Einzel-Tabellen exportieren
-1. Admin-Bereich → Tab **Einzel-Tabellen**
-2. Klicke auf **Tabellen exportieren**
-3. Excel-Datei wird heruntergeladen mit:
-   - Sheet 1: Tabelle Gruppe 1
-   - Sheet 2: Tabelle Gruppe 2
-   - Sheet 3: Alle Einzel-Spiele
-
----
-
-## Passwort zurücksetzen
-
-### Als angemeldeter Admin
-1. Klicke auf **Logout** oben rechts
-2. Auf der Login-Seite klicke auf **Passwort vergessen?**
-3. Gib deine Email-Adresse ein
-4. Klicke auf **Link senden**
-5. Du erhältst eine Email mit einem Link zum Zurücksetzen
-6. Folge den Anweisungen in der Email
-
-### Als nicht angemeldeter Admin
-1. Navigiere zur **Admin**-Seite
-2. Klicke auf **Passwort vergessen?**
-3. Gib deine Email-Adresse ein
-4. Klicke auf **Link senden**
-5. Du erhältst eine Email mit einem Link zum Zurücksetzen
-6. Folge den Anweisungen in der Email
-
-**Hinweis:** Der Link zum Zurücksetzen ist nur begrenzt gültig. Falls der Link abgelaufen ist, fordere einen neuen an.
-
----
-
-## Tipps & Best Practices
+## Admin-Funktionen
 
 ### Spielerverwaltung
-- ✅ Füge alle Spieler gleich zu Beginn hinzu
-- ✅ Teile die Spieler fair auf die Gruppen und Pools auf
-- ✅ Überprüfe regelmäßig, ob neue Spieler hinzugekommen sind
+Hier können Spieler zu den Vereinsmeisterschaften angemeldet und auch wieder gelöscht werden. Damit Spieler an einer Kategorie (Einzel oder Doppel) teilnehmen können, müssen sie zunächst angelegt werden. Anschließend kann über "Spieler bearbeiten" (Stift-Symbol) die Anmeldung zum Einzel und Doppel erfolgen. Dazu muss beim Einzel die Gruppe für die Gruppenphase gesetzt werden und beim Doppel muss eine Einordnung in die Pools A und B erfolgen. Die beiden Werte können unabhängig voneinander gesetzt werden, sodass man auch nur am Einzel oder nur am Doppel teilnehmen kann.  
+Wird ein Spieler gelöscht (Papierkorb-Symbol) so wird dieser aus der Einzel-Gruppe direkt entfernt. Damit der Spieler aus der Doppel-Pyramide verschwindet, muss dies über [Doppel-Einstellungen](#doppel-einstellungen) manuell erfolgen. Ebenso bleiben die bereits eingetragenen Spiele erhalten. Hier erscheint dann "Gelöschter Spieler" als Name. Solche Spiele können auch manuell gelöscht werden.
 
-### Gruppenphase
-- ✅ Trage Ergebnisse zeitnah ein
-- ✅ Nutze die Validierungen, um Fehler zu vermeiden
-- ✅ Exportiere regelmäßig Zwischenstände als Backup
-- ⚠️ Starte die K.O.-Phase erst, wenn ALLE Gruppenspiele gespielt sind
+### Einzel-Einstellungen
+Die Einstellungen der Gruppen erfolgt über die Zuordnung von Spielern über die [Spielerverwaltung](#spielerverwaltung). Über die Einstellungen im Admin-Bereich kann die Zuordnung vorgenommen werden, welche Positionen am Ende der Gruppenphase in der K.O.-Phase gegeneinander spielen. (Beispiel: 4. Gruppe 1 spielt gegen 1. Gruppe 2 etc.) Ebenfalls kann hier die Gruppenphase für beendet erklärt werden und die K.O.-Phase wird eingeleitet. In diesem Fall werden die Gruppen-Tabellen eingefroren und die Viertelfinals starten.  
+Es ist möglich, die K.O.-Phase wieder zu deaktivieren, allerdings gehen dadurch alle Ergebnisse der K.O.-Phase verloren. Sollte dies wegen Änderungen notwendig sein, sollten die Spielergebnisse der K.O.-Phase vorher gespeichert werden, um sie danach wieder einzutragen.
 
-### K.O.-Phase
-- ✅ Überprüfe die Platzierungen vor dem Start
-- ✅ Konfiguriere die Paarungen logisch (1. vs. 4., 2. vs. 3.)
-- ⚠️ Nach der Aktivierung können keine Gruppen-Ergebnisse mehr geändert werden
+### Doppel-Einstellungen
+Hier kann die Reihenfolge der Pyramide manuell beeinflusst werden. Da nachträgliche Änderungen an Spielen die Auswirkungen auf die Pyramide sehr kompliziert wären, wird die Pyramide nur beeinflusst, wenn ein Spiel initial eingetragen wird. Spätere Änderungen am Ergebnis (so sie nötig sein sollten) müssen manuell vom Admin in die Reihenfolge eingebracht werden. Durch die Buttons "rauf" und "runter" (Pfeil-Buttons) können einzelne Spieler in der Pyramide direkt nach oben oder unten verschoben werden.  
+Es ist ebenfalls möglich, einzelne Spieler komplett aus der Pyramide zu löschen. Hier sollte zuvor der Doppel-Pool des Spielers entfernt werden, da er sonst möglicherweise wieder zur Pyramide hinzugefügt wird.
 
-### Doppel & Pyramide
-- ✅ Initialisiere die Pyramide nur einmal zu Beginn
-- ✅ Passe die Rangfolge an, wenn neue Spieler dazukommen
-- ✅ Ermutige Spieler, Herausforderungen einzutragen
-- ✅ Überprüfe regelmäßig offene Herausforderungen
 
-### Datenexport
-- ✅ Exportiere regelmäßig Daten als Backup
-- ✅ Nutze die Excel-Dateien für Analysen und Statistiken
-- ✅ Teile Zwischenstände mit den Spielern
+## Einzel
+Hier können die Gruppentabellen eingesehen und neue Spiele eingetragen werden. Damit neue Spiele eingetragen werden können, muss man als Admin eingeloggt sein. (Siehe [Anmelde-Notwendigkeit](#notwendigkeit))  
+Beim Eintragen werden die Gruppenzuordnungen geprüft. (Beispiel: Wenn man selbst in Gruppe 1 ist, kann man auch nur Ergebnisse gegen Spieler eintragen, die ebenfalls in Gruppe 1 sind.) Es sind pro Paarung 2 Spiele (Hin- und Rückspiel) für die Gruppenphase geplant. Nach dem zweiten Spiel wird gewarnt, wenn man ein drittes Spiel eintragen will. Die Spiele für Hin- und Rückrunde können unter [Herausforderungen](#herausforderungen) eingesehen werden.  
+Sobald die K.O.-Phase beendet ist, werden nicht mehr die Tabellen sondern die einzelnen Spiele angezeigt. Hier muss jeweils direkt zum entsprechenden Spiel auf den Button "Ergebnis eintragen" gedrückt werden, damit die Punkte im Popup eingetragen werden können.  
+Die Gruppentabelle wird anhand folgender Werte aufgebaut. Es kommt nur der nächste Wert zum Tragen, wenn zwei Spieler beim Vorherigen denselben Wert haben.
+ - Punkte
+ - Satz-Differenz (Gewonnene Sätze - verlorene Sätze)
+ - Spiel-Punkte-Differenz (Gewonnene Spielpunkte - Verlorene Spielpunkte)  
+  
+Es werden Punkte nach folgendem Schema vergeben:
+- Sieg in 2 Sätzen: 3 Punkte
+- Sieg in 3 Sätzen: 2 Punkte
+- Niederlage in 3 Sätzen: 1 Punkt
+- Niederlage in 2 Sätzen: 0 Punkte
 
-### Sicherheit
-- ✅ Logge dich aus, wenn du den Computer verlässt
-- ✅ Teile dein Admin-Passwort mit niemandem
-- ✅ Ändere das Passwort regelmäßig
+## Doppel
+Hier kann die Pyramide eingesehen und neue Spiele eingetragen werden. Damit neue Spiele eingetragen werden können, muss man als Admin eingeloggt sein. (Siehe [Anmelde-Notwendigkeit](#notwendigkeit))  
+Beim Eintragen von Ergebnissen werden die Pool-Zuordnungen geprüft. (Beispiel: Wenn man selbst in Pool A ist, kann man nur mit einem Spieler spielen, der in Pool B ist. Für den Gegner genauso.) Eine Doppelpaarung muss immer aus einem Spieler aus Pool A und einem Spieler aus Pool B bestehen. Im Gegensatz zum Einzel können im Doppel beliebig viele Spiele gespielt werden, die Rangefolge in der Pyramide verändert sich dynamisch.  
+Beim Eintragen ist wichtig, dass ein Ergebniss in der Pyramide immer nur für die ersten beiden Spieler des Doppels gewertet wird. Die Spieler 2 jedes Teams sind immer nur Mitspieler und deren Rangfolge in der Pyramide wird durch das Ergebnis nicht beeinflusst.  
+Man kann beliebige Spieler in der Pyramide zum Spiel herausfordern, die über einem stehen. Wenn der Spieler, der weiter unten in der Pyramide steht, das Spiel gewinnt, so nimmt er die Position des unterlegenen Spielers ein und alle anderen in der Rangfolge werden um eine Position nach hinten versetzt. Wie hoch das Ergebnis ausgeht, ist im Doppel egal.
 
----
 
-## Fehlerbehebung
+## Herausforderungen
 
-### "Spieler nicht gefunden"
-- Stelle sicher, dass alle beteiligten Spieler noch in der Datenbank existieren
-- Prüfe, ob der Spieler versehentlich gelöscht wurde
+### Einzel
+Herausforderungen in Einzel sind nur während der Gruppenphase möglich. Die werden automatisiert durch das System erstellt und bilden Hin- und Rückrunde jeder Spielerkombination aus jeder Gruppe ab. Es kann nach Spielernamen gesucht werden und auch das Eintragen von Ergebnissen für einzelne Spiele ist hier direkt möglich. Die ersten 2 Spiele pro Spielerkombination werden automatisch als Hin- und Rückspiel gewertet. Alle Spiele ab dem Dritten finden als Herausforderungen keine Beachtung mehr, wirken sich aber trotzdem auf die Gruppentabelle aus.
 
-### "Ungültige Satz-Ergebnisse"
-- Jeder Satz muss einen klaren Gewinner haben (21:19 ist ok, 20:20 nicht)
-- Der dritte Satz ist nur bei 1:1-Spielstand nach zwei Sätzen erlaubt
+### Doppel
+Im Doppel sind die Herausforderungen im Prinzip lediglich eine terminliche Erinnerung. Man kann eintragen, dass ein Spieler einen anderen herausgefordert hat und ein Ablaufdatum eintragen. Auf der Startseite der Anwendung wird man über anstehende und überfällige Doppel-Herausforderungen benachrichtigt. Mehr Funktion als diese Terminierung haben Doppel-herausforderungen nicht. Man könnte also in der Theorie die gesamten Vereinsmeisterschaften abwickeln, ohne auch nur eine Herausforderung eingetragen zu haben.  
+Sind erstmal Herausforderungen eingetragen, so kann man diese als erledigt markieren (falls das Spiel bereits eingetragen ist, die Herausforderung aber systemisch noch steht) oder das Ergebnis direkt eintragen und damit auch die Herausforderung erledigen. 
 
-### K.O.-Phase lässt sich nicht aktivieren
-- Stelle sicher, dass alle Viertelfinale-Paarungen konfiguriert sind
-- Jede Position darf nur einmal verwendet werden
+## Spiele
+Hier können alle vergangenen Spiele in Einzel & Doppel eingesehen werden. Ausgenommen sind die K.O.-Phasen-Spiele im Einzel, diese müssen über die Einzel-Seite direkt eingesehen werden. Es kann nach den Namen einzelner Spieler gefiltert werden.  
+Admins können die angezeigten Spiele in Excel exportieren. Die Filter-Funktion schränkt dabei ebenfalls den Export ein.
+Admins können hier ebenfalls Ergebnisse anpassen oder Spiele löschen. Es ist ebenfalls möglich, den Sieger eines Spiels zu ändern (über die Punktzahl). Beim Einzel stellt dies in der Gruppenphase kein Problem dar. Beim Doppel hingegen werden Änderungen an der Pyramide nachträglich nicht mehr vorgenommen, dies muss manuell durch einen Admin passieren. ([Admin-Funktionen](#admin-funktionen)). 
 
-### Pyramide kann nicht initialisiert werden
-- Prüfe, ob mindestens ein Spieler einem Doppel-Pool zugewiesen ist
-- Stelle sicher, dass du im Admin-Bereich angemeldet bist
+## Spieler
+Hier können alle Spieler, die in der Anwendung registiert sind, angezeigt werden. Durck klicken die Kachel des jeweiligen Spielers können die Statistiken in Einzel und Doppel sowie alle Spiele abgerufen werden.
 
-### Herausforderung kann nicht eingetragen werden
-- Das Datum darf nicht in der Vergangenheit liegen
-- Herausforderer und Herausgeforderter müssen unterschiedlich sein
-
----
 
 ## Kontakt & Support
 
-Bei technischen Problemen oder Fragen zur App wende dich an den Entwickler oder das Vereinsmanagement.
-
-**Viel Erfolg bei der Verwaltung eurer Vereinsmeisterschaft! 🏸**
+Bei technischen Problemen oder Fragen zur App wende dich am besten an Daniel R.   
+Für die Registrierung neuer Accounts ebenfalls.

@@ -42,6 +42,6 @@ const state = {
     set2P2: "",
     set3P1: "",
     set3P2: "",
-    set3Disabled: false,
+    set3Disabled: true,
   },
 };

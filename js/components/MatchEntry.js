@@ -71,11 +71,11 @@ function SinglesMatchEntry() {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Spieler 1</label>
-            <input type="number" id="set3P1" min="0" max="30" oninput="updateMatchEntry('set3P1', this.value)" ${state.matchEntry.set3Disabled ? "disabled" : ""} class="w-full px-3 py-2 border rounded-lg ${state.matchEntry.set3Disabled ? "bg-gray-200" : ""}">
+            <input type="number" id="set3P1" min="0" max="30" oninput="updateMatchEntry('set3P1', this.value)" disabled class="w-full px-3 py-2 border rounded-lg bg-gray-200">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Spieler 2</label>
-            <input type="number" id="set3P2" min="0" max="30" oninput="updateMatchEntry('set3P2', this.value)" ${state.matchEntry.set3Disabled ? "disabled" : ""} class="w-full px-3 py-2 border rounded-lg ${state.matchEntry.set3Disabled ? "bg-gray-200" : ""}">
+            <input type="number" id="set3P2" min="0" max="30" oninput="updateMatchEntry('set3P2', this.value)" disabled class="w-full px-3 py-2 border rounded-lg bg-gray-200">
           </div>
         </div>
       </div>
@@ -127,18 +127,38 @@ function DoublesMatchEntry() {
       </div>
       
       <div class="space-y-3 mb-4">
-        ${[1, 2, 3].map((i) => `
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Satz ${i} - Team 1</label>
-              <input type="number" id="doublesSet${i}T1" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Satz ${i} - Team 2</label>
-              <input type="number" id="doublesSet${i}T2" min="0" max="30" class="w-full px-3 py-2 border rounded-lg">
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Team 1</label>
+            <input type="number" id="doublesSet1T1" min="0" max="30" oninput="updateMatchEntry('doublesSet1T1', this.value)" class="w-full px-3 py-2 border rounded-lg">
           </div>
-        `).join("")}
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Satz 1 - Team 2</label>
+            <input type="number" id="doublesSet1T2" min="0" max="30" oninput="updateMatchEntry('doublesSet1T2', this.value)" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Team 1</label>
+            <input type="number" id="doublesSet2T1" min="0" max="30" oninput="updateMatchEntry('doublesSet2T1', this.value)" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Satz 2 - Team 2</label>
+            <input type="number" id="doublesSet2T2" min="0" max="30" oninput="updateMatchEntry('doublesSet2T2', this.value)" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Team 1</label>
+            <input type="number" id="doublesSet3T1" min="0" max="30" oninput="updateMatchEntry('doublesSet3T1', this.value)" disabled class="w-full px-3 py-2 border rounded-lg bg-gray-200">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Satz 3 - Team 2</label>
+            <input type="number" id="doublesSet3T2" min="0" max="30" oninput="updateMatchEntry('doublesSet3T2', this.value)" disabled class="w-full px-3 py-2 border rounded-lg bg-gray-200">
+          </div>
+        </div>
       </div>
       
       <button onclick="addDoublesMatch()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">

@@ -109,8 +109,6 @@ function initFirebaseListeners() {
 // Load pyramid manually
 async function loadPyramid() {
 
-  console.log("Manual Pyramid load!")
-
   try {
     state.pyramidLoading = true;
     render();

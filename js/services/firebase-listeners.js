@@ -45,14 +45,21 @@ function initFirebaseListeners() {
   db.collection("pyramid")
     .doc("current")
     .onSnapshot((doc) => {
-      if (doc.exists) {
-        state.pyramid = doc.data();
-        state.pyramidInitialized = true;
-        state.pyramidLoading = false;
-      } else {
-        state.pyramidInitialized = false;
+      // Only update if we're not in the middle of a manual load
+      // Manual loads happen after match entry to ensure proper processing
+      if (!state.pyramidLoading) {
+        if (doc.exists) {
+          const data = doc.data();
+          const levelsArray = pyramidLevelsToArray(data);
+          state.pyramid = {
+            levels: levelsArray,
+          };
+          state.pyramidInitialized = true;
+        } else {
+          state.pyramidInitialized = false;
+        }
+        render();
       }
-      render();
     });
 
   // Challenges
@@ -101,6 +108,9 @@ function initFirebaseListeners() {
 
 // Load pyramid manually
 async function loadPyramid() {
+
+  console.log("Manual Pyramid load!")
+
   try {
     state.pyramidLoading = true;
     render();

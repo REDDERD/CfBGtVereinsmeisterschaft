@@ -268,13 +268,14 @@ async function addDoublesMatch() {
   // Clear prefilled data
   state.prefilledDoubles = null;
 
-  // Reload pyramid after update (with delay to ensure Firestore has written)
-  setTimeout(() => {
-    loadPyramid();
-  }, 1000);
+  // Set loading state and reload pyramid after update
+  state.pyramidLoading = true;
+  render();
+  
+  // Reload pyramid now that Firestore has written (updatePyramidAfterChallenge was awaited)
+  await loadPyramid();
 
   Toast.success("Doppel-Spiel erfolgreich eingetragen!");
-  render();
 }
 
 async function updatePyramidAfterChallenge(winnerId, loserId) {

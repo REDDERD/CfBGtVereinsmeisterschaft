@@ -47,25 +47,21 @@ function DoublesPage() {
           `}
         </div>
         
+        ${state.challenges.length > 0 ? `
         <div class="mb-6">
           <h3 class="text-xl font-semibold mb-3">Anstehende Herausforderungen</h3>
-          ${state.challenges.length === 0 ? `
-            <div class="text-center py-8 bg-gray-50 rounded-lg">
-              <p class="text-gray-500">Keine anstehenden Herausforderungen</p>
-            </div>
-          ` : `
-            <div class="space-y-3">
-              ${state.challenges.map((challenge) => `
-                <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <span class="font-medium">${getPlayerName(challenge.challengerId)} fordert ${getPlayerName(challenge.challengedId)} heraus</span>
-                    <span class="text-sm text-gray-500">Offen</span>
-                  </div>
+          <div class="space-y-3">
+            ${state.challenges.map((challenge) => `
+              <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <span class="font-medium">${getPlayerName(challenge.challengerId)} fordert ${getPlayerName(challenge.challengedId)} heraus</span>
+                  <span class="text-sm text-gray-500">Offen</span>
                 </div>
-              `).join("")}
-            </div>
-          `}
+              </div>
+            `).join("")}
+          </div>
         </div>
+        ` : ''}
         
         ${state.user && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : ""}
       </div>

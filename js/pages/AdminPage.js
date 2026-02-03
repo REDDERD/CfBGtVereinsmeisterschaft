@@ -246,9 +246,9 @@ function AdminPlayersTab() {
                 ${!player.singlesGroup && !player.doublesPool ? "Nimmt nicht teil" : ""}
               </div>
             </div>
-            <div class="flex space-x-2">
-              <button onclick="editPlayer('${player.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded">${icons.edit}</button>
-              <button onclick="deletePlayer('${player.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded">${icons.trash}</button>
+            <div class="flex space-x-2 ml-4">
+              <button onclick="editPlayer('${player.id}')" class="p-2 text-red-600 hover:bg-blue-50 rounded-lg transition-colors">${icons.edit}</button>
+              <button onclick="deletePlayer('${player.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">${icons.trash}</button>
             </div>
           </div>
         `).join("")}

@@ -6,9 +6,13 @@ function Navigation() {
     <nav class="bg-white shadow-lg">
       <div class="container mx-auto px-4">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between py-4 md:h-16">
-          <div class="flex items-center justify-between mb-4 md:mb-0">
-            <h1 class="text-xl md:text-2xl font-bold text-indigo-600 cursor-pointer" onclick="navigateTo('home')">CfB Gütersloh Vereinsmeisterschaft</h1>
-            <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-700">
+          <div class="flex items-center justify-between mb-4 md:mb-0 min-w-0 flex-shrink">
+            <!-- Logo - wird bei kleinen Screens ausgeblendet wenn Navigation buttons Platz brauchen -->
+            <div class="cursor-pointer flex items-center" onclick="navigateTo('home')">
+              <img src="logo.gif" alt="CfB Gütersloh Logo" class="h-10 md:h-12 hidden sm:block" />
+              <span class="text-lg font-bold text-indigo-600 sm:hidden">CfB</span>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-700 flex-shrink-0">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
               </svg>

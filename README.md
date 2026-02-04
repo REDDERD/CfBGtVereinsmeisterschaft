@@ -78,6 +78,5 @@ Hier können alle Spieler, die in der Anwendung registiert sind, angezeigt werde
 
 ## Kontakt & Support
 
-<<<<<<< HEAD:readme.md
 Bei technischen Problemen oder Fragen zur App wende dich am besten an Daniel R.   
 Für die Registrierung neuer Accounts ebenfalls.

@@ -225,7 +225,7 @@ function AdminPlayersTab() {
                   <select id="editDoubles_${player.id}" class="w-full px-3 py-2 border rounded-lg">
                     <option value="">Nicht dabei</option>
                     <option value="A" ${player.doublesPool === "A" ? "selected" : ""}>Pool A (stark)</option>
-                    <option value="B" ${player.doublesPool === "B" ? "selected" : ""}>Pool B (schwach)</option>
+                    <option value="B" ${player.doublesPool === "B" ? "selected" : ""}>Pool B (normal)</option>
                   </select>
                 </div>
               </div>

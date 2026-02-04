@@ -122,20 +122,46 @@
             text-decoration: underline;
         }
 
-        .theme-toggle {
+        .button-container {
             position: fixed;
             top: 20px;
             right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .theme-toggle, .spa-button {
             padding: 10px 20px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            z-index: 1000;
+            border: none;
         }
 
-        .theme-toggle:hover {
+        .theme-toggle:hover, .spa-button:hover {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        body.light-mode .spa-button {
+            background-color: #f6f8fa;
+            color: #24292e;
+            border: 1px solid #d1d5da;
+        }
+
+        body.light-mode .spa-button:hover {
+            background-color: #e1e4e8;
+        }
+
+        body.dark-mode .spa-button {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        body.dark-mode .spa-button:hover {
+            background-color: #30363d;
         }
 
         #content {
@@ -144,10 +170,18 @@
     </style>
 </head>
 <body class="light-mode">
-    <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+    <div class="button-container">
+        <button class="spa-button" onclick="openSPA()">Zur App</button>
+        <button class="theme-toggle" onclick="toggleTheme()">Dark Mode</button>
+    </div>
     <div id="content">Lade README...</div>
     
     <script>
+        // SPA öffnen
+        function openSPA() {
+            window.open('../', '_blank');
+        }
+
         // Theme Toggle Funktion
         function toggleTheme() {
             const body = document.body;
@@ -156,12 +190,12 @@
             if (body.classList.contains('light-mode')) {
                 body.classList.remove('light-mode');
                 body.classList.add('dark-mode');
-                button.textContent = '☀️ Light Mode';
+                button.textContent = 'Light Mode';
                 localStorage.setItem('theme', 'dark');
             } else {
                 body.classList.remove('dark-mode');
                 body.classList.add('light-mode');
-                button.textContent = '🌙 Dark Mode';
+                button.textContent = 'Dark Mode';
                 localStorage.setItem('theme', 'light');
             }
         }
@@ -175,7 +209,7 @@
             if (savedTheme === 'dark') {
                 body.classList.remove('light-mode');
                 body.classList.add('dark-mode');
-                button.textContent = '☀️ Light Mode';
+                button.textContent = 'Light Mode';
             }
         }
 

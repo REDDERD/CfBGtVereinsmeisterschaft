@@ -138,6 +138,67 @@ async function handleLogout() {
   }
 }
 
+
+// ========== QR Code Login ==========
+
+async function checkQrCodeLogin() {
+  // Parse URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const email = urlParams.get('email');
+  const password = urlParams.get('password');
+  
+  // If no parameters, do nothing
+  if (!email || !password) {
+    return;
+  }
+  
+  try {
+    // Try to login with provided credentials
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+    
+    // Check if user has QR login permission
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    
+    if (!userDoc.exists) {
+      // User document doesn't exist - logout
+      await auth.signOut();
+      showToast('QR-Code-Login fehlgeschlagen: Keine Berechtigung', 'error');
+      // Remove URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+    
+    const userData = userDoc.data();
+    
+    if (!userData.isQrLogin) {
+      // User doesn't have QR login permission - logout
+      await auth.signOut();
+      showToast('QR-Code-Login fehlgeschlagen: Keine Berechtigung', 'error');
+      // Remove URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+    
+    // Login successful and authorized
+    showToast('QR-Code-Login erfolgreich', 'success');
+    
+    // Remove URL parameters from address bar for security
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    // Navigate to home page
+    state.currentPage = 'home';
+    render();
+    
+  } catch (error) {
+    console.error('QR-Code-Login error:', error);
+    showToast('QR-Code-Login fehlgeschlagen: ' + error.message, 'error');
+    
+    // Remove URL parameters
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
 // ========== Password Reset ==========
 
 function showPasswordReset() {

@@ -61,7 +61,7 @@ function MatchesSinglesTab() {
                     <div class="text-sm text-gray-500 mt-1">${scoreText}</div>
                     ${dateStr ? `<div class="text-xs text-gray-400 mt-1">${dateStr}</div>` : ""}
                   </div>
-                  ${state.user ? `
+                  ${state.isAdmin ? `
                     <div class="flex space-x-2 ml-4">
                       <button onclick="editSinglesMatch('${match.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Bearbeiten">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +114,7 @@ function MatchesDoublesTab() {
                     <div class="text-sm text-gray-500 mt-1">${scoreText}</div>
                     ${dateStr ? `<div class="text-xs text-gray-400 mt-1">${dateStr}</div>` : ""}
                   </div>
-                  ${state.user ? `
+                  ${state.isAdmin ? `
                     <div class="flex space-x-2 ml-4">
                       <button onclick="editDoublesMatch('${match.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Bearbeiten">
                         ${icons.edit}

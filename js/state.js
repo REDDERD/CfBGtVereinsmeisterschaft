@@ -4,6 +4,7 @@
 const state = {
   currentPage: "home",
   user: null,
+  isAdmin: false,
   players: [],
   singlesMatches: [],
   doublesMatches: [],

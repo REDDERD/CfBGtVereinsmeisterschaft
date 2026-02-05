@@ -176,7 +176,7 @@ function KnockoutBracketView() {
             ? `
           <div class="mt-3 text-center">
             <div class="text-sm font-semibold text-indigo-600">${resultText}</div>
-            ${state.user && canCancel ? `<button onclick="cancelKnockoutMatch('${round}', ${matchNum})" class="mt-2 px-3 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200">Stornieren</button>` : ""}
+            ${state.isAdmin && canCancel ? `<button onclick="cancelKnockoutMatch('${round}', ${matchNum})" class="mt-2 px-3 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200">Stornieren</button>` : ""}
           </div>
         `
             : state.user && canPlay

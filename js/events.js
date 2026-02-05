@@ -163,7 +163,7 @@ async function checkQrCodeLogin() {
     if (!userDoc.exists) {
       // User document doesn't exist - logout
       await auth.signOut();
-      showToast('QR-Code-Login fehlgeschlagen: Keine Berechtigung', 'error');
+      Toast.error('QR-Code-Login fehlgeschlagen: Keine Berechtigung', 'error');
       // Remove URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
@@ -174,14 +174,14 @@ async function checkQrCodeLogin() {
     if (!userData.isQrLogin) {
       // User doesn't have QR login permission - logout
       await auth.signOut();
-      showToast('QR-Code-Login fehlgeschlagen: Keine Berechtigung', 'error');
+      Toast.error('QR-Code-Login fehlgeschlagen: Keine Berechtigung', 'error');
       // Remove URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
     }
     
     // Login successful and authorized
-    showToast('QR-Code-Login erfolgreich', 'success');
+    Toast.error('QR-Code-Login erfolgreich', 'success');
     
     // Remove URL parameters from address bar for security
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -192,7 +192,7 @@ async function checkQrCodeLogin() {
     
   } catch (error) {
     console.error('QR-Code-Login error:', error);
-    showToast('QR-Code-Login fehlgeschlagen: ' + error.message, 'error');
+    Toast.error('QR-Code-Login fehlgeschlagen: ' + error.message, 'error');
     
     // Remove URL parameters
     window.history.replaceState({}, document.title, window.location.pathname);

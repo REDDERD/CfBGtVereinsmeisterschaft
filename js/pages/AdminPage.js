@@ -1,6 +1,7 @@
 // js/pages/AdminPage.js
 
 function AdminPage() {
+  // Check if user is logged in
   if (!state.user) {
     return `
       <div class="max-w-md mx-auto">
@@ -178,11 +179,15 @@ function AdminPage() {
         <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Admin-Bereich</h2>
         
         <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-2">
-          ${tabs.map((tab) => `
+          ${tabs
+            .map(
+              (tab) => `
             <button onclick="setAdminTab('${tab.id}')" class="px-4 py-2 text-left sm:text-center rounded-t ${state.adminTab === tab.id ? "bg-indigo-600 text-white font-semibold" : "text-gray-600 hover:bg-gray-100"}">
               ${tab.label}
             </button>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
 
         ${state.adminTab === "players" ? AdminPlayersTab() : ""}
@@ -190,6 +195,37 @@ function AdminPage() {
         ${state.adminTab === "doublesRanking" ? AdminDoublesRankingTab() : ""}
       </div>
     </div>`;
+
+  // Check if user is admin
+  if (!state.isAdmin) {
+    return `
+      <div class="max-w-md mx-auto">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+          <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+              <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">Keine Berechtigung</h2>
+            <p class="text-sm text-gray-600 mt-2">Du hast keine Admin-Rechte für diesen Bereich</p>
+          </div>
+          
+          <div class="space-y-4">
+            <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+              <p class="text-sm">Du bist angemeldet, aber dein Account hat keine Administrator-Berechtigung.</p>
+            </div>
+            
+            <button 
+              onclick="navigateTo('home')" 
+              class="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition-all font-medium">
+              Zurück zur Startseite
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 function AdminPlayersTab() {
@@ -204,7 +240,10 @@ function AdminPlayersTab() {
       </div>
       
       <div class="space-y-3">
-        ${state.players.map((player) => state.editingPlayer === player.id ? `
+        ${state.players
+          .map((player) =>
+            state.editingPlayer === player.id
+              ? `
           <div class="p-4 bg-blue-50 border-2 border-blue-500 rounded-lg">
             <div class="space-y-3">
               <div>
@@ -235,7 +274,8 @@ function AdminPlayersTab() {
               </div>
             </div>
           </div>
-        ` : `
+        `
+              : `
           <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300">
             <div>
               <span class="font-medium text-gray-800 break-words">${player.name}</span>
@@ -251,7 +291,9 @@ function AdminPlayersTab() {
               <button onclick="deletePlayer('${player.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">${icons.trash}</button>
             </div>
           </div>
-        `).join("")}
+        `,
+          )
+          .join("")}
       </div>
     </div>`;
 }
@@ -260,10 +302,14 @@ function AdminSinglesTableTab() {
   const group1 = calculateStandings(1);
   const group2 = calculateStandings(2);
   const positions = [
-    { value: "g1p1", label: "1. Platz Gruppe 1" }, { value: "g1p2", label: "2. Platz Gruppe 1" },
-    { value: "g1p3", label: "3. Platz Gruppe 1" }, { value: "g1p4", label: "4. Platz Gruppe 1" },
-    { value: "g2p1", label: "1. Platz Gruppe 2" }, { value: "g2p2", label: "2. Platz Gruppe 2" },
-    { value: "g2p3", label: "3. Platz Gruppe 2" }, { value: "g2p4", label: "4. Platz Gruppe 2" },
+    { value: "g1p1", label: "1. Platz Gruppe 1" },
+    { value: "g1p2", label: "2. Platz Gruppe 1" },
+    { value: "g1p3", label: "3. Platz Gruppe 1" },
+    { value: "g1p4", label: "4. Platz Gruppe 1" },
+    { value: "g2p1", label: "1. Platz Gruppe 2" },
+    { value: "g2p2", label: "2. Platz Gruppe 2" },
+    { value: "g2p3", label: "3. Platz Gruppe 2" },
+    { value: "g2p4", label: "4. Platz Gruppe 2" },
   ];
   const config = state.knockoutConfig || {};
 
@@ -279,24 +325,30 @@ function AdminSinglesTableTab() {
       </div>
       <div class="bg-gray-50 rounded-lg p-6 mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4">K.O.-Phase konfigurieren</h3>
-        ${!state.knockoutPhaseActive ? `
+        ${
+          !state.knockoutPhaseActive
+            ? `
           <div class="mb-4 p-4 bg-blue-50 border border-blue-300 rounded-lg">
             <p class="text-sm text-blue-800 mb-3">Konfiguriere die Paarungen nach Platzierung.</p>
             <button onclick="activateKnockoutPhase()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">K.O.-Phase starten</button>
           </div>
-        ` : `
+        `
+            : `
           <div class="mb-4 p-4 bg-green-50 border border-green-300 rounded-lg">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <p class="text-sm text-green-800">✅ K.O.-Phase ist aktiv.</p>
               <button onclick="deactivateKnockoutPhase()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold">K.O.-Phase deaktivieren</button>
             </div>
           </div>
-        `}
+        `
+        }
         <div class="space-y-6">
           <div>
             <h4 class="font-semibold text-gray-700 mb-3">Viertelfinale (4 Spiele)</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              ${[1, 2, 3, 4].map((i) => `
+              ${[1, 2, 3, 4]
+                .map(
+                  (i) => `
                 <div class="bg-white p-4 rounded-lg border">
                   <div class="font-medium mb-2">Spiel ${i}</div>
                   <div class="grid grid-cols-2 gap-2">
@@ -310,7 +362,9 @@ function AdminSinglesTableTab() {
                     </select>
                   </div>
                 </div>
-              `).join("")}
+              `,
+                )
+                .join("")}
             </div>
           </div>
           ${!state.knockoutPhaseActive ? `<button onclick="saveKnockoutConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Paarungen speichern</button>` : ""}
@@ -329,14 +383,19 @@ function AdminDoublesRankingTab() {
         <h3 class="text-xl font-bold text-gray-800 mb-3">Doppel-Rangfolge bearbeiten</h3>
         <p class="text-sm text-gray-600 mb-4">Nutze die Pfeile, um die Spieler in die gewünschte Reihenfolge zu bringen.</p>
       </div>
-      ${flatPositions.length === 0 ? `
+      ${
+        flatPositions.length === 0
+          ? `
         <div class="text-center py-12 bg-gray-50 rounded-lg">
           <p class="text-gray-600 mb-4">Pyramide noch nicht initialisiert</p>
           <button onclick="initPyramid()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Pyramide initialisieren</button>
         </div>
-      ` : `
+      `
+          : `
         <div class="space-y-3 mb-6">
-          ${flatPositions.map((playerId, idx) => `
+          ${flatPositions
+            .map(
+              (playerId, idx) => `
             <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300">
               <div class="flex items-center space-x-4">
                 <span class="font-bold text-gray-500 w-8">#${idx + 1}</span>
@@ -348,9 +407,12 @@ function AdminDoublesRankingTab() {
                 <button onclick="removePlayerFromRanking(${idx}, '${playerId}')" class="p-2 text-red-600 hover:bg-red-50 rounded" title="Aus Rangfolge löschen"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
               </div>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </div>
         <button onclick="saveDoublesRanking()" class="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">Rangfolge speichern</button>
-      `}
+      `
+      }
     </div>`;
 }

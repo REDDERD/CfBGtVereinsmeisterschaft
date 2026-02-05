@@ -3,8 +3,27 @@
 
 function initFirebaseListeners() {
   // Auth State
-  auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged(async (user) => {
     state.user = user;
+    
+    // Load admin status from Firestore if user is logged in
+    if (user) {
+      try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          state.isAdmin = userData.isAdmin || false;
+        } else {
+          state.isAdmin = false;
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        state.isAdmin = false;
+      }
+    } else {
+      state.isAdmin = false;
+    }
+    
     render();
   });
 

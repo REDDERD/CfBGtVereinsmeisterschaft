@@ -66,14 +66,16 @@ function Navigation() {
             ${
               state.user
                 ? `
-                <button onclick="navigateTo('admin')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                  state.currentPage === "admin"
-                    ? "bg-indigo-600 text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                }">
-                  ${icons.settings}
-                  <span class="font-medium">Admin</span>
-                </button>
+                ${state.isAdmin ? `
+                  <button onclick="navigateTo('admin')" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                    state.currentPage === "admin"
+                      ? "bg-indigo-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }">
+                    ${icons.settings}
+                    <span class="font-medium">Admin</span>
+                  </button>
+                ` : ''}
                 <button onclick="handleLogout()" class="w-full md:w-auto flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                   ${icons.logout}
                   <span>Logout</span>

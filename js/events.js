@@ -178,11 +178,7 @@ async function checkQrCodeLogin() {
       // Remove URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
-    }
-    
-    // Login successful and authorized
-    Toast.error('QR-Code-Login erfolgreich', 'success');
-    
+    }  
     // Remove URL parameters from address bar for security
     window.history.replaceState({}, document.title, window.location.pathname);
     

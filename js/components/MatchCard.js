@@ -9,8 +9,8 @@
  */
 function MatchCard(match, context = 'home') {
   const isAdmin = state.isAdmin;
-  const isSingles = match.type === 'singles' || (match.player1Id && !match.round);
-  const isKnockout = match.type === 'knockout' || match.round;
+  const isSingles = match.type === 'singles' || (match.player1Id && match.round);
+  const isKnockout = match.round && match.round !== 'group1' && match.round !== 'group2';
   const status = match.status || 'confirmed';
   
   // Datum formatieren
@@ -24,7 +24,7 @@ function MatchCard(match, context = 'home') {
   // Spieler-Namen und Score ermitteln
   let player1Name, player2Name, scoreText, player1Sets, player2Sets;
   
-  if (isSingles || isKnockout) {
+  if (isSingles) {
     player1Name = getPlayerName(match.player1Id);
     player2Name = getPlayerName(match.player2Id);
     scoreText = match.sets ? match.sets.map(s => `${s.p1}:${s.p2}`).join(', ') : 'Ausstehend';
@@ -87,9 +87,9 @@ function MatchCard(match, context = 'home') {
   };
   
   const getKnockoutBadge = () => {
-    if (!match.round && !match.knockoutRound) return '';
+    if (!isKnockout) return '';
     
-    const round = match.round || match.knockoutRound;
+    const round = match.round;
     const roundNames = {
       'final': 'Finale',
       'semifinal': 'Halbfinale',
@@ -117,9 +117,10 @@ function MatchCard(match, context = 'home') {
         
       case 'admin':
         // 2x2 Grid mit Status-Buttons (oben) und Edit/Delete-Buttons (unten)
-        const matchType = isKnockout ? 'knockout' : (isSingles ? 'singles' : 'doubles');
-        const editFunction = isKnockout ? 'editKnockoutMatch' : (isSingles ? 'editSinglesMatch' : 'editDoublesMatch');
-        const deleteFunction = isKnockout ? 'deleteKnockoutMatch' : (isSingles ? 'deleteSinglesMatch' : 'deleteDoublesMatch');
+        // Bestimme den Match-Type für die Funktionsaufrufe
+        const matchType = isSingles ? 'singles' : 'doubles';
+        const editFunction = isSingles ? 'editSinglesMatch' : 'editDoublesMatch';
+        const deleteFunction = isSingles ? 'deleteSinglesMatch' : 'deleteDoublesMatch';
         
         // Status-Buttons (nur die anzeigen, die nicht der aktuelle Status sind)
         const statusButtons = [];
@@ -161,7 +162,7 @@ function MatchCard(match, context = 'home') {
               class="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center"
               title="Auf Unbestätigt setzen">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </button>
           `);
@@ -177,7 +178,7 @@ function MatchCard(match, context = 'home') {
         }
         
         return `
-          <div class="grid grid-cols-2 gap-2 ml-4" style="min-width: 120px;">
+          <div class="grid grid-cols-2 gap-2" style="min-width: 120px;">
             <!-- Zeile 1: Status-Buttons -->
             ${visibleStatusButtons.join('')}
             

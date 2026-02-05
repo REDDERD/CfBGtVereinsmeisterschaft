@@ -102,10 +102,14 @@ async function addSinglesMatch() {
     matchStatus = 'confirmed';
   }
 
+  // Bestimme die Runde basierend auf der Spielergruppe
+  const round = player1.singlesGroup === 1 ? 'group1' : 'group2';
+
   await db.collection("singlesMatches").add({
     player1Id: p1,
     player2Id: p2,
     sets,
+    round,
     status: matchStatus,
     date: firebase.firestore.FieldValue.serverTimestamp(),
   });
@@ -352,9 +356,18 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
   }
 }
 
-// Ändere den Status eines Spiels
+// Ändere den Status eines Spiels - Vereinheitlichte Funktion
 async function updateMatchStatus(matchId, matchType, newStatus) {
-  const collection = matchType === 'singles' ? 'singlesMatches' : 'doublesMatches';
+  // Bestimme die richtige Collection: singles, doubles oder auch singles für knockout
+  let collection;
+  if (matchType === 'singles' || matchType === 'knockout') {
+    collection = 'singlesMatches';
+  } else if (matchType === 'doubles') {
+    collection = 'doublesMatches';
+  } else {
+    Toast.error("Ungültiger Match-Typ");
+    return;
+  }
   
   try {
     const matchDoc = await db.collection(collection).doc(matchId).get();
@@ -397,5 +410,119 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Status:', error);
     Toast.error("Fehler beim Aktualisieren des Status");
+  }
+}
+
+// Vereinheitlichte Bearbeiten-Funktion für Singles (inkl. Knockout)
+async function editSinglesMatch(matchId) {
+  const match = state.singlesMatches.find((m) => m.id === matchId);
+  if (!match) {
+    Toast.error("Spiel nicht gefunden");
+    return;
+  }
+
+  // Prüfe ob es ein Knockout-Match ist
+  const isKnockout = match.round && match.round !== 'group1' && match.round !== 'group2';
+
+  if (isKnockout) {
+    // Öffne das Knockout-Entry-Modal mit vorausgefüllten Daten
+    state.knockoutEntryMatch = {
+      round: match.round,
+      matchNum: match.matchNum,
+      editing: true,
+      matchId: matchId,
+    };
+  } else {
+    // Für normale Gruppenspiele - Modal noch implementieren
+    Toast.info("Bearbeitungsfunktion für Gruppenspiele wird noch implementiert");
+    return;
+  }
+
+  // Setze die Werte im State (werden im Render verwendet)
+  state.matchEntry = {
+    set1P1: match.sets[0]?.p1 || "",
+    set1P2: match.sets[0]?.p2 || "",
+    set2P1: match.sets[1]?.p1 || "",
+    set2P2: match.sets[1]?.p2 || "",
+    set3P1: match.sets[2]?.p1 || "",
+    set3P2: match.sets[2]?.p2 || "",
+    set3Disabled: !match.sets[2],
+  };
+
+  render();
+}
+
+// Vereinheitlichte Bearbeiten-Funktion für Doubles
+async function editDoublesMatch(matchId) {
+  const match = state.doublesMatches.find((m) => m.id === matchId);
+  if (!match) {
+    Toast.error("Spiel nicht gefunden");
+    return;
+  }
+
+  Toast.info("Bearbeitungsfunktion für Doppel-Spiele wird noch implementiert");
+}
+
+// Vereinheitlichte Löschen-Funktion für Singles (inkl. Knockout)
+async function deleteSinglesMatch(matchId) {
+  const match = state.singlesMatches.find((m) => m.id === matchId);
+  if (!match) {
+    Toast.error("Spiel nicht gefunden");
+    return;
+  }
+
+  const player1 = getPlayerName(match.player1Id);
+  const player2 = getPlayerName(match.player2Id);
+
+  const confirmed = await Modal.confirm({
+    title: 'Spiel löschen?',
+    message: `Möchtest du das Spiel zwischen ${player1} und ${player2} wirklich löschen?`,
+    confirmText: 'Ja, löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  });
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await db.collection("singlesMatches").doc(matchId).delete();
+    Toast.success("Spiel erfolgreich gelöscht");
+  } catch (error) {
+    console.error("Error deleting singles match:", error);
+    Toast.error("Fehler beim Löschen");
+  }
+}
+
+// Vereinheitlichte Löschen-Funktion für Doubles
+async function deleteDoublesMatch(matchId) {
+  const match = state.doublesMatches.find((m) => m.id === matchId);
+  if (!match) {
+    Toast.error("Spiel nicht gefunden");
+    return;
+  }
+
+  const team1 = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
+  const team2 = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
+
+  const confirmed = await Modal.confirm({
+    title: 'Spiel löschen?',
+    message: `Möchtest du das Doppel-Spiel zwischen ${team1} und ${team2} wirklich löschen?`,
+    confirmText: 'Ja, löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  });
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await db.collection("doublesMatches").doc(matchId).delete();
+    Toast.success("Spiel erfolgreich gelöscht");
+  } catch (error) {
+    console.error("Error deleting doubles match:", error);
+    Toast.error("Fehler beim Löschen");
   }
 }

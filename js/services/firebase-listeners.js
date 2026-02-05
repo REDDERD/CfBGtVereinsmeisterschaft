@@ -38,14 +38,23 @@ function initFirebaseListeners() {
       render();
     });
 
-  // Singles Matches
+  // Singles Matches - jetzt inkl. Knockout-Matches
   db.collection("singlesMatches")
     .orderBy("date", "desc")
     .onSnapshot((snapshot) => {
-      state.singlesMatches = snapshot.docs.map((doc) => ({
+      const allSingles = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+      
+      // Filtere nach Gruppenspiele und KO-Spiele
+      state.singlesMatches = allSingles;
+      
+      // Extrahiere die KO-Matches für separate Anzeige
+      state.knockoutMatches = allSingles.filter(match => 
+        match.round && match.round !== 'group1' && match.round !== 'group2'
+      );
+      
       render();
     });
 
@@ -101,17 +110,6 @@ function initFirebaseListeners() {
         state.frozenStandings = doc.data().frozenStandings || null;
         render();
       }
-    });
-
-  // Knockout Matches
-  db.collection("knockoutMatches")
-    .orderBy("createdAt", "desc")
-    .onSnapshot((snapshot) => {
-      state.knockoutMatches = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      render();
     });
 
   // Knockout Config

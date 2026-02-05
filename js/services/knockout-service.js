@@ -79,23 +79,23 @@ async function saveKnockoutMatch() {
     );
 
     if (existingMatch) {
-      // Update existing match
-      await db.collection("knockoutMatches").doc(existingMatch.id).update({
+      // Update existing match - jetzt in singlesMatches
+      await db.collection("singlesMatches").doc(existingMatch.id).update({
         player1Id,
         player2Id,
         sets,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } else {
-      // Create new match
-      await db.collection("knockoutMatches").add({
+      // Create new match - jetzt in singlesMatches mit round-Feld
+      await db.collection("singlesMatches").add({
         round,
         matchNum,
         player1Id,
         player2Id,
         sets,
         status: defaultStatus,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        date: firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
 
@@ -105,45 +105,6 @@ async function saveKnockoutMatch() {
   } catch (error) {
     console.error("Fehler beim Speichern:", error);
     Toast.error("Fehler beim Speichern: " + error.message);
-  }
-}
-
-async function cancelKnockoutMatch(round, matchNum) {
-  const canCancel = checkCanCancelMatch(round, matchNum);
-
-  if (!canCancel) {
-    Toast.warning(
-      "Dieses Spiel kann nicht mehr storniert werden, da bereits ein nachfolgendes Spiel stattgefunden hat.",
-      4000,
-    );
-    return;
-  }
-
-  const confirmed = await Modal.confirm({
-    title: "Spielergebnis stornieren?",
-    message:
-      "Möchtest du das Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt.",
-    confirmText: "Stornieren",
-    cancelText: "Abbrechen",
-    type: "warning",
-  });
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-    const match = state.knockoutMatches.find(
-      (m) => m.round === round && m.matchNum === matchNum,
-    );
-    if (match) {
-      await db.collection("knockoutMatches").doc(match.id).delete();
-      Toast.success("Spielergebnis storniert.");
-      render();
-    }
-  } catch (error) {
-    console.error("Fehler beim Stornieren:", error);
-    Toast.error("Fehler beim Stornieren: " + error.message);
   }
 }
 
@@ -241,15 +202,15 @@ async function deactivateKnockoutPhase() {
     deactivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Delete all knockoutMatches from Firebase
-  await db
-    .collection("knockoutMatches")
-    .get()
-    .then((res) => {
-      res.forEach((element) => {
-        element.ref.delete();
-      });
-    });
+  // Delete all knockoutMatches from Firebase - jetzt aus singlesMatches
+  // Lösche alle Spiele mit round !== 'group1' und !== 'group2'
+  const knockoutMatchesToDelete = state.singlesMatches.filter(
+    match => match.round && match.round !== 'group1' && match.round !== 'group2'
+  );
+  
+  for (const match of knockoutMatchesToDelete) {
+    await db.collection("singlesMatches").doc(match.id).delete();
+  }
 
   Toast.success("K.O.-Phase deaktiviert.");
   render();
@@ -393,59 +354,4 @@ async function saveDoublesRanking() {
     });
 
   Toast.success("Rangfolge gespeichert!");
-}
-// Bearbeiten von KO-Spielen
-async function editKnockoutMatch(matchId) {
-  const match = state.knockoutMatches.find((m) => m.id === matchId);
-  if (!match) {
-    Toast.error("Spiel nicht gefunden");
-    return;
-  }
-
-  // Öffne das Entry-Modal mit vorausgefüllten Daten
-  state.knockoutEntryMatch = {
-    round: match.round,
-    matchNum: match.matchNum,
-    editing: true,
-    matchId: matchId,
-  };
-
-  // Setze die Werte im State (werden im Render verwendet)
-  state.matchEntry = {
-    set1P1: match.sets[0]?.p1 || "",
-    set1P2: match.sets[0]?.p2 || "",
-    set2P1: match.sets[1]?.p1 || "",
-    set2P2: match.sets[1]?.p2 || "",
-    set3P1: match.sets[2]?.p1 || "",
-    set3P2: match.sets[2]?.p2 || "",
-    set3Disabled: !match.sets[2],
-  };
-
-  render();
-}
-
-// Löschen von KO-Spielen
-async function deleteKnockoutMatch(matchId) {
-  const match = state.knockoutMatches.find((m) => m.id === matchId);
-  if (!match) {
-    Toast.error("Spiel nicht gefunden");
-    return;
-  }
-
-  const player1 = getPlayerName(match.player1Id);
-  const player2 = getPlayerName(match.player2Id);
-
-  Modal.confirm(
-    "Spiel löschen?",
-    `Möchtest du das K.O.-Spiel zwischen ${player1} und ${player2} wirklich löschen?`,
-    async () => {
-      try {
-        await db.collection("knockoutMatches").doc(matchId).delete();
-        Toast.success("Spiel erfolgreich gelöscht");
-      } catch (error) {
-        console.error("Error deleting knockout match:", error);
-        Toast.error("Fehler beim Löschen");
-      }
-    },
-  );
 }

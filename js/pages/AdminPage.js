@@ -472,6 +472,7 @@ function AdminDoublesRankingTab() {
 
 function AdminMatchApprovalTab() {
   // Filtere Spiele basierend auf den ausgewählten Status-Filtern
+  // Singles-Matches enthalten jetzt auch KO-Matches, daher werden alle zusammen gefiltert
   const filteredSingles = state.singlesMatches.filter((match) => {
     const status = match.status || "confirmed";
     if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
@@ -493,27 +494,15 @@ function AdminMatchApprovalTab() {
       return true;
     return false;
   });
-  
-  // KO-Spiele mit Status-Filterung (genau wie Einzel)
-  const filteredKnockout = state.knockoutMatches.filter((match) => {
-    const status = match.status || "confirmed";
-    if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
-      return true;
-    if (status === "confirmed" && state.matchApprovalFilters.showConfirmed)
-      return true;
-    if (status === "rejected" && state.matchApprovalFilters.showRejected)
-      return true;
-    return false;
-  });
 
   // Kombiniere und sortiere nach Datum
+  // Da KO-Matches jetzt Teil von singlesMatches sind, werden sie automatisch mit einbezogen
   const allMatches = [
     ...filteredSingles.map((m) => ({ ...m, type: "singles" })),
     ...filteredDoubles.map((m) => ({ ...m, type: "doubles" })),
-    ...filteredKnockout.map((m) => ({ ...m, type: "knockout" })),
   ].sort((a, b) => {
-    const aTime = a.date?.seconds || a.createdAt?.seconds || 0;
-    const bTime = b.date?.seconds || b.createdAt?.seconds || 0;
+    const aTime = a.date?.seconds || 0;
+    const bTime = b.date?.seconds || 0;
     return bTime - aTime;
   });
 

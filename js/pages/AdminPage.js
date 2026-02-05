@@ -469,10 +469,11 @@ function AdminDoublesRankingTab() {
     `;
 }
 
+
 function AdminMatchApprovalTab() {
   // Filtere Spiele basierend auf den ausgewählten Status-Filtern
   const filteredSingles = state.singlesMatches.filter((match) => {
-    const status = match.status || "confirmed"; // alte Spiele ohne Status als bestätigt behandeln
+    const status = match.status || "confirmed";
     if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
       return true;
     if (status === "confirmed" && state.matchApprovalFilters.showConfirmed)
@@ -499,34 +500,8 @@ function AdminMatchApprovalTab() {
     ...filteredDoubles.map((m) => ({ ...m, type: "doubles" })),
   ].sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      unconfirmed: {
-        label: "Unbestätigt",
-        color: "bg-orange-100 text-orange-800 border-orange-300",
-      },
-      confirmed: {
-        label: "Bestätigt",
-        color: "bg-green-100 text-green-800 border-green-300",
-      },
-      rejected: {
-        label: "Abgelehnt",
-        color: "bg-red-100 text-red-800 border-red-300",
-      },
-    };
-    const s = statusMap[status] || statusMap["unconfirmed"];
-    return `<span class="px-2 py-1 text-xs font-semibold rounded border ${s.color}">${s.label}</span>`;
-  };
-
-  const getTypeBadge = (type) => {
-    return type === "singles"
-      ? '<span class="px-2 py-1 text-xs font-semibold rounded border bg-yellow-100 text-yellow-800 border-yellow-300">Einzel</span>'
-      : '<span class="px-2 py-1 text-xs font-semibold rounded border bg-blue-100 text-blue-800 border-blue-300">Doppel</span>';
-  };
-
   return `
     <div>
-
       <!-- Status-Filter -->
       <div class="bg-gray-50 rounded-lg p-4 mb-6">
         <h4 class="font-semibold text-gray-700 mb-3">Filter nach Status</h4>
@@ -562,65 +537,7 @@ function AdminMatchApprovalTab() {
       `
           : `
         <div class="space-y-3">
-          ${allMatches
-            .map((match) => {
-              const status = match.status || "confirmed";
-              const date = match.date
-                ? new Date(match.date.seconds * 1000).toLocaleDateString(
-                    "de-DE",
-                  )
-                : "Unbekannt";
-
-              let player1, player2, score;
-              if (match.type === "singles") {
-                player1 = getPlayerName(match.player1Id);
-                player2 = getPlayerName(match.player2Id);
-                score = match.sets.map((s) => `${s.p1}:${s.p2}`).join(", ");
-              } else {
-                player1 = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
-                player2 = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
-                score = match.sets.map((s) => `${s.t1}:${s.t2}`).join(", ");
-              }
-
-              return `
-              <div class="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div class="flex-1">
-                    <div class="flex flex-wrap items-center gap-2 mb-2">
-                      ${getTypeBadge(match.type)}
-                      ${getStatusBadge(status)}
-                      <span class="text-sm text-gray-500">${date}</span>
-                    </div>
-                    <div class="font-medium text-gray-800 mb-1">
-                      ${player1} <span class="text-gray-500">vs</span> ${player2}
-                    </div>
-                    <div class="text-sm text-indigo-600 font-semibold">
-                      ${score}
-                    </div>
-                  </div>
-                  <div class="flex gap-2">
-                    <button 
-                      onclick="updateMatchStatus('${match.id}', '${match.type}', 'confirmed')" 
-                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
-                      title="Bestätigen">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                      </svg>
-                    </button>
-                    <button 
-                      onclick="updateMatchStatus('${match.id}', '${match.type}', 'rejected')" 
-                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
-                      title="Ablehnen">
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
-            })
-            .join("")}
+          ${allMatches.map(match => MatchCard(match, 'admin')).join('')}
         </div>
       `
       }

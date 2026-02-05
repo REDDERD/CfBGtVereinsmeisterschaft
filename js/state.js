@@ -57,4 +57,10 @@ const state = {
     showConfirmed: false,
     showRejected: false,
   },
+  // Neue Filter für MatchesPage
+  matchTypeFilters: {
+    showSingles: true,
+    showDoubles: true,
+  },
+  matchesSearchQuery: "",
 };

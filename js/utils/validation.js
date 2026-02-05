@@ -13,8 +13,6 @@ function validateSet(p1, p2) {
   
   const higherScore = Math.max(n1, n2);
   const lowerScore = Math.min(n1, n2);
-
-  console.log("mark1");
   
   // Standard-Gewinn: Erster auf 21 mit mindestens 2 Punkten Vorsprung
   if (higherScore === 21 && lowerScore <= 19) return true;

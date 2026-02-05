@@ -597,3 +597,110 @@ async function submitChallengeMatch(player1Id, player2Id) {
     Toast.error("Fehler beim Eintragen des Spiels");
   }
 }
+// ========== Match Type Filters (MatchesPage) ==========
+
+function toggleMatchTypeFilter(type) {
+  if (type === 'singles') {
+    state.matchTypeFilters.showSingles = !state.matchTypeFilters.showSingles;
+  } else if (type === 'doubles') {
+    state.matchTypeFilters.showDoubles = !state.matchTypeFilters.showDoubles;
+  }
+  render();
+}
+
+function updateMatchesSearch(query) {
+  state.matchesSearchQuery = query;
+  render();
+}
+
+// ========== Match Status Filters (AdminPage) ==========
+
+function toggleMatchStatusFilter(status) {
+  if (status === 'unconfirmed') {
+    state.matchApprovalFilters.showUnconfirmed = !state.matchApprovalFilters.showUnconfirmed;
+  } else if (status === 'confirmed') {
+    state.matchApprovalFilters.showConfirmed = !state.matchApprovalFilters.showConfirmed;
+  } else if (status === 'rejected') {
+    state.matchApprovalFilters.showRejected = !state.matchApprovalFilters.showRejected;
+  }
+  render();
+}
+
+// ========== Export Functions ==========
+
+async function exportAllMatches() {
+  // Kombiniere alle Spiele
+  const allMatches = [];
+  
+  // Einzelspiele
+  state.singlesMatches.forEach(match => {
+    const p1Name = getPlayerName(match.player1Id);
+    const p2Name = getPlayerName(match.player2Id);
+    const scoreText = match.sets ? match.sets.map(s => `${s.p1}:${s.p2}`).join(', ') : 'Ausstehend';
+    let p1Sets = 0, p2Sets = 0;
+    if (match.sets) {
+      match.sets.forEach(set => {
+        if (set.p1 > set.p2) p1Sets++;
+        else p2Sets++;
+      });
+    }
+    const dateStr = match.date ? new Date(match.date.seconds * 1000).toLocaleDateString('de-DE') : '';
+    const knockoutRound = match.knockoutRound || '';
+    
+    allMatches.push({
+      Typ: 'Einzel',
+      'KO-Runde': knockoutRound,
+      'Spieler 1': p1Name,
+      'Spieler 2': p2Name,
+      'Sätze Spieler 1': p1Sets,
+      'Sätze Spieler 2': p2Sets,
+      Ergebnis: scoreText,
+      Datum: dateStr
+    });
+  });
+  
+  // Doppelspiele
+  state.doublesMatches.forEach(match => {
+    const t1 = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
+    const t2 = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
+    const scoreText = match.sets ? match.sets.map(s => `${s.t1}:${s.t2}`).join(', ') : 'Ausstehend';
+    let t1Sets = 0, t2Sets = 0;
+    if (match.sets) {
+      match.sets.forEach(set => {
+        if (set.t1 > set.t2) t1Sets++;
+        else t2Sets++;
+      });
+    }
+    const dateStr = match.date ? new Date(match.date.seconds * 1000).toLocaleDateString('de-DE') : '';
+    
+    allMatches.push({
+      Typ: 'Doppel',
+      'KO-Runde': '',
+      'Team 1': t1,
+      'Team 2': t2,
+      'Sätze Team 1': t1Sets,
+      'Sätze Team 2': t2Sets,
+      Ergebnis: scoreText,
+      Datum: dateStr
+    });
+  });
+  
+  // Sortiere nach Datum
+  allMatches.sort((a, b) => {
+    const dateA = a.Datum ? new Date(a.Datum.split('.').reverse().join('-')) : new Date(0);
+    const dateB = b.Datum ? new Date(b.Datum.split('.').reverse().join('-')) : new Date(0);
+    return dateB - dateA;
+  });
+  
+  // Excel exportieren
+  try {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(allMatches);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Alle Spiele");
+    XLSX.writeFile(workbook, `Vereinsmeisterschaft_Alle_Spiele_${new Date().toISOString().split('T')[0]}.xlsx`);
+    Toast.success("Export erfolgreich!");
+  } catch (error) {
+    console.error("Export error:", error);
+    Toast.error("Fehler beim Export");
+  }
+}

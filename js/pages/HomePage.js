@@ -3,6 +3,13 @@
 function HomePage() {
   const recentMatches = [...state.singlesMatches, ...state.doublesMatches]
     .filter(match => match.status === 'confirmed') // Nur bestätigte Spiele
+    .map(match => {
+      // Füge type-Feld hinzu falls nicht vorhanden
+      if (!match.type) {
+        match.type = match.player1Id ? 'singles' : 'doubles';
+      }
+      return match;
+    })
     .sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0))
     .slice(0, 5);
 
@@ -102,14 +109,7 @@ function HomePage() {
           <p class="text-gray-500 text-center py-8">Noch keine Spiele eingetragen</p>
         ` : `
           <div class="space-y-3">
-            ${recentMatches.map((match) => {
-              const scoreText = match.sets ? match.sets.map((s) => `${s.p1 ?? s.t1}:${s.p2 ?? s.t2}`).join(", ") : "Ausstehend";
-              return `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span class="font-medium">${getPlayerName(match.player1Id || match.team1?.player1Id)} vs ${getPlayerName(match.player2Id || match.team2?.player1Id)}</span>
-                  <span class="text-indigo-600 font-bold">${scoreText}</span>
-                </div>`;
-            }).join("")}
+            ${recentMatches.map(match => MatchCard(match, 'home')).join('')}
           </div>
         `}
       </div>

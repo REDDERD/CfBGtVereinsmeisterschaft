@@ -68,6 +68,11 @@ async function saveKnockoutMatch() {
   }
 
   try {
+    // Bestimme Status basierend auf Admin/User
+    const defaultStatus = state.isAdmin
+      ? state.matchStatusSettings.singlesAdminDefault
+      : state.matchStatusSettings.singlesUserDefault;
+
     // Prüfe ob bereits ein Ergebnis für dieses Spiel existiert
     const existingMatch = state.knockoutMatches.find(
       (m) => m.round === round && m.matchNum === matchNum,
@@ -89,6 +94,7 @@ async function saveKnockoutMatch() {
         player1Id,
         player2Id,
         sets,
+        status: defaultStatus,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
@@ -108,17 +114,18 @@ async function cancelKnockoutMatch(round, matchNum) {
   if (!canCancel) {
     Toast.warning(
       "Dieses Spiel kann nicht mehr storniert werden, da bereits ein nachfolgendes Spiel stattgefunden hat.",
-      4000
+      4000,
     );
     return;
   }
 
   const confirmed = await Modal.confirm({
-    title: 'Spielergebnis stornieren?',
-    message: 'Möchtest du das Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt.',
-    confirmText: 'Stornieren',
-    cancelText: 'Abbrechen',
-    type: 'warning'
+    title: "Spielergebnis stornieren?",
+    message:
+      "Möchtest du das Spielergebnis wirklich stornieren? Der Gewinner wird aus der nächsten Runde entfernt.",
+    confirmText: "Stornieren",
+    cancelText: "Abbrechen",
+    type: "warning",
   });
 
   if (!confirmed) {
@@ -171,11 +178,12 @@ function checkCanCancelMatch(round, matchNum) {
 
 async function activateKnockoutPhase() {
   const confirmed = await Modal.confirm({
-    title: 'K.O.-Phase starten?',
-    message: 'Möchtest du die K.O.-Phase jetzt starten? Die aktuellen Gruppenphase-Tabellen werden eingefroren und können nicht mehr geändert werden.',
-    confirmText: 'K.O.-Phase starten',
-    cancelText: 'Abbrechen',
-    type: 'warning'
+    title: "K.O.-Phase starten?",
+    message:
+      "Möchtest du die K.O.-Phase jetzt starten? Die aktuellen Gruppenphase-Tabellen werden eingefroren und können nicht mehr geändert werden.",
+    confirmText: "K.O.-Phase starten",
+    cancelText: "Abbrechen",
+    type: "warning",
   });
 
   if (!confirmed) {
@@ -201,17 +209,21 @@ async function activateKnockoutPhase() {
     activatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  Toast.success("K.O.-Phase aktiviert! Die Gruppenphase-Tabellen wurden eingefroren.", 4000);
+  Toast.success(
+    "K.O.-Phase aktiviert! Die Gruppenphase-Tabellen wurden eingefroren.",
+    4000,
+  );
   render();
 }
 
 async function deactivateKnockoutPhase() {
   const confirmed = await Modal.confirm({
-    title: 'K.O.-Phase deaktivieren?',
-    message: 'Möchtest du die K.O.-Phase wirklich deaktivieren? Die Ergebnisse der Gruppenphase bleiben erhalten, aber alle Spiele der K.O.-Phase werden verworfen.',
-    confirmText: 'Deaktivieren',
-    cancelText: 'Abbrechen',
-    type: 'danger'
+    title: "K.O.-Phase deaktivieren?",
+    message:
+      "Möchtest du die K.O.-Phase wirklich deaktivieren? Die Ergebnisse der Gruppenphase bleiben erhalten, aber alle Spiele der K.O.-Phase werden verworfen.",
+    confirmText: "Deaktivieren",
+    cancelText: "Abbrechen",
+    type: "danger",
   });
 
   if (!confirmed) {
@@ -304,13 +316,13 @@ function movePlayerDown(index) {
 
 async function removePlayerFromRanking(index, playerId) {
   const playerName = getPlayerName(playerId);
-  
+
   const confirmed = await Modal.confirm({
-    title: 'Spieler aus Rangfolge löschen',
+    title: "Spieler aus Rangfolge löschen",
     message: `Möchtest du wirklich <strong>${playerName}</strong> aus der Doppel-Rangfolge entfernen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-    confirmText: 'Ja, löschen',
-    cancelText: 'Abbrechen',
-    type: 'danger'
+    confirmText: "Ja, löschen",
+    cancelText: "Abbrechen",
+    type: "danger",
   });
 
   if (!confirmed) {
@@ -381,4 +393,59 @@ async function saveDoublesRanking() {
     });
 
   Toast.success("Rangfolge gespeichert!");
+}
+// Bearbeiten von KO-Spielen
+async function editKnockoutMatch(matchId) {
+  const match = state.knockoutMatches.find((m) => m.id === matchId);
+  if (!match) {
+    Toast.error("Spiel nicht gefunden");
+    return;
+  }
+
+  // Öffne das Entry-Modal mit vorausgefüllten Daten
+  state.knockoutEntryMatch = {
+    round: match.round,
+    matchNum: match.matchNum,
+    editing: true,
+    matchId: matchId,
+  };
+
+  // Setze die Werte im State (werden im Render verwendet)
+  state.matchEntry = {
+    set1P1: match.sets[0]?.p1 || "",
+    set1P2: match.sets[0]?.p2 || "",
+    set2P1: match.sets[1]?.p1 || "",
+    set2P2: match.sets[1]?.p2 || "",
+    set3P1: match.sets[2]?.p1 || "",
+    set3P2: match.sets[2]?.p2 || "",
+    set3Disabled: !match.sets[2],
+  };
+
+  render();
+}
+
+// Löschen von KO-Spielen
+async function deleteKnockoutMatch(matchId) {
+  const match = state.knockoutMatches.find((m) => m.id === matchId);
+  if (!match) {
+    Toast.error("Spiel nicht gefunden");
+    return;
+  }
+
+  const player1 = getPlayerName(match.player1Id);
+  const player2 = getPlayerName(match.player2Id);
+
+  Modal.confirm(
+    "Spiel löschen?",
+    `Möchtest du das K.O.-Spiel zwischen ${player1} und ${player2} wirklich löschen?`,
+    async () => {
+      try {
+        await db.collection("knockoutMatches").doc(matchId).delete();
+        Toast.success("Spiel erfolgreich gelöscht");
+      } catch (error) {
+        console.error("Error deleting knockout match:", error);
+        Toast.error("Fehler beim Löschen");
+      }
+    },
+  );
 }

@@ -1,17 +1,26 @@
 // js/pages/MatchesPage.js
-// Seite für alle Spiele (Einzel und Doppel) mit Toggle-Filter
+// Seite für alle Spiele (Einzel, Doppel und KO) mit Toggle-Filter
 
 function MatchesPage() {
   // Filtere und kombiniere alle Spiele
   const allMatches = [];
   
-  // Einzelspiele (inkl. KO-Spiele)
+  // Einzelspiele (Gruppenphase)
   if (state.matchTypeFilters.showSingles) {
     const singlesMatches = state.singlesMatches.map(match => ({
       ...match,
       type: 'singles'
     }));
     allMatches.push(...singlesMatches);
+  }
+  
+  // KO-Spiele (sind auch Einzelspiele)
+  if (state.matchTypeFilters.showSingles) {
+    const knockoutMatches = state.knockoutMatches.map(match => ({
+      ...match,
+      type: 'knockout'
+    }));
+    allMatches.push(...knockoutMatches);
   }
   
   // Doppelspiele
@@ -28,7 +37,7 @@ function MatchesPage() {
   const filteredMatches = allMatches.filter(match => {
     if (!searchQuery) return true;
     
-    if (match.type === 'singles') {
+    if (match.type === 'singles' || match.type === 'knockout') {
       const p1Name = getPlayerName(match.player1Id).toLowerCase();
       const p2Name = getPlayerName(match.player2Id).toLowerCase();
       return p1Name.includes(searchQuery.toLowerCase()) || p2Name.includes(searchQuery.toLowerCase());
@@ -44,7 +53,11 @@ function MatchesPage() {
   });
   
   // Sortieren nach Datum (neueste zuerst)
-  filteredMatches.sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+  filteredMatches.sort((a, b) => {
+    const aTime = a.date?.seconds || a.createdAt?.seconds || 0;
+    const bTime = b.date?.seconds || b.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
   
   return `
     <div class="space-y-6">
@@ -62,7 +75,7 @@ function MatchesPage() {
                   ? 'bg-yellow-100 border-yellow-400 text-yellow-800 font-semibold'
                   : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
               }">
-              Einzel
+              Einzel (inkl. KO)
             </button>
             <button 
               onclick="toggleMatchTypeFilter('doubles')" 

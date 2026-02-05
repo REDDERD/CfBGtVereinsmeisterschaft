@@ -3,6 +3,12 @@
 
 function render() {
   const app = document.getElementById("app");
+  
+  // Speichere das aktuelle aktive Element und dessen Cursor-Position
+  const activeElement = document.activeElement;
+  const activeElementId = activeElement?.id;
+  const selectionStart = activeElement?.selectionStart;
+  const selectionEnd = activeElement?.selectionEnd;
 
   let content = "";
 
@@ -38,4 +44,19 @@ function render() {
       ${content}
     </div>
   `;
+  
+  // Stelle den Fokus und die Cursor-Position wieder her
+  if (activeElementId) {
+    const element = document.getElementById(activeElementId);
+    if (element) {
+      element.focus();
+      if (typeof selectionStart === 'number' && typeof selectionEnd === 'number') {
+        try {
+          element.setSelectionRange(selectionStart, selectionEnd);
+        } catch (e) {
+          // Ignoriere Fehler bei Elementen die keine Selection unterstützen
+        }
+      }
+    }
+  }
 }

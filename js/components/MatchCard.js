@@ -9,18 +9,22 @@
  */
 function MatchCard(match, context = 'home') {
   const isAdmin = state.isAdmin;
-  const isSingles = match.type === 'singles' || match.player1Id; // Fallback für alte Spiele ohne type
+  const isSingles = match.type === 'singles' || (match.player1Id && !match.round);
+  const isKnockout = match.type === 'knockout' || match.round;
   const status = match.status || 'confirmed';
   
   // Datum formatieren
-  const dateStr = match.date 
-    ? new Date(match.date.seconds ? match.date.seconds * 1000 : match.date.toDate()).toLocaleDateString('de-DE')
-    : '';
+  let dateStr = '';
+  if (match.date) {
+    dateStr = new Date(match.date.seconds ? match.date.seconds * 1000 : match.date.toDate()).toLocaleDateString('de-DE');
+  } else if (match.createdAt) {
+    dateStr = new Date(match.createdAt.seconds * 1000).toLocaleDateString('de-DE');
+  }
   
   // Spieler-Namen und Score ermitteln
   let player1Name, player2Name, scoreText, player1Sets, player2Sets;
   
-  if (isSingles) {
+  if (isSingles || isKnockout) {
     player1Name = getPlayerName(match.player1Id);
     player2Name = getPlayerName(match.player2Id);
     scoreText = match.sets ? match.sets.map(s => `${s.p1}:${s.p2}`).join(', ') : 'Ausstehend';
@@ -53,6 +57,9 @@ function MatchCard(match, context = 'home') {
   
   // Badge-Funktionen
   const getTypeBadge = () => {
+    if (isKnockout) {
+      return '<span class="px-2 py-1 text-xs font-semibold rounded border bg-yellow-100 text-yellow-800 border-yellow-300">Einzel</span>';
+    }
     return isSingles
       ? '<span class="px-2 py-1 text-xs font-semibold rounded border bg-yellow-100 text-yellow-800 border-yellow-300">Einzel</span>'
       : '<span class="px-2 py-1 text-xs font-semibold rounded border bg-blue-100 text-blue-800 border-blue-300">Doppel</span>';
@@ -80,16 +87,20 @@ function MatchCard(match, context = 'home') {
   };
   
   const getKnockoutBadge = () => {
-    if (!match.knockoutRound) return '';
+    if (!match.round && !match.knockoutRound) return '';
     
+    const round = match.round || match.knockoutRound;
     const roundNames = {
       'final': 'Finale',
       'semifinal': 'Halbfinale',
+      'semi': 'Halbfinale',
       'quarterfinal': 'Viertelfinale',
-      'round16': 'Achtelfinale'
+      'quarter': 'Viertelfinale',
+      'round16': 'Achtelfinale',
+      'thirdPlace': 'Platz 3'
     };
     
-    const roundName = roundNames[match.knockoutRound] || match.knockoutRound;
+    const roundName = roundNames[round] || round;
     return `<span class="px-2 py-1 text-xs font-semibold rounded border bg-purple-100 text-purple-800 border-purple-300">${roundName}</span>`;
   };
   
@@ -102,76 +113,93 @@ function MatchCard(match, context = 'home') {
         return ''; // Keine Buttons auf der Homepage
         
       case 'matches':
-        // Bearbeiten und Löschen Buttons
-        const matchType = isSingles ? 'singles' : 'doubles';
-        const editFunction = isSingles ? 'editSinglesMatch' : 'editDoublesMatch';
-        const deleteFunction = isSingles ? 'deleteSinglesMatch' : 'deleteDoublesMatch';
-        
-        return `
-          <div class="flex space-x-2 ml-4">
-            <button 
-              onclick="${editFunction}('${match.id}')" 
-              class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
-              title="Bearbeiten">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-              </svg>
-            </button>
-            <button 
-              onclick="${deleteFunction}('${match.id}')" 
-              class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
-              title="Löschen">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
-            </button>
-          </div>
-        `;
+        return ''; // Keine Buttons mehr auf der MatchesPage
         
       case 'admin':
-        // Status-Buttons
-        const buttons = [];
+        // 2x2 Grid mit Status-Buttons (oben) und Edit/Delete-Buttons (unten)
+        const matchType = isKnockout ? 'knockout' : (isSingles ? 'singles' : 'doubles');
+        const editFunction = isKnockout ? 'editKnockoutMatch' : (isSingles ? 'editSinglesMatch' : 'editDoublesMatch');
+        const deleteFunction = isKnockout ? 'deleteKnockoutMatch' : (isSingles ? 'deleteSinglesMatch' : 'deleteDoublesMatch');
+        
+        // Status-Buttons (nur die anzeigen, die nicht der aktuelle Status sind)
+        const statusButtons = [];
         
         if (status !== 'confirmed') {
-          buttons.push(`
+          statusButtons.push(`
             <button 
-              onclick="updateMatchStatus('${match.id}', '${isSingles ? 'singles' : 'doubles'}', 'confirmed')" 
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+              onclick="updateMatchStatus('${match.id}', '${matchType}', 'confirmed')" 
+              class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
               title="Bestätigen">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
               </svg>
             </button>
           `);
+        } else {
+          statusButtons.push('<div></div>'); // Platzhalter
         }
         
         if (status !== 'rejected') {
-          buttons.push(`
+          statusButtons.push(`
             <button 
-              onclick="updateMatchStatus('${match.id}', '${isSingles ? 'singles' : 'doubles'}', 'rejected')" 
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+              onclick="updateMatchStatus('${match.id}', '${matchType}', 'rejected')" 
+              class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
               title="Ablehnen">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           `);
+        } else {
+          statusButtons.push('<div></div>'); // Platzhalter
         }
         
         if (status !== 'unconfirmed') {
-          buttons.push(`
+          statusButtons.push(`
             <button 
-              onclick="updateMatchStatus('${match.id}', '${isSingles ? 'singles' : 'doubles'}', 'unconfirmed')" 
-              class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center"
+              onclick="updateMatchStatus('${match.id}', '${matchType}', 'unconfirmed')" 
+              class="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center"
               title="Auf Unbestätigt setzen">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
             </button>
           `);
         }
         
-        return `<div class="flex gap-2">${buttons.join('')}</div>`;
+        // Wenn alle 3 Status-Buttons angezeigt werden sollen, zeige nur 2 (die wichtigsten)
+        // um das Grid sauber zu halten
+        const visibleStatusButtons = statusButtons.filter(btn => btn !== '<div></div>').slice(0, 2);
+        
+        // Fülle mit Platzhaltern auf, wenn nur 1 Status-Button
+        while (visibleStatusButtons.length < 2) {
+          visibleStatusButtons.push('<div></div>');
+        }
+        
+        return `
+          <div class="grid grid-cols-2 gap-2 ml-4" style="min-width: 120px;">
+            <!-- Zeile 1: Status-Buttons -->
+            ${visibleStatusButtons.join('')}
+            
+            <!-- Zeile 2: Edit/Delete-Buttons -->
+            <button 
+              onclick="${editFunction}('${match.id}')" 
+              class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+              title="Bearbeiten">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            <button 
+              onclick="${deleteFunction}('${match.id}')" 
+              class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
+              title="Löschen">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        `;
         
       default:
         return '';

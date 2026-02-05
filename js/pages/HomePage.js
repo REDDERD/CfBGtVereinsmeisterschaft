@@ -1,16 +1,29 @@
 // js/pages/HomePage.js
 
 function HomePage() {
-  const recentMatches = [...state.singlesMatches, ...state.doublesMatches]
-    .filter(match => match.status === 'confirmed') // Nur bestätigte Spiele
-    .map(match => {
-      // Füge type-Feld hinzu falls nicht vorhanden
-      if (!match.type) {
-        match.type = match.player1Id ? 'singles' : 'doubles';
-      }
-      return match;
+  // Kombiniere alle Spiele: Singles, KO und Doubles
+  const allMatches = [
+    ...state.singlesMatches.filter(match => match.status === 'confirmed').map(match => ({
+      ...match,
+      type: 'singles'
+    })),
+    ...state.knockoutMatches.map(match => ({
+      ...match,
+      type: 'knockout'
+    })),
+    ...state.doublesMatches.filter(match => match.status === 'confirmed').map(match => ({
+      ...match,
+      type: 'doubles'
+    }))
+  ];
+  
+  // Sortiere nach Datum und nimm die letzten 5
+  const recentMatches = allMatches
+    .sort((a, b) => {
+      const aTime = a.date?.seconds || a.createdAt?.seconds || 0;
+      const bTime = b.date?.seconds || b.createdAt?.seconds || 0;
+      return bTime - aTime;
     })
-    .sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0))
     .slice(0, 5);
 
   const today = new Date();

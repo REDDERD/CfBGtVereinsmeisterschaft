@@ -42,3 +42,35 @@ async function updateMatchStatusSettings() {
     }
   }
 }
+// Update Match Status (Singles, Doubles und Knockout)
+async function updateMatchStatus(matchId, matchType, newStatus) {
+  try {
+    let collection;
+    if (matchType === 'singles') {
+      collection = 'singlesMatches';
+    } else if (matchType === 'doubles') {
+      collection = 'doublesMatches';
+    } else if (matchType === 'knockout') {
+      collection = 'knockoutMatches';
+    } else {
+      Toast.error('Unbekannter Spieltyp');
+      return;
+    }
+    
+    await db.collection(collection).doc(matchId).update({
+      status: newStatus,
+      statusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    const statusNames = {
+      'confirmed': 'bestätigt',
+      'rejected': 'abgelehnt',
+      'unconfirmed': 'auf unbestätigt gesetzt'
+    };
+    
+    Toast.success(`Spiel ${statusNames[newStatus]}`);
+  } catch (error) {
+    console.error('Error updating match status:', error);
+    Toast.error('Fehler beim Aktualisieren des Status');
+  }
+}

@@ -493,12 +493,29 @@ function AdminMatchApprovalTab() {
       return true;
     return false;
   });
+  
+  // KO-Spiele mit Status-Filterung (genau wie Einzel)
+  const filteredKnockout = state.knockoutMatches.filter((match) => {
+    const status = match.status || "confirmed";
+    if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
+      return true;
+    if (status === "confirmed" && state.matchApprovalFilters.showConfirmed)
+      return true;
+    if (status === "rejected" && state.matchApprovalFilters.showRejected)
+      return true;
+    return false;
+  });
 
   // Kombiniere und sortiere nach Datum
   const allMatches = [
     ...filteredSingles.map((m) => ({ ...m, type: "singles" })),
     ...filteredDoubles.map((m) => ({ ...m, type: "doubles" })),
-  ].sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+    ...filteredKnockout.map((m) => ({ ...m, type: "knockout" })),
+  ].sort((a, b) => {
+    const aTime = a.date?.seconds || a.createdAt?.seconds || 0;
+    const bTime = b.date?.seconds || b.createdAt?.seconds || 0;
+    return bTime - aTime;
+  });
 
   return `
     <div>

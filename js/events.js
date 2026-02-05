@@ -628,11 +628,12 @@ function toggleMatchStatusFilter(status) {
 
 // ========== Export Functions ==========
 
+
 async function exportAllMatches() {
   // Kombiniere alle Spiele
   const allMatches = [];
   
-  // Einzelspiele
+  // Einzelspiele (Gruppenphase)
   state.singlesMatches.forEach(match => {
     const p1Name = getPlayerName(match.player1Id);
     const p2Name = getPlayerName(match.player2Id);
@@ -645,10 +646,47 @@ async function exportAllMatches() {
       });
     }
     const dateStr = match.date ? new Date(match.date.seconds * 1000).toLocaleDateString('de-DE') : '';
-    const knockoutRound = match.knockoutRound || '';
     
     allMatches.push({
       Typ: 'Einzel',
+      'KO-Runde': '',
+      'Spieler 1': p1Name,
+      'Spieler 2': p2Name,
+      'Sätze Spieler 1': p1Sets,
+      'Sätze Spieler 2': p2Sets,
+      Ergebnis: scoreText,
+      Datum: dateStr
+    });
+  });
+  
+  // KO-Spiele
+  state.knockoutMatches.forEach(match => {
+    const p1Name = getPlayerName(match.player1Id);
+    const p2Name = getPlayerName(match.player2Id);
+    const scoreText = match.sets ? match.sets.map(s => `${s.p1}:${s.p2}`).join(', ') : 'Ausstehend';
+    let p1Sets = 0, p2Sets = 0;
+    if (match.sets) {
+      match.sets.forEach(set => {
+        if (set.p1 > set.p2) p1Sets++;
+        else p2Sets++;
+      });
+    }
+    const dateStr = match.createdAt ? new Date(match.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '';
+    
+    // Rundenname formatieren
+    const roundNames = {
+      'final': 'Finale',
+      'semifinal': 'Halbfinale',
+      'semi': 'Halbfinale',
+      'quarterfinal': 'Viertelfinale',
+      'quarter': 'Viertelfinale',
+      'round16': 'Achtelfinale',
+      'thirdPlace': 'Platz 3'
+    };
+    const knockoutRound = roundNames[match.round] || match.round || '';
+    
+    allMatches.push({
+      Typ: 'Einzel (KO)',
       'KO-Runde': knockoutRound,
       'Spieler 1': p1Name,
       'Spieler 2': p2Name,

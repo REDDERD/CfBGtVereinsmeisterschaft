@@ -2,6 +2,7 @@
 
 function HomePage() {
   const recentMatches = [...state.singlesMatches, ...state.doublesMatches]
+    .filter(match => match.status === 'confirmed') // Nur bestätigte Spiele
     .sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0))
     .slice(0, 5);
 
@@ -15,12 +16,43 @@ function HomePage() {
     return challengeDate <= todayTimestamp + 86400;
   });
 
+  // Zähle unbestätigte Spiele (nur für Admins sichtbar)
+  const unconfirmedSingles = state.isAdmin ? state.singlesMatches.filter(m => m.status === 'unconfirmed').length : 0;
+  const unconfirmedDoubles = state.isAdmin ? state.doublesMatches.filter(m => m.status === 'unconfirmed').length : 0;
+  const totalUnconfirmed = unconfirmedSingles + unconfirmedDoubles;
+
   return `
     <div class="space-y-8">
       <div class="text-center">
         <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-4">Willkommen zur Vereinsmeisterschaft</h2>
         <p class="text-lg md:text-xl text-gray-600">Aktuell ${state.players.length} registrierte Spieler</p>
       </div>
+      
+      ${state.isAdmin && totalUnconfirmed > 0 ? `
+        <div class="bg-orange-50 border-2 border-orange-400 rounded-xl shadow-lg p-6">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">Neue Spiele zum Bestätigen</h3>
+              <p class="text-gray-700 mb-4">
+                Es gibt ${totalUnconfirmed} unbestätigte${totalUnconfirmed === 1 ? 's' : ''} Spiel${totalUnconfirmed === 1 ? '' : 'e'}:
+                ${unconfirmedSingles > 0 ? `${unconfirmedSingles} Einzel` : ''}
+                ${unconfirmedSingles > 0 && unconfirmedDoubles > 0 ? ' und ' : ''}
+                ${unconfirmedDoubles > 0 ? `${unconfirmedDoubles} Doppel` : ''}
+              </p>
+              <button 
+                onclick="navigateTo('admin'); state.adminTab = 'matchApproval'; render();" 
+                class="px-6 py-2.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold transition-colors">
+                Spiele überprüfen
+              </button>
+            </div>
+            <div class="ml-4">
+              <svg class="w-12 h-12 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      ` : ''}
       
       ${upcomingChallenges.length > 0 ? `
         <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-lg p-6">
@@ -38,7 +70,7 @@ function HomePage() {
                       <div class="font-bold text-gray-800">${getPlayerName(challenge.challengerId)} vs ${getPlayerName(challenge.challengedId)}</div>
                       <div class="text-sm ${isOverdue ? "text-red-600 font-semibold" : "text-gray-600"}">${dateStr} ${isOverdue ? "ÜBERFÄLLIG" : "Heute"}</div>
                     </div>
-                    ${state.user && !state.knockoutPhaseActive ? "<button onclick='enterResultFromChallenge('${challenge.id}')' class='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm'>Ergebnis eintragen</button>" : "" }
+                    ${state.user && !state.knockoutPhaseActive ? "<button onclick='enterResultFromChallenge(\"" + challenge.id + "\")' class='px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm'>Ergebnis eintragen</button>" : "" }
                   </div>
                 </div>`;
             }).join("")}

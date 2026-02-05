@@ -123,6 +123,24 @@ function initFirebaseListeners() {
         render();
       }
     });
+
+  // Match Status Settings
+  db.collection("settings")
+    .doc("defaultMatchStatus")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        state.matchStatusSettings = doc.data();
+      } else {
+        // Fallback zu Standard-Werten
+        state.matchStatusSettings = {
+          singlesAdminDefault: 'confirmed',
+          singlesUserDefault: 'unconfirmed',
+          doublesAdminDefault: 'confirmed',
+          doublesUserDefault: 'unconfirmed',
+        };
+      }
+      render();
+    });
 }
 
 // Load pyramid manually

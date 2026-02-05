@@ -21,6 +21,10 @@ function calculateStandings(groupNum) {
   state.singlesMatches.forEach((match) => {
     if (!match.sets) return;
 
+    // NUR BESTÄTIGTE SPIELE BERÜCKSICHTIGEN
+    const status = match.status || 'confirmed'; // alte Spiele ohne Status als bestätigt
+    if (status !== 'confirmed') return; // Überspringe unbestätigte oder abgelehnte Spiele
+
     const p1 = match.player1Id;
     const p2 = match.player2Id;
 
@@ -78,9 +82,11 @@ function calculateStandings(groupNum) {
 }
 
 function calculatePlayerSinglesStats(playerId) {
-  const matches = state.singlesMatches.filter(
-    (m) => m.player1Id === playerId || m.player2Id === playerId
-  );
+  // NUR BESTÄTIGTE SPIELE BERÜCKSICHTIGEN
+  const matches = state.singlesMatches.filter((m) => {
+    const status = m.status || 'confirmed';
+    return status === 'confirmed' && (m.player1Id === playerId || m.player2Id === playerId);
+  });
 
   let wins = 0,
     losses = 0;
@@ -106,13 +112,16 @@ function calculatePlayerSinglesStats(playerId) {
 }
 
 function calculatePlayerDoublesStats(playerId) {
-  const matches = state.doublesMatches.filter(
-    (m) =>
+  // NUR BESTÄTIGTE SPIELE BERÜCKSICHTIGEN
+  const matches = state.doublesMatches.filter((m) => {
+    const status = m.status || 'confirmed';
+    return status === 'confirmed' && (
       m.team1.player1Id === playerId ||
       m.team1.player2Id === playerId ||
       m.team2.player1Id === playerId ||
       m.team2.player2Id === playerId
-  );
+    );
+  });
 
   return { matches };
 }

@@ -45,4 +45,16 @@ const state = {
     set3P2: "",
     set3Disabled: true,
   },
+  // Neue Felder für Match-Status-Verwaltung
+  matchStatusSettings: {
+    singlesAdminDefault: 'confirmed',
+    singlesUserDefault: 'unconfirmed',
+    doublesAdminDefault: 'confirmed',
+    doublesUserDefault: 'unconfirmed',
+  },
+  matchApprovalFilters: {
+    showUnconfirmed: true,
+    showConfirmed: false,
+    showRejected: false,
+  },
 };

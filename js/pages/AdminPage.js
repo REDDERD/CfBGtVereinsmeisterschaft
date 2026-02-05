@@ -167,35 +167,6 @@ function AdminPage() {
       </div>`;
   }
 
-  const tabs = [
-    { id: "players", label: "Spieler" },
-    { id: "singlesTable", label: "Einzel" },
-    { id: "doublesRanking", label: "Doppel" },
-  ];
-
-  return `
-    <div class="space-y-6">
-      <div class="bg-white rounded-xl shadow-lg p-6">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Admin-Bereich</h2>
-        
-        <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-2">
-          ${tabs
-            .map(
-              (tab) => `
-            <button onclick="setAdminTab('${tab.id}')" class="px-4 py-2 text-left sm:text-center rounded-t ${state.adminTab === tab.id ? "bg-indigo-600 text-white font-semibold" : "text-gray-600 hover:bg-gray-100"}">
-              ${tab.label}
-            </button>
-          `,
-            )
-            .join("")}
-        </div>
-
-        ${state.adminTab === "players" ? AdminPlayersTab() : ""}
-        ${state.adminTab === "singlesTable" ? AdminSinglesTableTab() : ""}
-        ${state.adminTab === "doublesRanking" ? AdminDoublesRankingTab() : ""}
-      </div>
-    </div>`;
-
   // Check if user is admin
   if (!state.isAdmin) {
     return `
@@ -226,6 +197,37 @@ function AdminPage() {
       </div>
     `;
   }
+
+  const tabs = [
+    { id: "players", label: "Spieler" },
+    { id: "singlesTable", label: "Einzel" },
+    { id: "doublesRanking", label: "Doppel" },
+    { id: "matchApproval", label: "Spiele bestätigen" },
+  ];
+
+  return `
+    <div class="space-y-6">
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Admin-Bereich</h2>
+        
+        <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-2">
+          ${tabs
+            .map(
+              (tab) => `
+            <button onclick="setAdminTab('${tab.id}')" class="px-4 py-2 text-left sm:text-center rounded-t ${state.adminTab === tab.id ? "bg-indigo-600 text-white font-semibold" : "text-gray-600 hover:bg-gray-100"}">
+              ${tab.label}
+            </button>
+          `,
+            )
+            .join("")}
+        </div>
+
+        ${state.adminTab === "players" ? AdminPlayersTab() : ""}
+        ${state.adminTab === "singlesTable" ? AdminSinglesTableTab() : ""}
+        ${state.adminTab === "doublesRanking" ? AdminDoublesRankingTab() : ""}
+        ${state.adminTab === "matchApproval" ? AdminMatchApprovalTab() : ""}
+      </div>
+    </div>`;
 }
 
 function AdminPlayersTab() {
@@ -312,16 +314,16 @@ function AdminSinglesTableTab() {
     { value: "g2p4", label: "4. Platz Gruppe 2" },
   ];
   const config = state.knockoutConfig || {};
+  const settings = state.matchStatusSettings || {};
 
   return `
     <div>
-      <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h3 class="text-xl font-bold text-gray-800">Einzel-Tabellen</h3>
-        <button onclick="exportSinglesTables()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Tabellen exportieren</button>
-      </div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         ${GroupTable(1, group1)}
         ${GroupTable(2, group2)}
+      </div>
+      <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <button onclick="exportSinglesTables()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Tabellen exportieren</button>
       </div>
       <div class="bg-gray-50 rounded-lg p-6 mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4">K.O.-Phase konfigurieren</h3>
@@ -370,19 +372,42 @@ function AdminSinglesTableTab() {
           ${!state.knockoutPhaseActive ? `<button onclick="saveKnockoutConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Paarungen speichern</button>` : ""}
         </div>
       </div>
+
+      <!-- Status-Einstellungen für Einzel-Spiele -->
+      <div class="bg-gray-50 rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Status-Einstellungen</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Admin-eingetragene Spiele</label>
+            <select id="singlesAdminStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
+              <option value="confirmed" ${settings.singlesAdminDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
+              <option value="unconfirmed" ${settings.singlesAdminDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Nutzer-eingetragene Spiele</label>
+            <select id="singlesUserStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
+              <option value="confirmed" ${settings.singlesUserDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
+              <option value="unconfirmed" ${settings.singlesUserDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
+              <option value="rejected" ${settings.singlesUserDefault === "rejected" ? "selected" : ""}>Abgelehnt</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>`;
 }
 
 function AdminDoublesRankingTab() {
   const levels = state.pyramid.levels || [];
   const flatPositions = flattenPyramidLevels(levels);
+  const settings = state.matchStatusSettings || {};
 
   return `
     <div>
       <div class="mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-3">Doppel-Rangfolge bearbeiten</h3>
-        <p class="text-sm text-gray-600 mb-4">Nutze die Pfeile, um die Spieler in die gewünschte Reihenfolge zu bringen.</p>
       </div>
+
       ${
         flatPositions.length === 0
           ? `
@@ -410,8 +435,197 @@ function AdminDoublesRankingTab() {
           `,
             )
             .join("")}
+
+            <button onclick="saveDoublesRanking()" class="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">Rangfolge speichern</button>
         </div>
-        <button onclick="saveDoublesRanking()" class="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">Rangfolge speichern</button>
+        `
+      }
+    
+          <!-- Status-Einstellungen für Doppel-Spiele -->
+      <div class="bg-gray-50 rounded-lg p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Status-Einstellungen für Doppel-Spiele</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Admin-eingetragene Spiele</label>
+            <select id="doublesAdminStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
+              <option value="confirmed" ${settings.doublesAdminDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
+              <option value="unconfirmed" ${settings.doublesAdminDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Nutzer-eingetragene Spiele</label>
+            <select id="doublesUserStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
+              <option value="confirmed" ${settings.doublesUserDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
+              <option value="unconfirmed" ${settings.doublesUserDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
+              <option value="rejected" ${settings.doublesUserDefault === "rejected" ? "selected" : ""}>Abgelehnt</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 mt-3">Diese Einstellungen bestimmen, welchen Status neue Doppel-Spiele automatisch erhalten. Nur bestätigte Spiele beeinflussen die Pyramide.</p>
+      </div>
+
+    </div>
+    
+    `;
+}
+
+function AdminMatchApprovalTab() {
+  // Filtere Spiele basierend auf den ausgewählten Status-Filtern
+  const filteredSingles = state.singlesMatches.filter((match) => {
+    const status = match.status || "confirmed"; // alte Spiele ohne Status als bestätigt behandeln
+    if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
+      return true;
+    if (status === "confirmed" && state.matchApprovalFilters.showConfirmed)
+      return true;
+    if (status === "rejected" && state.matchApprovalFilters.showRejected)
+      return true;
+    return false;
+  });
+
+  const filteredDoubles = state.doublesMatches.filter((match) => {
+    const status = match.status || "confirmed";
+    if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
+      return true;
+    if (status === "confirmed" && state.matchApprovalFilters.showConfirmed)
+      return true;
+    if (status === "rejected" && state.matchApprovalFilters.showRejected)
+      return true;
+    return false;
+  });
+
+  // Kombiniere und sortiere nach Datum
+  const allMatches = [
+    ...filteredSingles.map((m) => ({ ...m, type: "singles" })),
+    ...filteredDoubles.map((m) => ({ ...m, type: "doubles" })),
+  ].sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      unconfirmed: {
+        label: "Unbestätigt",
+        color: "bg-orange-100 text-orange-800 border-orange-300",
+      },
+      confirmed: {
+        label: "Bestätigt",
+        color: "bg-green-100 text-green-800 border-green-300",
+      },
+      rejected: {
+        label: "Abgelehnt",
+        color: "bg-red-100 text-red-800 border-red-300",
+      },
+    };
+    const s = statusMap[status] || statusMap["unconfirmed"];
+    return `<span class="px-2 py-1 text-xs font-semibold rounded border ${s.color}">${s.label}</span>`;
+  };
+
+  const getTypeBadge = (type) => {
+    return type === "singles"
+      ? '<span class="px-2 py-1 text-xs font-semibold rounded border bg-yellow-100 text-yellow-800 border-yellow-300">Einzel</span>'
+      : '<span class="px-2 py-1 text-xs font-semibold rounded border bg-blue-100 text-blue-800 border-blue-300">Doppel</span>';
+  };
+
+  return `
+    <div>
+      <div class="mb-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-3">Spiele bestätigen</h3>
+        <p class="text-sm text-gray-600 mb-4">Überprüfe und bestätige eingetragene Spiele.</p>
+      </div>
+
+      <!-- Status-Filter -->
+      <div class="bg-gray-50 rounded-lg p-4 mb-6">
+        <h4 class="font-semibold text-gray-700 mb-3">Filter nach Status</h4>
+        <div class="flex flex-wrap gap-2">
+          <button 
+            onclick="toggleMatchStatusFilter('unconfirmed')" 
+            class="px-4 py-2 rounded-lg border-2 transition-colors ${state.matchApprovalFilters.showUnconfirmed ? "bg-orange-100 border-orange-400 text-orange-800 font-semibold" : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"}">
+            Unbestätigt
+          </button>
+          <button 
+            onclick="toggleMatchStatusFilter('confirmed')" 
+            class="px-4 py-2 rounded-lg border-2 transition-colors ${state.matchApprovalFilters.showConfirmed ? "bg-green-100 border-green-400 text-green-800 font-semibold" : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"}">
+            Bestätigt
+          </button>
+          <button 
+            onclick="toggleMatchStatusFilter('rejected')" 
+            class="px-4 py-2 rounded-lg border-2 transition-colors ${state.matchApprovalFilters.showRejected ? "bg-red-100 border-red-400 text-red-800 font-semibold" : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"}">
+            Abgelehnt
+          </button>
+        </div>
+      </div>
+
+      <!-- Spiele-Liste -->
+      ${
+        allMatches.length === 0
+          ? `
+        <div class="text-center py-12 bg-gray-50 rounded-lg">
+          <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <p class="text-gray-600">Keine Spiele mit den ausgewählten Filtern gefunden</p>
+        </div>
+      `
+          : `
+        <div class="space-y-3">
+          ${allMatches
+            .map((match) => {
+              const status = match.status || "confirmed";
+              const date = match.date
+                ? new Date(match.date.seconds * 1000).toLocaleDateString(
+                    "de-DE",
+                  )
+                : "Unbekannt";
+
+              let player1, player2, score;
+              if (match.type === "singles") {
+                player1 = getPlayerName(match.player1Id);
+                player2 = getPlayerName(match.player2Id);
+                score = match.sets.map((s) => `${s.p1}:${s.p2}`).join(", ");
+              } else {
+                player1 = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
+                player2 = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
+                score = match.sets.map((s) => `${s.t1}:${s.t2}`).join(", ");
+              }
+
+              return `
+              <div class="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                      ${getTypeBadge(match.type)}
+                      ${getStatusBadge(status)}
+                      <span class="text-sm text-gray-500">${date}</span>
+                    </div>
+                    <div class="font-medium text-gray-800 mb-1">
+                      ${player1} <span class="text-gray-500">vs</span> ${player2}
+                    </div>
+                    <div class="text-sm text-indigo-600 font-semibold">
+                      ${score}
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button 
+                      onclick="updateMatchStatus('${match.id}', '${match.type}', 'confirmed')" 
+                      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                      title="Bestätigen">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </button>
+                    <button 
+                      onclick="updateMatchStatus('${match.id}', '${match.type}', 'rejected')" 
+                      class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                      title="Ablehnen">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+            })
+            .join("")}
+        </div>
       `
       }
     </div>`;

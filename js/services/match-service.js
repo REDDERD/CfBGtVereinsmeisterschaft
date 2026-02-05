@@ -89,10 +89,24 @@ async function addSinglesMatch() {
     }
   }
 
+  // Bestimme den Status basierend auf den Einstellungen
+  let matchStatus = 'unconfirmed';
+  if (state.matchStatusSettings) {
+    if (state.isAdmin) {
+      matchStatus = state.matchStatusSettings.singlesAdminDefault || 'confirmed';
+    } else {
+      matchStatus = state.matchStatusSettings.singlesUserDefault || 'unconfirmed';
+    }
+  } else if (state.isAdmin) {
+    // Fallback wenn Settings noch nicht geladen sind
+    matchStatus = 'confirmed';
+  }
+
   await db.collection("singlesMatches").add({
     player1Id: p1,
     player2Id: p2,
     sets,
+    status: matchStatus,
     date: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -234,25 +248,41 @@ async function addDoublesMatch() {
     }
   }
 
+  // Bestimme den Status basierend auf den Einstellungen
+  let matchStatus = 'unconfirmed';
+  if (state.matchStatusSettings) {
+    if (state.isAdmin) {
+      matchStatus = state.matchStatusSettings.doublesAdminDefault || 'confirmed';
+    } else {
+      matchStatus = state.matchStatusSettings.doublesUserDefault || 'unconfirmed';
+    }
+  } else if (state.isAdmin) {
+    // Fallback wenn Settings noch nicht geladen sind
+    matchStatus = 'confirmed';
+  }
+
   await db.collection("doublesMatches").add({
     team1: { player1Id: t1p1, player2Id: t1p2 },
     team2: { player1Id: t2p1, player2Id: t2p2 },
     sets,
+    status: matchStatus,
     date: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  // EVERY doubles match updates the pyramid
-  let t1Sets = 0,
-    t2Sets = 0;
-  sets.forEach((set) => {
-    if (set.t1 > set.t2) t1Sets++;
-    else t2Sets++;
-  });
+  // EVERY doubles match updates the pyramid (only if confirmed)
+  if (matchStatus === 'confirmed') {
+    let t1Sets = 0,
+      t2Sets = 0;
+    sets.forEach((set) => {
+      if (set.t1 > set.t2) t1Sets++;
+      else t2Sets++;
+    });
 
-  const winnerId = t1Sets > t2Sets ? t1p1 : t2p1;
-  const loserId = t1Sets > t2Sets ? t2p1 : t1p1;
+    const winnerId = t1Sets > t2Sets ? t1p1 : t2p1;
+    const loserId = t1Sets > t2Sets ? t2p1 : t1p1;
 
-  await updatePyramidAfterChallenge(winnerId, loserId);
+    await updatePyramidAfterChallenge(winnerId, loserId);
+  }
 
   // If this was from a challenge (via prefilled data), mark it as completed
   if (state.prefilledDoubles && state.prefilledDoubles.challengeId) {
@@ -268,12 +298,14 @@ async function addDoublesMatch() {
   // Clear prefilled data
   state.prefilledDoubles = null;
 
-  // Set loading state and reload pyramid after update
-  state.pyramidLoading = true;
-  render();
-  
-  // Reload pyramid now that Firestore has written (updatePyramidAfterChallenge was awaited)
-  await loadPyramid();
+  // Set loading state and reload pyramid after update (only if confirmed)
+  if (matchStatus === 'confirmed') {
+    state.pyramidLoading = true;
+    render();
+    
+    // Reload pyramid now that Firestore has written (updatePyramidAfterChallenge was awaited)
+    await loadPyramid();
+  }
 
   Toast.success("Doppel-Spiel erfolgreich eingetragen!");
 }
@@ -317,5 +349,53 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
         ...newPyramidData,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       });
+  }
+}
+
+// Ändere den Status eines Spiels
+async function updateMatchStatus(matchId, matchType, newStatus) {
+  const collection = matchType === 'singles' ? 'singlesMatches' : 'doublesMatches';
+  
+  try {
+    const matchDoc = await db.collection(collection).doc(matchId).get();
+    
+    if (!matchDoc.exists) {
+      Toast.error("Spiel nicht gefunden");
+      return;
+    }
+    
+    const oldStatus = matchDoc.data().status;
+    
+    await db.collection(collection).doc(matchId).update({
+      status: newStatus,
+      statusChangedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    // Wenn ein Doppelspiel bestätigt wird, muss die Pyramide eventuell aktualisiert werden
+    if (matchType === 'doubles' && newStatus === 'confirmed' && oldStatus !== 'confirmed') {
+      const matchData = matchDoc.data();
+      const sets = matchData.sets;
+      
+      let t1Sets = 0, t2Sets = 0;
+      sets.forEach((set) => {
+        if (set.t1 > set.t2) t1Sets++;
+        else t2Sets++;
+      });
+
+      const winnerId = t1Sets > t2Sets ? matchData.team1.player1Id : matchData.team2.player1Id;
+      const loserId = t1Sets > t2Sets ? matchData.team2.player1Id : matchData.team1.player1Id;
+
+      await updatePyramidAfterChallenge(winnerId, loserId);
+      
+      state.pyramidLoading = true;
+      render();
+      await loadPyramid();
+    }
+    
+    const statusText = newStatus === 'confirmed' ? 'bestätigt' : newStatus === 'rejected' ? 'abgelehnt' : 'unbestätigt';
+    Toast.success(`Spiel wurde als ${statusText} markiert`);
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren des Status:', error);
+    Toast.error("Fehler beim Aktualisieren des Status");
   }
 }

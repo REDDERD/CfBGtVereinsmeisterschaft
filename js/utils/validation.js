@@ -8,11 +8,13 @@ function validateSet(p1, p2) {
   // Mindestens ein Spieler muss gewonnen haben
   const winner = n1 > n2 ? 1 : (n2 > n1 ? 2 : null);
   if (winner === null) {
-    return { valid: false, reason: "Unentschieden gibt es nicht" };
+    return false;
   }
   
   const higherScore = Math.max(n1, n2);
   const lowerScore = Math.min(n1, n2);
+
+  console.log("mark1");
   
   // Standard-Gewinn: Erster auf 21 mit mindestens 2 Punkten Vorsprung
   if (higherScore === 21 && lowerScore <= 19) return true;

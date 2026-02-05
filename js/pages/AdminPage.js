@@ -526,10 +526,6 @@ function AdminMatchApprovalTab() {
 
   return `
     <div>
-      <div class="mb-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-3">Spiele bestätigen</h3>
-        <p class="text-sm text-gray-600 mb-4">Überprüfe und bestätige eingetragene Spiele.</p>
-      </div>
 
       <!-- Status-Filter -->
       <div class="bg-gray-50 rounded-lg p-4 mb-6">

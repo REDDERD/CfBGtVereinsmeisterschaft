@@ -2,7 +2,7 @@ name: Notify Unconfirmed Matches
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # alle 10 Minuten
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -16,14 +16,10 @@ jobs:
         with:
           node-version: 20
 
-      - run: npm install firebase-admin nodemailer
+      - run: npm install firebase-admin resend
 
       - run: node scripts/notify-match-unconfirmed.js
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}

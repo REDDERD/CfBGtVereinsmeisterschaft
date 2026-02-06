@@ -1,5 +1,7 @@
 // js/services/match-service.js
-// Match-bezogene Funktionen für Einzel und Doppel
+// Match-Eintragung für Einzel und Doppel
+// (Bearbeiten/Löschen → match-edit-handlers.js)
+// (Status-Einstellungen → match-status-handlers.js)
 
 async function addSinglesMatch() {
   const p1 = document.getElementById("singlesP1").value;
@@ -30,7 +32,6 @@ async function addSinglesMatch() {
   const set1Winner = set1P1 > set1P2 ? "p1" : "p2";
   const set2Winner = set2P1 > set2P2 ? "p1" : "p2";
 
-  // Check if set 3 is needed
   if (set1Winner !== set2Winner) {
     if (!isNaN(set3P1) && !isNaN(set3P2)) {
       if (!validateSet(set3P1, set3P2)) {
@@ -47,7 +48,6 @@ async function addSinglesMatch() {
     return;
   }
 
-  // Neue Validierungen für Einzel-Gruppenspiele
   const player1 = state.players.find(player => player.id === p1);
   const player2 = state.players.find(player => player.id === p2);
 
@@ -56,7 +56,7 @@ async function addSinglesMatch() {
     return;
   }
 
-  // Validierung 1: Spieler müssen in derselben Gruppe sein
+  // Validierung: Spieler müssen in derselben Gruppe sein
   if (player1.singlesGroup !== player2.singlesGroup) {
     const confirmed = await Modal.warn({
       title: 'Spieler in unterschiedlichen Gruppen',
@@ -70,7 +70,7 @@ async function addSinglesMatch() {
     }
   }
 
-  // Validierung 2: Prüfe, ob diese Paarung bereits 2x gespielt wurde
+  // Validierung: Prüfe, ob diese Paarung bereits 2x gespielt wurde
   const existingMatches = state.singlesMatches.filter(match => 
     (match.player1Id === p1 && match.player2Id === p2) || 
     (match.player1Id === p2 && match.player2Id === p1)
@@ -90,17 +90,7 @@ async function addSinglesMatch() {
   }
 
   // Bestimme den Status basierend auf den Einstellungen
-  let matchStatus = 'unconfirmed';
-  if (state.matchStatusSettings) {
-    if (state.isAdmin) {
-      matchStatus = state.matchStatusSettings.singlesAdminDefault || 'confirmed';
-    } else {
-      matchStatus = state.matchStatusSettings.singlesUserDefault || 'unconfirmed';
-    }
-  } else if (state.isAdmin) {
-    // Fallback wenn Settings noch nicht geladen sind
-    matchStatus = 'confirmed';
-  }
+  const matchStatus = _getDefaultMatchStatus('singles');
 
   // Bestimme die Runde basierend auf der Spielergruppe
   const round = player1.singlesGroup === 1 ? 'group1' : 'group2';
@@ -148,7 +138,6 @@ async function addDoublesMatch() {
     return;
   }
 
-  // Validierung: Kein Spieler darf in beiden Teams sein
   const allPlayers = [t1p1, t1p2, t2p1, t2p2];
   const uniquePlayers = new Set(allPlayers);
   if (uniquePlayers.size !== 4) {
@@ -182,7 +171,6 @@ async function addDoublesMatch() {
     }
   }
 
-  // Neue Validierungen für Doppel-Spiele
   const t1player1 = state.players.find(p => p.id === t1p1);
   const t1player2 = state.players.find(p => p.id === t1p2);
   const t2player1 = state.players.find(p => p.id === t2p1);
@@ -193,7 +181,7 @@ async function addDoublesMatch() {
     return;
   }
 
-  // Validierung: Jede Kombination muss aus zwei Spielern unterschiedlicher Pools bestehen
+  // Validierung: Pool-Kombination prüfen
   const validatePoolCombination = (player1, player2, teamName) => {
     if (!player1.doublesPool || !player2.doublesPool) {
       return { valid: false, message: `Beide Spieler in ${teamName} müssen einem Doppel-Pool zugeordnet sein.` };
@@ -216,7 +204,7 @@ async function addDoublesMatch() {
     return;
   }
 
-  // Validierung: Prüfe ob eine Challenge für Spieler 1 der beiden Teams existiert
+  // Prüfe ob eine offene Challenge existiert
   let challengeToComplete = null;
   if (state.challenges && state.challenges.length > 0) {
     challengeToComplete = state.challenges.find(challenge => 
@@ -238,7 +226,6 @@ async function addDoublesMatch() {
       });
 
       if (confirmed) {
-        // Markiere Challenge als completed nach dem Spiel
         await db
           .collection("challenges")
           .doc(challengeToComplete.id)
@@ -247,23 +234,12 @@ async function addDoublesMatch() {
             completedAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
       } else {
-        challengeToComplete = null; // Don't mark as completed
+        challengeToComplete = null;
       }
     }
   }
 
-  // Bestimme den Status basierend auf den Einstellungen
-  let matchStatus = 'unconfirmed';
-  if (state.matchStatusSettings) {
-    if (state.isAdmin) {
-      matchStatus = state.matchStatusSettings.doublesAdminDefault || 'confirmed';
-    } else {
-      matchStatus = state.matchStatusSettings.doublesUserDefault || 'unconfirmed';
-    }
-  } else if (state.isAdmin) {
-    // Fallback wenn Settings noch nicht geladen sind
-    matchStatus = 'confirmed';
-  }
+  const matchStatus = _getDefaultMatchStatus('doubles');
 
   await db.collection("doublesMatches").add({
     team1: { player1Id: t1p1, player2Id: t1p2 },
@@ -273,7 +249,7 @@ async function addDoublesMatch() {
     date: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  // EVERY doubles match updates the pyramid (only if confirmed)
+  // Pyramide aktualisieren (nur wenn bestätigt)
   if (matchStatus === 'confirmed') {
     let t1Sets = 0,
       t2Sets = 0;
@@ -288,7 +264,7 @@ async function addDoublesMatch() {
     await updatePyramidAfterChallenge(winnerId, loserId);
   }
 
-  // If this was from a challenge (via prefilled data), mark it as completed
+  // Wenn aus einer Challenge heraus, als erledigt markieren
   if (state.prefilledDoubles && state.prefilledDoubles.challengeId) {
     await db
       .collection("challenges")
@@ -299,20 +275,18 @@ async function addDoublesMatch() {
       });
   }
 
-  // Clear prefilled data
   state.prefilledDoubles = null;
 
-  // Set loading state and reload pyramid after update (only if confirmed)
   if (matchStatus === 'confirmed') {
     state.pyramidLoading = true;
     render();
-    
-    // Reload pyramid now that Firestore has written (updatePyramidAfterChallenge was awaited)
     await loadPyramid();
   }
 
   Toast.success("Doppel-Spiel erfolgreich eingetragen!");
 }
+
+// ========== Pyramide nach Herausforderung aktualisieren ==========
 
 async function updatePyramidAfterChallenge(winnerId, loserId) {
   const pyramidDoc = await db.collection("pyramid").doc("current").get();
@@ -323,8 +297,6 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
 
   const pyramidData = pyramidDoc.data();
   const levels = pyramidLevelsToArray(pyramidData);
-
-  // Flatten to get positions
   let flatPositions = flattenPyramidLevels(levels);
 
   const winnerPos = flatPositions.indexOf(winnerId);
@@ -334,16 +306,12 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
     return;
   }
 
-  // Only update if winner was below loser (higher position number = lower in pyramid)
+  // Nur aktualisieren wenn Gewinner unter Verlierer steht
   if (winnerPos > loserPos) {
-    // Remove winner from current position
     const winner = flatPositions[winnerPos];
     flatPositions.splice(winnerPos, 1);
-
-    // Insert winner at loser's position (pushing loser and everyone between down)
     flatPositions.splice(loserPos, 0, winner);
 
-    // Rebuild pyramid structure
     const newPyramidData = buildPyramidLevels(flatPositions);
 
     await db
@@ -356,9 +324,9 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
   }
 }
 
-// Ändere den Status eines Spiels - Vereinheitlichte Funktion
+// ========== Match-Status ändern (Einzel, Doppel, Knockout) ==========
+
 async function updateMatchStatus(matchId, matchType, newStatus) {
-  // Bestimme die richtige Collection: singles, doubles oder auch singles für knockout
   let collection;
   if (matchType === 'singles' || matchType === 'knockout') {
     collection = 'singlesMatches';
@@ -384,7 +352,7 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
       statusChangedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     
-    // Wenn ein Doppelspiel bestätigt wird, muss die Pyramide eventuell aktualisiert werden
+    // Wenn ein Doppelspiel bestätigt wird → Pyramide aktualisieren
     if (matchType === 'doubles' && newStatus === 'confirmed' && oldStatus !== 'confirmed') {
       const matchData = matchDoc.data();
       const sets = matchData.sets;
@@ -413,116 +381,25 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
   }
 }
 
-// Vereinheitlichte Bearbeiten-Funktion für Singles (inkl. Knockout)
-async function editSinglesMatch(matchId) {
-  const match = state.singlesMatches.find((m) => m.id === matchId);
-  if (!match) {
-    Toast.error("Spiel nicht gefunden");
-    return;
+// ========== Hilfsfunktion: Standard-Status ermitteln ==========
+
+function _getDefaultMatchStatus(type) {
+  let matchStatus = 'unconfirmed';
+  const settings = state.matchStatusSettings;
+  
+  if (settings) {
+    if (state.isAdmin) {
+      matchStatus = (type === 'singles') 
+        ? (settings.singlesAdminDefault || 'confirmed')
+        : (settings.doublesAdminDefault || 'confirmed');
+    } else {
+      matchStatus = (type === 'singles')
+        ? (settings.singlesUserDefault || 'unconfirmed')
+        : (settings.doublesUserDefault || 'unconfirmed');
+    }
+  } else if (state.isAdmin) {
+    matchStatus = 'confirmed';
   }
-
-  // Prüfe ob es ein Knockout-Match ist
-  const isKnockout = match.round && match.round !== 'group1' && match.round !== 'group2';
-
-  if (isKnockout) {
-    // Öffne das Knockout-Entry-Modal mit vorausgefüllten Daten
-    state.knockoutEntryMatch = {
-      round: match.round,
-      matchNum: match.matchNum,
-      editing: true,
-      matchId: matchId,
-    };
-  } else {
-    // Für normale Gruppenspiele - Modal noch implementieren
-    Toast.info("Bearbeitungsfunktion für Gruppenspiele wird noch implementiert");
-    return;
-  }
-
-  // Setze die Werte im State (werden im Render verwendet)
-  state.matchEntry = {
-    set1P1: match.sets[0]?.p1 || "",
-    set1P2: match.sets[0]?.p2 || "",
-    set2P1: match.sets[1]?.p1 || "",
-    set2P2: match.sets[1]?.p2 || "",
-    set3P1: match.sets[2]?.p1 || "",
-    set3P2: match.sets[2]?.p2 || "",
-    set3Disabled: !match.sets[2],
-  };
-
-  render();
-}
-
-// Vereinheitlichte Bearbeiten-Funktion für Doubles
-async function editDoublesMatch(matchId) {
-  const match = state.doublesMatches.find((m) => m.id === matchId);
-  if (!match) {
-    Toast.error("Spiel nicht gefunden");
-    return;
-  }
-
-  Toast.info("Bearbeitungsfunktion für Doppel-Spiele wird noch implementiert");
-}
-
-// Vereinheitlichte Löschen-Funktion für Singles (inkl. Knockout)
-async function deleteSinglesMatch(matchId) {
-  const match = state.singlesMatches.find((m) => m.id === matchId);
-  if (!match) {
-    Toast.error("Spiel nicht gefunden");
-    return;
-  }
-
-  const player1 = getPlayerName(match.player1Id);
-  const player2 = getPlayerName(match.player2Id);
-
-  const confirmed = await Modal.confirm({
-    title: 'Spiel löschen?',
-    message: `Möchtest du das Spiel zwischen ${player1} und ${player2} wirklich löschen?`,
-    confirmText: 'Ja, löschen',
-    cancelText: 'Abbrechen',
-    type: 'danger'
-  });
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-    await db.collection("singlesMatches").doc(matchId).delete();
-    Toast.success("Spiel erfolgreich gelöscht");
-  } catch (error) {
-    console.error("Error deleting singles match:", error);
-    Toast.error("Fehler beim Löschen");
-  }
-}
-
-// Vereinheitlichte Löschen-Funktion für Doubles
-async function deleteDoublesMatch(matchId) {
-  const match = state.doublesMatches.find((m) => m.id === matchId);
-  if (!match) {
-    Toast.error("Spiel nicht gefunden");
-    return;
-  }
-
-  const team1 = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
-  const team2 = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
-
-  const confirmed = await Modal.confirm({
-    title: 'Spiel löschen?',
-    message: `Möchtest du das Doppel-Spiel zwischen ${team1} und ${team2} wirklich löschen?`,
-    confirmText: 'Ja, löschen',
-    cancelText: 'Abbrechen',
-    type: 'danger'
-  });
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-    await db.collection("doublesMatches").doc(matchId).delete();
-    Toast.success("Spiel erfolgreich gelöscht");
-  } catch (error) {
-    console.error("Error deleting doubles match:", error);
-    Toast.error("Fehler beim Löschen");
-  }
+  
+  return matchStatus;
 }

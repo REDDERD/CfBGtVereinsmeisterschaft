@@ -1,5 +1,6 @@
 // js/services/knockout-service.js
-// K.O.-Phase bezogene Funktionen
+// K.O.-Phase Verwaltung (Aktivierung, Spiele, Konfiguration)
+// (Ranking-Verwaltung → ranking-service.js)
 
 function setSinglesView(view) {
   state.singlesView = view;
@@ -53,7 +54,6 @@ async function saveKnockoutMatch() {
   const set1Winner = set1P1 > set1P2 ? "p1" : "p2";
   const set2Winner = set2P1 > set2P2 ? "p1" : "p2";
 
-  // Check if set 3 is needed
   if (set1Winner !== set2Winner) {
     if (!isNaN(set3P1) && !isNaN(set3P2)) {
       if (!validateSet(set3P1, set3P2)) {
@@ -68,18 +68,15 @@ async function saveKnockoutMatch() {
   }
 
   try {
-    // Bestimme Status basierend auf Admin/User
     const defaultStatus = state.isAdmin
       ? state.matchStatusSettings.singlesAdminDefault
       : state.matchStatusSettings.singlesUserDefault;
 
-    // Prüfe ob bereits ein Ergebnis für dieses Spiel existiert
     const existingMatch = state.knockoutMatches.find(
       (m) => m.round === round && m.matchNum === matchNum,
     );
 
     if (existingMatch) {
-      // Update existing match - jetzt in singlesMatches
       await db.collection("singlesMatches").doc(existingMatch.id).update({
         player1Id,
         player2Id,
@@ -87,7 +84,6 @@ async function saveKnockoutMatch() {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } else {
-      // Create new match - jetzt in singlesMatches mit round-Feld
       await db.collection("singlesMatches").add({
         round,
         matchNum,
@@ -114,10 +110,8 @@ function checkCanCancelMatch(round, matchNum) {
       (match) => match.round === r && match.matchNum === m,
     );
 
-  // Finale und Platz 3 können immer storniert werden
   if (round === "final" || round === "thirdPlace") return true;
 
-  // Für Viertelfinale: Prüfe ob zugehöriges Halbfinale schon gespielt wurde
   if (round === "quarter") {
     const sfNum = matchNum <= 2 ? 1 : 2;
     const sfMatch = getKnockoutMatch("semi", sfNum);
@@ -125,7 +119,6 @@ function checkCanCancelMatch(round, matchNum) {
     return true;
   }
 
-  // Für Halbfinale: Prüfe ob Finale oder Platz 3 schon gespielt wurde
   if (round === "semi") {
     const finalMatch = getKnockoutMatch("final", 1);
     const thirdMatch = getKnockoutMatch("thirdPlace", 1);
@@ -151,7 +144,6 @@ async function activateKnockoutPhase() {
     return;
   }
 
-  // Aktuelle Tabellen einfrieren
   const group1 = calculateStandings(1);
   const group2 = calculateStandings(2);
 
@@ -163,7 +155,6 @@ async function activateKnockoutPhase() {
   state.knockoutPhaseActive = true;
   state.frozenStandings = frozenStandings;
 
-  // Save to Firebase
   await db.collection("settings").doc("knockout").set({
     active: true,
     frozenStandings: frozenStandings,
@@ -195,15 +186,12 @@ async function deactivateKnockoutPhase() {
   state.frozenStandings = null;
   state.singlesView = "group";
 
-  // Save to Firebase
   await db.collection("settings").doc("knockout").set({
     active: false,
     frozenStandings: null,
     deactivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Delete all knockoutMatches from Firebase - jetzt aus singlesMatches
-  // Lösche alle Spiele mit round !== 'group1' und !== 'group2'
   const knockoutMatchesToDelete = state.singlesMatches.filter(
     match => match.round && match.round !== 'group1' && match.round !== 'group2'
   );
@@ -217,7 +205,6 @@ async function deactivateKnockoutPhase() {
 }
 
 async function saveKnockoutConfig() {
-  // Sammle alle Viertelfinale-Paarungen
   const config = {};
   for (let i = 1; i <= 4; i++) {
     const p1 = document.getElementById(`qf_${i}_p1`)?.value || "";
@@ -242,116 +229,4 @@ async function saveKnockoutConfig() {
     console.error("Fehler beim Speichern:", error);
     Toast.error("Fehler beim Speichern: " + error.message);
   }
-}
-
-// Ranking-Verwaltung
-function movePlayerUp(index) {
-  const levels = state.pyramid.levels || [];
-  const flatPositions = flattenPyramidLevels(levels);
-
-  if (index > 0) {
-    const temp = flatPositions[index];
-    flatPositions[index] = flatPositions[index - 1];
-    flatPositions[index - 1] = temp;
-
-    // Update state
-    state.pyramid.levels = rebuildPyramidLevels(flatPositions);
-    render();
-  }
-}
-
-function movePlayerDown(index) {
-  const levels = state.pyramid.levels || [];
-  const flatPositions = flattenPyramidLevels(levels);
-
-  if (index < flatPositions.length - 1) {
-    const temp = flatPositions[index];
-    flatPositions[index] = flatPositions[index + 1];
-    flatPositions[index + 1] = temp;
-
-    // Update state
-    state.pyramid.levels = rebuildPyramidLevels(flatPositions);
-    render();
-  }
-}
-
-async function removePlayerFromRanking(index, playerId) {
-  const playerName = getPlayerName(playerId);
-
-  const confirmed = await Modal.confirm({
-    title: "Spieler aus Rangfolge löschen",
-    message: `Möchtest du wirklich <strong>${playerName}</strong> aus der Doppel-Rangfolge entfernen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-    confirmText: "Ja, löschen",
-    cancelText: "Abbrechen",
-    type: "danger",
-  });
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-    const levels = state.pyramid.levels || [];
-    const flatPositions = flattenPyramidLevels(levels);
-
-    // Entferne den Spieler aus der flachen Liste
-    flatPositions.splice(index, 1);
-
-    // Baue die Pyramide neu auf
-    state.pyramid.levels = rebuildPyramidLevels(flatPositions);
-
-    // Speichere in Firebase
-    const levelsObject = {};
-    state.pyramid.levels.forEach((level, idx) => {
-      levelsObject[`level${idx + 1}`] = level;
-    });
-
-    await db
-      .collection("pyramid")
-      .doc("current")
-      .set({
-        ...levelsObject,
-        lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-
-    Toast.success(`${playerName} wurde aus der Rangfolge entfernt`);
-    render();
-  } catch (error) {
-    console.error("Error removing player from ranking:", error);
-    Toast.error("Fehler beim Entfernen des Spielers");
-  }
-}
-
-function rebuildPyramidLevels(flatPositions) {
-  const levels = [];
-  let idx = 0;
-  let levelNum = 1;
-
-  while (idx < flatPositions.length) {
-    const levelPlayers = flatPositions.slice(idx, idx + levelNum);
-    levels.push(levelPlayers);
-    idx += levelNum;
-    levelNum++;
-  }
-
-  return levels;
-}
-
-async function saveDoublesRanking() {
-  const levels = state.pyramid.levels || [];
-
-  const levelsObject = {};
-  levels.forEach((level, idx) => {
-    levelsObject[`level${idx + 1}`] = level;
-  });
-
-  await db
-    .collection("pyramid")
-    .doc("current")
-    .set({
-      ...levelsObject,
-      lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-
-  Toast.success("Rangfolge gespeichert!");
 }

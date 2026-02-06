@@ -51,26 +51,6 @@ function KnockoutBracketView() {
     return p1Sets > p2Sets ? match.player2Id : match.player1Id;
   };
 
-  const canCancelKnockoutMatch = (round, matchNum) => {
-    const match = getKnockoutMatch(round, matchNum);
-    if (!match || !match.sets) return false;
-    if (round === "final" || round === "thirdPlace") return true;
-    if (round === "quarter") {
-      const sfNum = matchNum <= 2 ? 1 : 2;
-      const sfMatch = getKnockoutMatch("semi", sfNum);
-      return !(sfMatch && sfMatch.sets);
-    }
-    if (round === "semi") {
-      const finalMatch = getKnockoutMatch("final", 1);
-      const thirdMatch = getKnockoutMatch("thirdPlace", 1);
-      return !(
-        (finalMatch && finalMatch.sets) ||
-        (thirdMatch && thirdMatch.sets)
-      );
-    }
-    return true;
-  };
-
   const getKnockoutMatchPlayers = (round, matchNum) => {
     if (round === "quarter") {
       const p1Pos = config[`qf_${matchNum}_p1`];
@@ -142,10 +122,8 @@ function KnockoutBracketView() {
     const players = getKnockoutMatchPlayers(round, matchNum);
     const isPlayed = match && match.sets;
     const canPlay = players.player1Id && players.player2Id;
-    const canCancel = canCancelKnockoutMatch(round, matchNum);
 
-    let resultText = "",
-      winnerId = null;
+    let winnerId = null;
     if (isPlayed) {
       let p1Sets = 0,
         p2Sets = 0;
@@ -153,39 +131,40 @@ function KnockoutBracketView() {
         if (set.p1 > set.p2) p1Sets++;
         else p2Sets++;
       });
-      resultText = `${p1Sets}:${p2Sets} (${match.sets.map((s) => `${s.p1}:${s.p2}`).join(", ")})`;
       winnerId = p1Sets > p2Sets ? match.player1Id : match.player2Id;
     }
 
-    const playerRow = (playerId, name) => `
+    const playerRow = (playerId, name, isPlayer1) => {
+      const setScores = isPlayed ? match.sets.map((set, idx) => {
+        const playerScore = isPlayer1 ? set.p1 : set.p2;
+        const opponentScore = isPlayer1 ? set.p2 : set.p1;
+        const wonSet = playerScore > opponentScore;
+        return `<div class="px-2 py-1 text-xs rounded ${wonSet ? 'border-2 border-green-700 bg-white font-semibold' : 'bg-gray-100'}">${playerScore}</div>`;
+      }).join('') : '';
+      
+      return `
       <div class="p-2 ${isPlayed && winnerId === playerId ? "bg-green-100 font-bold" : "bg-gray-50"} rounded text-sm flex justify-between items-center">
         <span>${name}</span>
-        ${isPlayed && winnerId === playerId ? '<span class="text-green-600">✓</span>' : ""}
+        ${isPlayed ? `<div class="flex gap-1">${setScores}</div>` : ''}
       </div>`;
+    };
 
     return `
       <div class="bg-white p-4 rounded-lg border-2 border-${borderColor}-400">
         <div class="text-sm font-medium text-gray-700 mb-3">${title}</div>
         <div class="space-y-2">
-          ${playerRow(players.player1Id, players.player1Name)}
+          ${playerRow(players.player1Id, players.player1Name, true)}
           <div class="text-center text-xs text-gray-500">vs</div>
-          ${playerRow(players.player2Id, players.player2Name)}
+          ${playerRow(players.player2Id, players.player2Name, false)}
         </div>
         ${
-          isPlayed
+          !isPlayed && state.user && canPlay
             ? `
-          <div class="mt-3 text-center">
-            <div class="text-sm font-semibold text-indigo-600">${resultText}</div>
-            ${state.isAdmin && canCancel ? `<button onclick="cancelKnockoutMatch('${round}', ${matchNum})" class="mt-2 px-3 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200">Stornieren</button>` : ""}
-          </div>
-        `
-            : state.user && canPlay
-              ? `
           <button onclick="openKnockoutMatchEntry('${round}', ${matchNum})" class="mt-3 w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Ergebnis eintragen</button>
         `
-              : state.user
-                ? '<div class="mt-3 text-center text-xs text-gray-400">Warte auf vorherige Spiele</div>'
-                : ""
+            : !isPlayed && state.user
+              ? '<div class="mt-3 text-center text-xs text-gray-400">Warte auf vorherige Spiele</div>'
+              : ""
         }
       </div>`;
   };

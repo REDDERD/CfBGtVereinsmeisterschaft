@@ -63,4 +63,10 @@ const state = {
     showDoubles: true,
   },
   matchesSearchQuery: "",
+  // Filter für Admin Match Approval
+  adminMatchTypeFilters: {
+    showSingles: true,
+    showDoubles: true,
+  },
+  adminMatchesSearchQuery: "",
 };

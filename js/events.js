@@ -28,6 +28,17 @@ function toggleMobileMenu() {
 
 function setAdminTab(tab) {
   state.adminTab = tab;
+  
+  // Wenn auf "matchApproval" (Spiele) gewechselt wird, Filter zurücksetzen
+  if (tab === 'matchApproval') {
+    state.adminMatchTypeFilters.showSingles = true;
+    state.adminMatchTypeFilters.showDoubles = true;
+    state.matchApprovalFilters.showUnconfirmed = true;
+    state.matchApprovalFilters.showConfirmed = false;
+    state.matchApprovalFilters.showRejected = false;
+    state.adminMatchesSearchQuery = "";
+  }
+  
   render();
 }
 
@@ -741,4 +752,31 @@ async function exportAllMatches() {
     console.error("Export error:", error);
     Toast.error("Fehler beim Export");
   }
+}
+// ========== Admin Match Approval Filters ==========
+
+function toggleAdminMatchTypeFilter(type) {
+  if (type === 'singles') {
+    state.adminMatchTypeFilters.showSingles = !state.adminMatchTypeFilters.showSingles;
+  } else if (type === 'doubles') {
+    state.adminMatchTypeFilters.showDoubles = !state.adminMatchTypeFilters.showDoubles;
+  }
+  render();
+  
+  // Fokus zurück auf das Suchfeld
+  setTimeout(() => {
+    const searchInput = document.getElementById('adminMatchesSearchInput');
+    if (searchInput) searchInput.focus();
+  }, 0);
+}
+
+function updateAdminMatchesSearch(query) {
+  state.adminMatchesSearchQuery = query;
+  render();
+  
+  // Fokus zurück auf das Suchfeld
+  setTimeout(() => {
+    const searchInput = document.getElementById('adminMatchesSearchInput');
+    if (searchInput) searchInput.focus();
+  }, 0);
 }

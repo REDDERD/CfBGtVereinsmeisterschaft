@@ -202,7 +202,7 @@ function AdminPage() {
     { id: "players", label: "Spieler" },
     { id: "singlesTable", label: "Einzel" },
     { id: "doublesRanking", label: "Doppel" },
-    { id: "matchApproval", label: "Spiele bestätigen" },
+    { id: "matchApproval", label: "Spiele" },
   ];
 
   return `
@@ -378,14 +378,14 @@ function AdminSinglesTableTab() {
         <h3 class="text-xl font-bold text-gray-800 mb-4">Status-Einstellungen</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Admin-eingetragene Spiele</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Standard-Status für Admin-eingetragene Spiele</label>
             <select id="singlesAdminStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
               <option value="confirmed" ${settings.singlesAdminDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
               <option value="unconfirmed" ${settings.singlesAdminDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Nutzer-eingetragene Spiele</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Standard-Status für Nutzer-eingetragene Spiele</label>
             <select id="singlesUserStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
               <option value="confirmed" ${settings.singlesUserDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
               <option value="unconfirmed" ${settings.singlesUserDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
@@ -469,11 +469,26 @@ function AdminDoublesRankingTab() {
     `;
 }
 
-
 function AdminMatchApprovalTab() {
-  // Filtere Spiele basierend auf den ausgewählten Status-Filtern
-  // Singles-Matches enthalten jetzt auch KO-Matches, daher werden alle zusammen gefiltert
-  const filteredSingles = state.singlesMatches.filter((match) => {
+  // Filtere Spiele basierend auf Spieltyp
+  const allMatches = [];
+
+  // Singles-Matches (inkl. KO) wenn Filter aktiv
+  if (state.adminMatchTypeFilters.showSingles) {
+    state.singlesMatches.forEach((match) => {
+      allMatches.push({ ...match, type: "singles" });
+    });
+  }
+
+  // Doubles-Matches wenn Filter aktiv
+  if (state.adminMatchTypeFilters.showDoubles) {
+    state.doublesMatches.forEach((match) => {
+      allMatches.push({ ...match, type: "doubles" });
+    });
+  }
+
+  // Filtere nach Status
+  const statusFiltered = allMatches.filter((match) => {
     const status = match.status || "confirmed";
     if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
       return true;
@@ -484,23 +499,31 @@ function AdminMatchApprovalTab() {
     return false;
   });
 
-  const filteredDoubles = state.doublesMatches.filter((match) => {
-    const status = match.status || "confirmed";
-    if (status === "unconfirmed" && state.matchApprovalFilters.showUnconfirmed)
-      return true;
-    if (status === "confirmed" && state.matchApprovalFilters.showConfirmed)
-      return true;
-    if (status === "rejected" && state.matchApprovalFilters.showRejected)
-      return true;
-    return false;
+  // Filtern nach Suchbegriff
+  const searchQuery = state.adminMatchesSearchQuery || "";
+  const filteredMatches = statusFiltered.filter((match) => {
+    if (!searchQuery) return true;
+
+    if (match.type === "singles") {
+      const p1Name = getPlayerName(match.player1Id).toLowerCase();
+      const p2Name = getPlayerName(match.player2Id).toLowerCase();
+      return (
+        p1Name.includes(searchQuery.toLowerCase()) ||
+        p2Name.includes(searchQuery.toLowerCase())
+      );
+    } else {
+      const names = [
+        match.team1.player1Id,
+        match.team1.player2Id,
+        match.team2.player1Id,
+        match.team2.player2Id,
+      ].map((id) => getPlayerName(id).toLowerCase());
+      return names.some((n) => n.includes(searchQuery.toLowerCase()));
+    }
   });
 
-  // Kombiniere und sortiere nach Datum
-  // Da KO-Matches jetzt Teil von singlesMatches sind, werden sie automatisch mit einbezogen
-  const allMatches = [
-    ...filteredSingles.map((m) => ({ ...m, type: "singles" })),
-    ...filteredDoubles.map((m) => ({ ...m, type: "doubles" })),
-  ].sort((a, b) => {
+  // Sortieren nach Datum
+  filteredMatches.sort((a, b) => {
     const aTime = a.date?.seconds || 0;
     const bTime = b.date?.seconds || 0;
     return bTime - aTime;
@@ -508,10 +531,32 @@ function AdminMatchApprovalTab() {
 
   return `
     <div>
-      <!-- Status-Filter -->
+      <!-- Toggle-Filter für Spieltypen -->
       <div class="bg-gray-50 rounded-lg p-4 mb-6">
-        <h4 class="font-semibold text-gray-700 mb-3">Filter nach Status</h4>
-        <div class="flex flex-wrap gap-2">
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button 
+            onclick="toggleAdminMatchTypeFilter('singles')" 
+            class="px-4 py-2 rounded-lg border-2 transition-colors ${
+              state.adminMatchTypeFilters.showSingles
+                ? "bg-yellow-100 border-yellow-400 text-yellow-800 font-semibold"
+                : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+            }">
+            Einzel
+          </button>
+          <button 
+            onclick="toggleAdminMatchTypeFilter('doubles')" 
+            class="px-4 py-2 rounded-lg border-2 transition-colors ${
+              state.adminMatchTypeFilters.showDoubles
+                ? "bg-blue-100 border-blue-400 text-blue-800 font-semibold"
+                : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
+            }">
+            Doppel
+          </button>
+        </div>
+
+        <!-- Status-Filter -->
+        <div class="flex flex-wrap gap-2 mb-4">
           <button 
             onclick="toggleMatchStatusFilter('unconfirmed')" 
             class="px-4 py-2 rounded-lg border-2 transition-colors ${state.matchApprovalFilters.showUnconfirmed ? "bg-orange-100 border-orange-400 text-orange-800 font-semibold" : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"}">
@@ -528,11 +573,26 @@ function AdminMatchApprovalTab() {
             Abgelehnt
           </button>
         </div>
+
+        <!-- Suchfeld -->
+        <div>
+          <input 
+            type="text" 
+            id="adminMatchesSearchInput" 
+            placeholder="Nach Spielername suchen..." 
+            value="${searchQuery}" 
+            onkeyup="updateAdminMatchesSearch(this.value)" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        </div>
+
       </div>
+      
+      
+
 
       <!-- Spiele-Liste -->
       ${
-        allMatches.length === 0
+        filteredMatches.length === 0
           ? `
         <div class="text-center py-12 bg-gray-50 rounded-lg">
           <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -543,7 +603,7 @@ function AdminMatchApprovalTab() {
       `
           : `
         <div class="space-y-3">
-          ${allMatches.map(match => MatchCard(match, 'admin')).join('')}
+          ${filteredMatches.map((match) => MatchCard(match, "admin")).join("")}
         </div>
       `
       }

@@ -130,10 +130,7 @@ function MatchCard(match, context = 'home') {
             <button 
               onclick="updateMatchStatus('${match.id}', '${matchType}', 'confirmed')" 
               class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
-              title="Bestätigen">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
+              title="Bestätigen">${icons.check}
             </button>
           `);
         } else {
@@ -146,9 +143,7 @@ function MatchCard(match, context = 'home') {
               onclick="updateMatchStatus('${match.id}', '${matchType}', 'rejected')" 
               class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
               title="Ablehnen">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+              ${icons.x}
             </button>
           `);
         } else {
@@ -161,9 +156,7 @@ function MatchCard(match, context = 'home') {
               onclick="updateMatchStatus('${match.id}', '${matchType}', 'unconfirmed')" 
               class="px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center"
               title="Auf Unbestätigt setzen">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
+              ${icons.exclamation_triangle}
             </button>
           `);
         }
@@ -187,17 +180,13 @@ function MatchCard(match, context = 'home') {
               onclick="${editFunction}('${match.id}')" 
               class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
               title="Bearbeiten">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-              </svg>
+              ${icons.edit}
             </button>
             <button 
               onclick="${deleteFunction}('${match.id}')" 
               class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
               title="Löschen">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
+              ${icons.trash}
             </button>
           </div>
         `;

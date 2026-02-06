@@ -22,7 +22,6 @@ function DoublesPage() {
             </div>
           ` : levels.length === 0 && !state.pyramidInitialized ? `
             <div class="text-center py-12 bg-gray-50 rounded-lg">
-              <div class="text-blue-500 mb-4">${icons.pyramid}</div>
               <p class="text-gray-600">Pyramide noch nicht initialisiert</p>
               ${state.user ? `
                 <button onclick="initPyramid()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">

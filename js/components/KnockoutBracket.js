@@ -78,10 +78,10 @@ function KnockoutBracketView() {
         player2Id: p2,
         player1Name: p1
           ? getPlayerName(p1)
-          : `Gewinner VF${matchNum === 1 ? 1 : 3}`,
+          : `Gewinner Viertelfinale ${matchNum === 1 ? 1 : 3}`,
         player2Name: p2
           ? getPlayerName(p2)
-          : `Gewinner VF${matchNum === 1 ? 2 : 4}`,
+          : `Gewinner Viertelfinale ${matchNum === 1 ? 2 : 4}`,
       };
     }
     if (round === "thirdPlace") {
@@ -90,8 +90,8 @@ function KnockoutBracketView() {
       return {
         player1Id: p1,
         player2Id: p2,
-        player1Name: p1 ? getPlayerName(p1) : "Verlierer HF1",
-        player2Name: p2 ? getPlayerName(p2) : "Verlierer HF2",
+        player1Name: p1 ? getPlayerName(p1) : "Verlierer Halbfinale 1",
+        player2Name: p2 ? getPlayerName(p2) : "Verlierer Halbfinale 2",
       };
     }
     if (round === "final") {
@@ -100,8 +100,8 @@ function KnockoutBracketView() {
       return {
         player1Id: p1,
         player2Id: p2,
-        player1Name: p1 ? getPlayerName(p1) : "Gewinner HF1",
-        player2Name: p2 ? getPlayerName(p2) : "Gewinner HF2",
+        player1Name: p1 ? getPlayerName(p1) : "Gewinner Halbfinale 1",
+        player2Name: p2 ? getPlayerName(p2) : "Gewinner Halbfinale 2",
       };
     }
     return {
@@ -177,10 +177,10 @@ function KnockoutBracketView() {
         <div class="mb-6">
           <h4 class="font-bold text-gray-700 mb-3">Viertelfinale</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            ${renderKnockoutMatchCard("quarter", 1, "VF 1")}
-            ${renderKnockoutMatchCard("quarter", 2, "VF 2")}
-            ${renderKnockoutMatchCard("quarter", 3, "VF 3")}
-            ${renderKnockoutMatchCard("quarter", 4, "VF 4")}
+            ${renderKnockoutMatchCard("quarter", 1, "Viertelfinale 1")}
+            ${renderKnockoutMatchCard("quarter", 2, "Viertelfinale 2")}
+            ${renderKnockoutMatchCard("quarter", 3, "Viertelfinale 3")}
+            ${renderKnockoutMatchCard("quarter", 4, "Viertelfinale 4")}
           </div>
         </div>
         <div class="mb-6">

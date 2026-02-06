@@ -2,13 +2,6 @@
 // Einzel-Herausforderungen Tab
 
 function ChallengesSinglesTab() {
-  if (state.knockoutPhaseActive) {
-    return `
-      <div class="p-3 bg-blue-50 border border-blue-300 rounded-lg">
-        <p class="text-sm text-blue-800">Die Gruppenphase ist beendet. Einzel-Herausforderungen sind nur während der Gruppenphase möglich.</p>
-      </div>`;
-  }
-
   const group1Players = getGroupPlayers(1);
   const group2Players = getGroupPlayers(2);
 
@@ -130,7 +123,7 @@ function ChallengesSinglesTab() {
             `
                 : `
               ${
-                state.user
+                state.user && !state.knockoutPhaseActive
                   ? `
                 <button 
                   onclick="openSinglesMatchEntryForChallenge('${p1.id}', '${p2.id}')"
@@ -140,7 +133,7 @@ function ChallengesSinglesTab() {
                 </button>
               `
                   : `
-                <div class="text-center text-sm text-gray-400">Noch nicht gespielt</div>
+                <div class="text-center text-sm text-gray-400">${state.knockoutPhaseActive ? `Nicht gespielt` : `Noch nicht gespielt`}</div>
               `
               }
             `
@@ -167,7 +160,7 @@ function ChallengesSinglesTab() {
             `
                 : `
               ${
-                state.user && hinspiel
+                state.user && hinspiel && !state.knockoutPhaseActive
                   ? `
                 <button 
                   onclick="openSinglesMatchEntryForChallenge('${p1.id}', '${p2.id}')"
@@ -177,7 +170,7 @@ function ChallengesSinglesTab() {
                 </button>
               `
                   : `
-                <div class="text-center text-sm text-gray-400">${hinspiel ? "Noch nicht gespielt" : "Hinspiel zuerst"}</div>
+                <div class="text-center text-sm text-gray-400">${state.knockoutPhaseActive ?`Nicht gespielt` : hinspiel ? "Noch nicht gespielt" : "Hinspiel zuerst"}</div>
               `
               }
             `
@@ -190,6 +183,21 @@ function ChallengesSinglesTab() {
 
   return `
     <div>
+      <!-- Disclaimer für K.O.-Phase -->
+      ${
+        state.knockoutPhaseActive
+          ? `
+        <div class="mb-6 p-3 bg-blue-50 border border-blue-300 rounded-lg">
+          <p class="flex items-center gap-2 text-sm text-blue-800">
+            ${icons.info}
+            <span>Die Gruppenphase ist beendet.Gruppenspiele nicht mehr möglich.</span>
+          </p>
+        </div>
+
+      `
+          : ""
+      }
+      
       <!-- Suchfeld -->
       <div class="mb-6">
         <input 

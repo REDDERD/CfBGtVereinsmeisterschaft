@@ -1,7 +1,5 @@
 // js/services/export-service.js
 // Excel Export Funktionen
-// Modulare Builder: Jeder Builder gibt { headers, rows } zurück
-// für zukünftigen Export-Tab mit Checkboxen
 
 // ========== Sheet Builder: Einzel Gruppenphase ==========
 

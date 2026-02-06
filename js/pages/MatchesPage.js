@@ -75,7 +75,7 @@ function MatchesPage() {
                   ? 'bg-yellow-100 border-yellow-400 text-yellow-800 font-semibold'
                   : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
               }">
-              Einzel (inkl. KO)
+              Einzel
             </button>
             <button 
               onclick="toggleMatchTypeFilter('doubles')" 
@@ -89,22 +89,15 @@ function MatchesPage() {
           </div>
         </div>
         
-        <!-- Suchfeld und Export -->
-        <div class="mb-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+        <!-- Suchfeld -->
+        <div class="mb-6">
           <input 
             type="text" 
             id="matchesSearchInput" 
             placeholder="Nach Spielername suchen..." 
             value="${searchQuery}" 
             onkeyup="updateMatchesSearch(this.value)" 
-            class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-          ${state.user ? `
-            <button 
-              onclick="exportAllMatches()" 
-              class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-              Excel Export
-            </button>
-          ` : ''}
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
         </div>
         
         <!-- Spiele-Liste -->

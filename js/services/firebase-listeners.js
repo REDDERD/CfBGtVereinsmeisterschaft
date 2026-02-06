@@ -38,7 +38,7 @@ function initFirebaseListeners() {
       render();
     });
 
-  // Singles Matches - jetzt inkl. Knockout-Matches
+  // Singles Matches
   db.collection("singlesMatches")
     .orderBy("date", "desc")
     .onSnapshot((snapshot) => {

@@ -23,9 +23,6 @@ function AdminSinglesTableTab() {
         ${GroupTable(1, group1)}
         ${GroupTable(2, group2)}
       </div>
-      <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <button onclick="exportSinglesTables()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Tabellen exportieren</button>
-      </div>
       <div class="bg-gray-50 rounded-lg p-6 mb-6">
         <h3 class="text-xl font-bold text-gray-800 mb-4">K.O.-Phase konfigurieren</h3>
         ${

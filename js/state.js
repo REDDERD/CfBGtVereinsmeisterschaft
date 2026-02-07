@@ -69,4 +69,10 @@ const state = {
     showDoubles: true,
   },
   adminMatchesSearchQuery: "",
+  
+  // *** NEU: Doubles Pool Visualisierung ***
+  doublesPoolVisualization: false, // Toggle für Pool-Farbcodierung
+  
+  // *** NEU: Challenge-Validierungsmodus ***
+  doublesValidationMode: 'allow', // 'allow' | 'warn' | 'block'
 };

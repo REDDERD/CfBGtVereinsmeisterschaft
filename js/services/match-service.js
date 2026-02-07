@@ -48,8 +48,8 @@ async function addSinglesMatch() {
     return;
   }
 
-  const player1 = state.players.find(player => player.id === p1);
-  const player2 = state.players.find(player => player.id === p2);
+  const player1 = state.players.find((player) => player.id === p1);
+  const player2 = state.players.find((player) => player.id === p2);
 
   if (!player1 || !player2) {
     Toast.error("Spieler nicht gefunden");
@@ -59,41 +59,42 @@ async function addSinglesMatch() {
   // Validierung: Spieler müssen in derselben Gruppe sein
   if (player1.singlesGroup !== player2.singlesGroup) {
     const confirmed = await Modal.warn({
-      title: 'Spieler in unterschiedlichen Gruppen',
+      title: "Spieler in unterschiedlichen Gruppen",
       message: `${player1.name} ist in Gruppe ${player1.singlesGroup} und ${player2.name} ist in Gruppe ${player2.singlesGroup}. Gruppenspiele sollten nur innerhalb derselben Gruppe stattfinden. Möchtest du das Spiel trotzdem eintragen?`,
-      confirmText: 'Ja, eintragen',
-      cancelText: 'Abbrechen'
+      confirmText: "Ja, eintragen",
+      cancelText: "Abbrechen",
     });
-    
+
     if (!confirmed) {
       return;
     }
   }
 
   // Validierung: Prüfe, ob diese Paarung bereits 2x gespielt wurde
-  const existingMatches = state.singlesMatches.filter(match => 
-    (match.player1Id === p1 && match.player2Id === p2) || 
-    (match.player1Id === p2 && match.player2Id === p1)
+  const existingMatches = state.singlesMatches.filter(
+    (match) =>
+      (match.player1Id === p1 && match.player2Id === p2) ||
+      (match.player1Id === p2 && match.player2Id === p1),
   );
 
   if (existingMatches.length >= 2) {
     const confirmed = await Modal.warn({
-      title: 'Paarung bereits 2x gespielt',
+      title: "Paarung bereits 2x gespielt",
       message: `${player1.name} und ${player2.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Da es nur Hin- und Rückrunde gibt, macht es wenig Sinn, mehr als 2 Spiele pro Paarung einzutragen. Möchtest du das Spiel trotzdem eintragen?`,
-      confirmText: 'Ja, eintragen',
-      cancelText: 'Abbrechen'
+      confirmText: "Ja, eintragen",
+      cancelText: "Abbrechen",
     });
-    
+
     if (!confirmed) {
       return;
     }
   }
 
   // Bestimme den Status basierend auf den Einstellungen
-  const matchStatus = _getDefaultMatchStatus('singles');
+  const matchStatus = _getDefaultMatchStatus("singles");
 
   // Bestimme die Runde basierend auf der Spielergruppe
-  const round = player1.singlesGroup === 1 ? 'group1' : 'group2';
+  const round = player1.singlesGroup === 1 ? "group1" : "group2";
 
   await db.collection("singlesMatches").add({
     player1Id: p1,
@@ -141,7 +142,9 @@ async function addDoublesMatch() {
   const allPlayers = [t1p1, t1p2, t2p1, t2p2];
   const uniquePlayers = new Set(allPlayers);
   if (uniquePlayers.size !== 4) {
-    Toast.error("Ein Spieler kann nicht in beiden Teams spielen. Bitte wähle 4 verschiedene Spieler aus.");
+    Toast.error(
+      "Ein Spieler kann nicht in beiden Teams spielen. Bitte wähle 4 verschiedene Spieler aus.",
+    );
     return;
   }
 
@@ -171,10 +174,10 @@ async function addDoublesMatch() {
     }
   }
 
-  const t1player1 = state.players.find(p => p.id === t1p1);
-  const t1player2 = state.players.find(p => p.id === t1p2);
-  const t2player1 = state.players.find(p => p.id === t2p1);
-  const t2player2 = state.players.find(p => p.id === t2p2);
+  const t1player1 = state.players.find((p) => p.id === t1p1);
+  const t1player2 = state.players.find((p) => p.id === t1p2);
+  const t2player1 = state.players.find((p) => p.id === t2p1);
+  const t2player2 = state.players.find((p) => p.id === t2p2);
 
   if (!t1player1 || !t1player2 || !t2player1 || !t2player2) {
     Toast.error("Einer oder mehrere Spieler nicht gefunden");
@@ -184,62 +187,83 @@ async function addDoublesMatch() {
   // Validierung: Pool-Kombination prüfen
   const validatePoolCombination = (player1, player2, teamName) => {
     if (!player1.doublesPool || !player2.doublesPool) {
-      return { valid: false, message: `Beide Spieler in ${teamName} müssen einem Doppel-Pool zugeordnet sein.` };
+      return {
+        valid: false,
+        message: `Beide Spieler in ${teamName} müssen einem Doppel-Pool zugeordnet sein.`,
+      };
     }
     if (player1.doublesPool === player2.doublesPool) {
-      return { valid: false, message: `${teamName}: ${player1.name} und ${player2.name} sind beide in Pool ${player1.doublesPool}. Jedes Team muss einen Spieler aus Pool A und einen aus Pool B haben.` };
+      return {
+        valid: false,
+        message: `${teamName}: ${player1.name} und ${player2.name} sind beide in Pool ${player1.doublesPool}. Jedes Team muss einen Spieler aus Pool A und einen aus Pool B haben.`,
+      };
     }
     return { valid: true };
   };
 
-  const team1Validation = validatePoolCombination(t1player1, t1player2, "Team 1");
+  const team1Validation = validatePoolCombination(
+    t1player1,
+    t1player2,
+    "Team 1",
+  );
   if (!team1Validation.valid) {
     Toast.error(team1Validation.message);
     return;
   }
 
-  const team2Validation = validatePoolCombination(t2player1, t2player2, "Team 2");
+  const team2Validation = validatePoolCombination(
+    t2player1,
+    t2player2,
+    "Team 2",
+  );
   if (!team2Validation.valid) {
     Toast.error(team2Validation.message);
     return;
   }
 
+  const validationPassed = await checkDoublesMatchValidation(t1p1, t2p1);
+  if (!validationPassed) {
+    return; // Abbrechen wenn Validierung fehlschlägt
+  }
+
   // Prüfe ob eine offene Challenge existiert
   let challengeToComplete = null;
   if (state.challenges && state.challenges.length > 0) {
-    challengeToComplete = state.challenges.find(challenge => 
-      challenge.status === 'pending' &&
-      ((challenge.challengerId === t1p1 && challenge.challengedId === t2p1) ||
-       (challenge.challengerId === t2p1 && challenge.challengedId === t1p1))
+    challengeToComplete = state.challenges.find(
+      (challenge) =>
+        challenge.status === "pending" &&
+        ((challenge.challengerId === t1p1 && challenge.challengedId === t2p1) ||
+          (challenge.challengerId === t2p1 && challenge.challengedId === t1p1)),
     );
 
     if (challengeToComplete) {
-      const challenger = state.players.find(p => p.id === challengeToComplete.challengerId);
-      const challenged = state.players.find(p => p.id === challengeToComplete.challengedId);
-      
+      const challenger = state.players.find(
+        (p) => p.id === challengeToComplete.challengerId,
+      );
+      const challenged = state.players.find(
+        (p) => p.id === challengeToComplete.challengedId,
+      );
+
       const confirmed = await Modal.confirm({
-        title: 'Herausforderung gefunden',
-        message: `Es gibt eine offene Herausforderung zwischen ${challenger?.name || 'Spieler 1'} und ${challenged?.name || 'Spieler 2'}. Soll diese Herausforderung als erledigt markiert werden?`,
-        confirmText: 'Ja, als erledigt markieren',
-        cancelText: 'Nein, offen lassen',
-        type: 'info'
+        title: "Herausforderung gefunden",
+        message: `Es gibt eine offene Herausforderung zwischen ${challenger?.name || "Spieler 1"} und ${challenged?.name || "Spieler 2"}. Soll diese Herausforderung als erledigt markiert werden?`,
+        confirmText: "Ja, als erledigt markieren",
+        cancelText: "Nein, offen lassen",
+        type: "info",
       });
 
       if (confirmed) {
-        await db
-          .collection("challenges")
-          .doc(challengeToComplete.id)
-          .update({
-            status: "completed",
-            completedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
+        await db.collection("challenges").doc(challengeToComplete.id).update({
+          status: "completed",
+          completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
       } else {
         challengeToComplete = null;
       }
     }
   }
 
-  const matchStatus = _getDefaultMatchStatus('doubles');
+  const matchStatus = _getDefaultMatchStatus("doubles");
 
   await db.collection("doublesMatches").add({
     team1: { player1Id: t1p1, player2Id: t1p2 },
@@ -250,7 +274,7 @@ async function addDoublesMatch() {
   });
 
   // Pyramide aktualisieren (nur wenn bestätigt)
-  if (matchStatus === 'confirmed') {
+  if (matchStatus === "confirmed") {
     let t1Sets = 0,
       t2Sets = 0;
     sets.forEach((set) => {
@@ -277,7 +301,7 @@ async function addDoublesMatch() {
 
   state.prefilledDoubles = null;
 
-  if (matchStatus === 'confirmed') {
+  if (matchStatus === "confirmed") {
     state.pyramidLoading = true;
     render();
     await loadPyramid();
@@ -328,55 +352,67 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
 
 async function updateMatchStatus(matchId, matchType, newStatus) {
   let collection;
-  if (matchType === 'singles' || matchType === 'knockout') {
-    collection = 'singlesMatches';
-  } else if (matchType === 'doubles') {
-    collection = 'doublesMatches';
+  if (matchType === "singles" || matchType === "knockout") {
+    collection = "singlesMatches";
+  } else if (matchType === "doubles") {
+    collection = "doublesMatches";
   } else {
     Toast.error("Ungültiger Match-Typ");
     return;
   }
-  
+
   try {
     const matchDoc = await db.collection(collection).doc(matchId).get();
-    
+
     if (!matchDoc.exists) {
       Toast.error("Spiel nicht gefunden");
       return;
     }
-    
+
     const oldStatus = matchDoc.data().status;
-    
+
     await db.collection(collection).doc(matchId).update({
       status: newStatus,
       statusChangedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    
+
     // Wenn ein Doppelspiel bestätigt wird → Pyramide aktualisieren
-    if (matchType === 'doubles' && newStatus === 'confirmed' && oldStatus !== 'confirmed') {
+    if (
+      matchType === "doubles" &&
+      newStatus === "confirmed" &&
+      oldStatus !== "confirmed"
+    ) {
       const matchData = matchDoc.data();
       const sets = matchData.sets;
-      
-      let t1Sets = 0, t2Sets = 0;
+
+      let t1Sets = 0,
+        t2Sets = 0;
       sets.forEach((set) => {
         if (set.t1 > set.t2) t1Sets++;
         else t2Sets++;
       });
 
-      const winnerId = t1Sets > t2Sets ? matchData.team1.player1Id : matchData.team2.player1Id;
-      const loserId = t1Sets > t2Sets ? matchData.team2.player1Id : matchData.team1.player1Id;
+      const winnerId =
+        t1Sets > t2Sets ? matchData.team1.player1Id : matchData.team2.player1Id;
+      const loserId =
+        t1Sets > t2Sets ? matchData.team2.player1Id : matchData.team1.player1Id;
 
       await updatePyramidAfterChallenge(winnerId, loserId);
-      
+
       state.pyramidLoading = true;
       render();
       await loadPyramid();
     }
-    
-    const statusText = newStatus === 'confirmed' ? 'bestätigt' : newStatus === 'rejected' ? 'abgelehnt' : 'unbestätigt';
+
+    const statusText =
+      newStatus === "confirmed"
+        ? "bestätigt"
+        : newStatus === "rejected"
+          ? "abgelehnt"
+          : "unbestätigt";
     Toast.success(`Spiel wurde als ${statusText} markiert`);
   } catch (error) {
-    console.error('Fehler beim Aktualisieren des Status:', error);
+    console.error("Fehler beim Aktualisieren des Status:", error);
     Toast.error("Fehler beim Aktualisieren des Status");
   }
 }
@@ -384,22 +420,24 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
 // ========== Hilfsfunktion: Standard-Status ermitteln ==========
 
 function _getDefaultMatchStatus(type) {
-  let matchStatus = 'unconfirmed';
+  let matchStatus = "unconfirmed";
   const settings = state.matchStatusSettings;
-  
+
   if (settings) {
     if (state.isAdmin) {
-      matchStatus = (type === 'singles') 
-        ? (settings.singlesAdminDefault || 'confirmed')
-        : (settings.doublesAdminDefault || 'confirmed');
+      matchStatus =
+        type === "singles"
+          ? settings.singlesAdminDefault || "confirmed"
+          : settings.doublesAdminDefault || "confirmed";
     } else {
-      matchStatus = (type === 'singles')
-        ? (settings.singlesUserDefault || 'unconfirmed')
-        : (settings.doublesUserDefault || 'unconfirmed');
+      matchStatus =
+        type === "singles"
+          ? settings.singlesUserDefault || "unconfirmed"
+          : settings.doublesUserDefault || "unconfirmed";
     }
   } else if (state.isAdmin) {
-    matchStatus = 'confirmed';
+    matchStatus = "confirmed";
   }
-  
+
   return matchStatus;
 }

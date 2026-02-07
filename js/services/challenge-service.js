@@ -26,6 +26,12 @@ async function addChallenge() {
     return;
   }
 
+  // *** NEU: Validierung der Challenge-Regeln ***
+  const validationPassed = await checkChallengeValidation(challenger, challenged);
+  if (!validationPassed) {
+    return; // Abbrechen wenn Validierung fehlschlägt
+  }
+
   // Convert to Firestore timestamp
   const timestamp = firebase.firestore.Timestamp.fromDate(selectedDate);
 

@@ -310,7 +310,7 @@ function AdminSettingsTab() {
       <!-- Anzeige-Einstellungen für Matches-Tab -->
       <div class="bg-white rounded-lg p-6 border border-gray-200">
         <div class="mb-6">
-          <h3 class="text-xl font-bold text-gray-800 mb-1">Anzeige-Einstellungen für Matches-Tab</h3>
+          <h3 class="text-xl font-bold text-gray-800 mb-1">Anzeige-Einstellungen für unbestätige Spiele</h3>
           <p class="text-sm text-gray-600">Legt fest, ob unbestätigte Spiele auf der Seite "Spiele" angezeigt werden</p>
         </div>
         
@@ -324,7 +324,6 @@ function AdminSettingsTab() {
               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded">
             <div class="ml-3">
               <span class="font-semibold text-gray-800">Unbestätigte Einzel-Spiele anzeigen</span>
-              <p class="text-sm text-gray-600 mt-1">Zeigt unbestätigte Einzel-Spiele im Matches-Tab mit einem Badge an</p>
             </div>
           </label>
           
@@ -337,7 +336,6 @@ function AdminSettingsTab() {
               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded">
             <div class="ml-3">
               <span class="font-semibold text-gray-800">Unbestätigte Doppel-Spiele anzeigen</span>
-              <p class="text-sm text-gray-600 mt-1">Zeigt unbestätigte Doppel-Spiele im Matches-Tab mit einem Badge an</p>
             </div>
           </label>
         </div>

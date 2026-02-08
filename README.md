@@ -17,24 +17,59 @@ Die Anmeldung erfolgt über Email und Passwort. Wenn du berechtigt bist dich anz
 Der Login ist erforderlich, um Ergebnisse eintragen zu können und die Verwaltung der Vereinsmeisterschaften vorzunehmen. (Mehr dazu unter [Admin-Funktionen](#admin-funktionen))
 
 ### Notwendigkeit
-Damit schreibende Änderungen eingetragen werden können, muss man als Admin eingeloggt sein. Das liegt daran, dass die Tabellen und die Pyramide absichtlich öffentlich sind, damit sie jeder (auch ohne Login) einsehen kann. Damit aber nicht wahrlos oder von Dritten Ergebnisse eingetragen werden, ist der Login pflicht. Ist man nicht eingeloggt, die man die Bedienflächen zum Schreiben oder Exportieren garnicht.
+Damit schreibende Änderungen eingetragen werden können, muss man als Admin eingeloggt sein. Das liegt daran, dass die Tabellen und die Pyramide absichtlich öffentlich sind, damit sie jeder (auch ohne Login) einsehen kann. Damit aber nicht wahrlos oder von Dritten Ergebnisse eingetragen werden, ist der Login pflicht. Ist man nicht eingeloggt, die man die Bedienflächen zum Eintragen.
 
-Sollte sich dieses Konzept (dass immer ein Admin eingeloggt sein muss) als unpraktikabel oder kompliziert zum Eintragen in der Halle erweisen, können wir die Anwendung so umbauen, dass es auch einen "einfachen" Nutzer gibt. In der Halle könnte man sich dann immer über einen QR-Code einloggen und hätte nur die Berechtigung, Ergebnisse und Herausforderungen einzutragen, ohne das etwas an den Einstellungen kaputt gemacht werden kann.
+Es gibt einen Standard-Nutzer, der zum Eintragen verwendet werden kann. Dieser kann sich über einen Link anmelden und hat nur die Berechtigungen Spiele einzutragen. Den Link können wir bspw. in der Halle als QR-Code auslegen. Die App kann so eigestellt werden, dass Spiele von diesem Nutzer erst von einem Admin bestätigt werden müssen, bevor sie in die Wertung eingehen. Mehr dazu unter [Spiele verwalten](#spiele-verwalten)
 
 ## Admin-Funktionen
 
 ### Spielerverwaltung
 Hier können Spieler zu den Vereinsmeisterschaften angemeldet und auch wieder gelöscht werden. Damit Spieler an einer Kategorie (Einzel oder Doppel) teilnehmen können, müssen sie zunächst angelegt werden. Anschließend kann über "Spieler bearbeiten" (Stift-Symbol) die Anmeldung zum Einzel und Doppel erfolgen. Dazu muss beim Einzel die Gruppe für die Gruppenphase gesetzt werden und beim Doppel muss eine Einordnung in die Pools A und B erfolgen. Die beiden Werte können unabhängig voneinander gesetzt werden, sodass man auch nur am Einzel oder nur am Doppel teilnehmen kann.  
-Wird ein Spieler gelöscht (Papierkorb-Symbol) so wird dieser aus der Einzel-Gruppe direkt entfernt. Damit der Spieler aus der Doppel-Pyramide verschwindet, muss dies über [Doppel-Einstellungen](#doppel-einstellungen) manuell erfolgen. Ebenso bleiben die bereits eingetragenen Spiele erhalten. Hier erscheint dann "Gelöschter Spieler" als Name. Solche Spiele können auch manuell gelöscht werden.
+Wird ein Spieler gelöscht (Papierkorb-Symbol) so wird dieser aus der Einzel-Gruppe direkt entfernt. Damit der Spieler aus der Doppel-Pyramide verschwindet, muss dies über [Doppel-Einstellungen](#doppel-verwalten) manuell erfolgen. Ebenso bleiben die bereits eingetragenen Spiele erhalten. Hier erscheint dann "Gelöschter Spieler" als Name. Solche Spiele können auch manuell gelöscht werden.
 
-### Einzel-Einstellungen
+### Einzel verwalten
 Die Einstellungen der Gruppen erfolgt über die Zuordnung von Spielern über die [Spielerverwaltung](#spielerverwaltung). Über die Einstellungen im Admin-Bereich kann die Zuordnung vorgenommen werden, welche Positionen am Ende der Gruppenphase in der K.O.-Phase gegeneinander spielen. (Beispiel: 4. Gruppe 1 spielt gegen 1. Gruppe 2 etc.) Ebenfalls kann hier die Gruppenphase für beendet erklärt werden und die K.O.-Phase wird eingeleitet. In diesem Fall werden die Gruppen-Tabellen eingefroren und die Viertelfinals starten.  
-Es ist möglich, die K.O.-Phase wieder zu deaktivieren, allerdings gehen dadurch alle Ergebnisse der K.O.-Phase verloren. Sollte dies wegen Änderungen notwendig sein, sollten die Spielergebnisse der K.O.-Phase vorher gespeichert werden, um sie danach wieder einzutragen.
+Es ist möglich, die K.O.-Phase wieder zu deaktivieren, allerdings gehen dadurch alle Ergebnisse der K.O.-Phase verloren. Sollte dies wegen Änderungen notwendig sein, sollten die Spielergebnisse der K.O.-Phase vorher exportiert werden, um sie danach wieder einzutragen.
 
-### Doppel-Einstellungen
-Hier kann die Reihenfolge der Pyramide manuell beeinflusst werden. Da nachträgliche Änderungen an Spielen die Auswirkungen auf die Pyramide sehr kompliziert wären, wird die Pyramide nur beeinflusst, wenn ein Spiel initial eingetragen wird. Spätere Änderungen am Ergebnis (so sie nötig sein sollten) müssen manuell vom Admin in die Reihenfolge eingebracht werden. Durch die Buttons "rauf" und "runter" (Pfeil-Buttons) können einzelne Spieler in der Pyramide direkt nach oben oder unten verschoben werden.  
+### Doppel verwalten
+Hier kann die Reihenfolge der Pyramide manuell beeinflusst werden. Da nachträgliche Änderungen an Spielen die Auswirkungen auf die Pyramide sehr kompliziert wären, wird die Pyramide nur beeinflusst, wenn ein Spiel initial eingetragen (oder bestätigt) wird. Spätere Änderungen am Ergebnis (so sie nötig sein sollten) müssen manuell vom Admin in die Reihenfolge eingebracht werden. Durch die Buttons "rauf" und "runter" (Pfeil-Buttons) können einzelne Spieler in der Pyramide direkt nach oben oder unten verschoben werden.  
 Es ist ebenfalls möglich, einzelne Spieler komplett aus der Pyramide zu löschen. Hier sollte zuvor der Doppel-Pool des Spielers entfernt werden, da er sonst möglicherweise wieder zur Pyramide hinzugefügt wird.
 
+### Spiele verwalten
+Hier können alle eingetragenen Spiele eingesehen werden. Diese haben jeweils einen von 3 Status (Unbestätigt, Bestätigt, Abgelehnt). Admins können über die Buttons rechts den Status jedes Spiels verändern. Nur bestätigte Spiele gehen in die Wertung ein. Ein bestätigtes Spiel kann auch wieder zurückgenommen werden. Beim Einzel wird dieses dann aus der Wertung entfernt. Beim Doppel ist das nicht möglich, sodass der Admin die Reihenfolge manuell ändern muss.  
+Admins können hier ebenfalls Ergebnisse anpassen oder Spiele löschen. Es ist ebenfalls möglich, den Sieger eines Spiels zu ändern (über die Punktzahl). Beim Einzel stellt dies in der Gruppenphase kein Problem dar. Beim Doppel hingegen werden Änderungen an der Pyramide nachträglich nicht mehr vorgenommen, dies muss manuell durch einen Admin passieren. ([Admin-Funktionen](#admin-funktionen)).  
+Die angezeigen Spiele können über die Buttons und die Suchleiste gefiltert werden.
+
+### Einstellungen
+Hier können verschiedene Verhaltensweisen der App gesteuert werden, die Auswirkungen auf die Spieleintragung und -anzeige haben.
+
+#### Standardstatus für neue Spiele
+Hier kann festgelegt werden, welchen Status neu eingetragene Spiele standardmäßig erhalten sollen. Es gibt folgende Einstellmöglichkeiten:
+- **Einzel - Admin**: Wenn ein Admin ein Einzel-Spiel einträgt
+- **Einzel - Nutzer**: Wenn ein normaler Nutzer (z.B. über QR-Code-Login) ein Einzel-Spiel einträgt
+- **Doppel - Admin**: Wenn ein Admin ein Doppel-Spiel einträgt
+- **Doppel - Nutzer**: Wenn ein normaler Nutzer ein Doppel-Spiel einträgt
+
+Für jede dieser Optionen kann gewählt werden:
+- **Bestätigt**: Das Spiel geht sofort in die Wertung ein
+- **Unbestätigt**: Das Spiel muss erst von einem Admin unter [Spiele verwalten](#spiele-verwalten) bestätigt werden, bevor es in die Wertung eingeht
+
+**Empfehlung**: Admin-Eintragungen sollten auf "Bestätigt" stehen, während Nutzer-Eintragungen auf "Unbestätigt" gesetzt werden können, um Missbrauch zu vermeiden.
+
+#### Anzeige unbestätigter Spiele
+Hier kann gesteuert werden, ob unbestätigte Spiele auf der öffentlichen Spiele-Seite angezeigt werden sollen. Dies kann getrennt für Einzel und Doppel eingestellt werden. Unbestätigte Spiele erscheinen mit einem entsprechenden Hinweis, gehen aber nicht in die Wertung ein. Diese Einstellung hat keinen Einfluss auf die Admin-Ansicht unter [Spiele verwalten](#spiele-verwalten), dort werden immer alle Spiele angezeigt.
+
+#### Herausforderungs-Validierung
+Hier kann für Einzel und Doppel separat eingestellt werden, wie die App reagieren soll, wenn eine Herausforderung/ Spiel eingetragen wird, das gegen die Regeln verstößt.
+
+**Hinweis**: Diese Einstellung beeinflusst nur das Eintragen neuer Spiele, bereits eingetragene Spiele bleiben unverändert.
+
+#### Anzeige unbestätiger Spiele
+Hier kann je Spielmodus eingestellt werden, ob unbestätige Spiele Nutzern angezeigt werden sollen, die kein Admin sind.
+
+
+### Export
+Hier können alle gespeicherten Daten der App exportiert werden. Durch das setzen der Haken kann entschieden werden, welche Daten in die Excel-Datei exportiert werden.
 
 ## Einzel
 Hier können die Gruppentabellen eingesehen und neue Spiele eingetragen werden. Damit neue Spiele eingetragen werden können, muss man als Admin eingeloggt sein. (Siehe [Anmelde-Notwendigkeit](#notwendigkeit))  
@@ -68,9 +103,9 @@ Im Doppel sind die Herausforderungen im Prinzip lediglich eine terminliche Erinn
 Sind erstmal Herausforderungen eingetragen, so kann man diese als erledigt markieren (falls das Spiel bereits eingetragen ist, die Herausforderung aber systemisch noch steht) oder das Ergebnis direkt eintragen und damit auch die Herausforderung erledigen. 
 
 ## Spiele
-Hier können alle vergangenen Spiele in Einzel & Doppel eingesehen werden. Ausgenommen sind die K.O.-Phasen-Spiele im Einzel, diese müssen über die Einzel-Seite direkt eingesehen werden. Es kann nach den Namen einzelner Spieler gefiltert werden.  
-Admins können die angezeigten Spiele in Excel exportieren. Die Filter-Funktion schränkt dabei ebenfalls den Export ein.
-Admins können hier ebenfalls Ergebnisse anpassen oder Spiele löschen. Es ist ebenfalls möglich, den Sieger eines Spiels zu ändern (über die Punktzahl). Beim Einzel stellt dies in der Gruppenphase kein Problem dar. Beim Doppel hingegen werden Änderungen an der Pyramide nachträglich nicht mehr vorgenommen, dies muss manuell durch einen Admin passieren. ([Admin-Funktionen](#admin-funktionen)). 
+Hier können alle vergangenen Spiele in Einzel & Doppel eingesehen werden. Ausgenommen sind die K.O.-Phasen-Spiele im Einzel, diese müssen über die Einzel-Seite direkt eingesehen werden. Es kann nach den Namen einzelner Spieler gefiltert werden.
+In den Einstellungen kann durch den Admin festgelegt werden, ob hier auch unbestätige Spiele angezeigt werden sollen. Abgelehnte Spiele werden hier nie angezeigt.
+
 
 ## Spieler
 Hier können alle Spieler, die in der Anwendung registiert sind, angezeigt werden. Durck klicken die Kachel des jeweiligen Spielers können die Statistiken in Einzel und Doppel sowie alle Spiele abgerufen werden.

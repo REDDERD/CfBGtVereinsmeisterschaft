@@ -65,7 +65,7 @@ Hier kann für Einzel und Doppel separat eingestellt werden, wie die App reagier
 **Hinweis**: Diese Einstellung beeinflusst nur das Eintragen neuer Spiele, bereits eingetragene Spiele bleiben unverändert.
 
 #### Anzeige unbestätiger Spiele
-Hier kann je Spielmodus eingestellt werden, ob unbestätige Spiele Nutzern angezeigt werden sollen, die kein Admin sind.
+Hier kann je Spielmodus eingestellt werden, ob unbestätige Spiele Nutzern angezeigt werden sollen, die kein Admin sind. Falls ja, wird auch angezeigt, dass das Spiel unbestätigt ist.
 
 
 ### Export

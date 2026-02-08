@@ -2,25 +2,37 @@
 // Handler für Challenge-Validierungs-Einstellungen
 
 /**
- * Aktualisiert den Validierungsmodus für Doubles Challenges
+ * Aktualisiert den Validierungsmodus für Challenges
  * @param {string} mode - 'allow' | 'warn' | 'block'
+ * @param {string} type - 'singles' | 'doubles'
  */
-async function updateValidationMode(mode) {
+async function updateValidationMode(mode, type = 'doubles') {
   if (!['allow', 'warn', 'block'].includes(mode)) {
     Toast.error('Ungültiger Validierungsmodus');
     return;
   }
   
+  if (!['singles', 'doubles'].includes(type)) {
+    Toast.error('Ungültiger Spieltyp');
+    return;
+  }
+  
   try {
+    const docName = type === 'singles' ? 'singlesValidation' : 'doublesValidation';
+    
     // In Firebase speichern
-    await db.collection('settings').doc('doublesValidation').set({
+    await db.collection('settings').doc(docName).set({
       mode: mode,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: state.user?.uid || 'unknown'
     });
     
     // State aktualisieren
-    state.doublesValidationMode = mode;
+    if (type === 'singles') {
+      state.singlesValidationMode = mode;
+    } else {
+      state.doublesValidationMode = mode;
+    }
     
     // Erfolgsbenachrichtigung
     const modeText = {
@@ -29,7 +41,9 @@ async function updateValidationMode(mode) {
       'block': 'Blockieren'
     }[mode];
     
-    Toast.success(`Validierungsmodus auf "${modeText}" gesetzt`);
+    const typeText = type === 'singles' ? 'Einzel' : 'Doppel';
+    
+    Toast.success(`${typeText}-Validierungsmodus auf "${modeText}" gesetzt`);
     
     render();
   } catch (error) {
@@ -39,23 +53,32 @@ async function updateValidationMode(mode) {
 }
 
 /**
- * Lädt den Validierungsmodus aus Firebase
+ * Lädt die Validierungsmodi aus Firebase
  * Sollte beim App-Start aufgerufen werden
  */
 async function loadValidationMode() {
   try {
-    const doc = await db.collection('settings').doc('doublesValidation').get();
-    
-    if (doc.exists) {
-      const data = doc.data();
+    // Lade Doubles Validierung
+    const doublesDoc = await db.collection('settings').doc('doublesValidation').get();
+    if (doublesDoc.exists) {
+      const data = doublesDoc.data();
       state.doublesValidationMode = data.mode || 'allow';
     } else {
-      // Wenn noch keine Einstellung existiert, Standardwert setzen
       state.doublesValidationMode = 'allow';
     }
+    
+    // Lade Singles Validierung
+    const singlesDoc = await db.collection('settings').doc('singlesValidation').get();
+    if (singlesDoc.exists) {
+      const data = singlesDoc.data();
+      state.singlesValidationMode = data.mode || 'allow';
+    } else {
+      state.singlesValidationMode = 'allow';
+    }
   } catch (error) {
-    console.error('Fehler beim Laden des Validierungsmodus:', error);
+    console.error('Fehler beim Laden der Validierungsmodi:', error);
     state.doublesValidationMode = 'allow'; // Fallback
+    state.singlesValidationMode = 'allow'; // Fallback
   }
 }
 

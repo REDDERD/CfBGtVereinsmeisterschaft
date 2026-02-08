@@ -3,7 +3,8 @@
 
 function AdminSettingsTab() {
   const settings = state.matchStatusSettings || {};
-  const validationMode = state.doublesValidationMode || "allow";
+  const singlesValidationMode = state.singlesValidationMode || "allow";
+  const doublesValidationMode = state.doublesValidationMode || "allow";
   const displaySettings = state.matchesDisplaySettings || {
     showUnconfirmedSingles: false,
     showUnconfirmedDoubles: false,
@@ -18,128 +19,307 @@ function AdminSettingsTab() {
 
       <!-- Status-Einstellungen -->
       <div class="bg-white rounded-lg p-6 border border-gray-200">
-      <h3 class="text-xl font-bold text-gray-800 mb-4">Status-Einstellungen</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-6">Status-Einstellungen</h3>
 
-        <!-- Status-Einstellungen für Einzel-Spiele -->
-        <div class="bg-white rounded-lg p-6 border border-gray-200 mb-4">
-          <h3 class="text-xl font-bold text-gray-800 mb-4">Status-Einstellungen für Einzel-Spiele</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Grid Layout für Einzel und Doppel nebeneinander -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Linke Spalte: Einzel-Spiele -->
+          <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
+            <h4 class="text-lg font-bold text-gray-800 mb-4 text-center">Einzel-Spiele</h4>
+            
+            <!-- Admin-eingetragene Einzel-Spiele -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-3">Admin-eingetragene Spiele</label>
+              <div class="space-y-2">
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.singlesAdminDefault === "confirmed" ? "border-green-500 bg-green-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="singlesAdminStatus" 
+                    value="confirmed"
+                    ${settings.singlesAdminDefault === "confirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Bestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Sofort berücksichtigt</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.singlesAdminDefault === "unconfirmed" ? "border-yellow-500 bg-yellow-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="singlesAdminStatus" 
+                    value="unconfirmed"
+                    ${settings.singlesAdminDefault === "unconfirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-yellow-600 focus:ring-yellow-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Unbestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Manuelle Bestätigung</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Nutzer-eingetragene Einzel-Spiele -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Admin-eingetragene Spiele</label>
-              <select id="singlesAdminStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
-                <option value="confirmed" ${settings.singlesAdminDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
-                <option value="unconfirmed" ${settings.singlesAdminDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
-              </select>
+              <label class="block text-sm font-medium text-gray-700 mb-3">Nutzer-eingetragene Spiele</label>
+              <div class="space-y-2">
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.singlesUserDefault === "confirmed" ? "border-green-500 bg-green-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="singlesUserStatus" 
+                    value="confirmed"
+                    ${settings.singlesUserDefault === "confirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Bestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Sofort berücksichtigt</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.singlesUserDefault === "unconfirmed" ? "border-yellow-500 bg-yellow-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="singlesUserStatus" 
+                    value="unconfirmed"
+                    ${settings.singlesUserDefault === "unconfirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-yellow-600 focus:ring-yellow-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Unbestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Manuelle Bestätigung</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.singlesUserDefault === "rejected" ? "border-red-500 bg-red-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="singlesUserStatus" 
+                    value="rejected"
+                    ${settings.singlesUserDefault === "rejected" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Abgelehnt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Nicht berücksichtigt</p>
+                  </div>
+                </label>
+              </div>
             </div>
+          </div>
+          
+          <!-- Rechte Spalte: Doppel-Spiele -->
+          <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
+            <h4 class="text-lg font-bold text-gray-800 mb-4 text-center">Doppel-Spiele</h4>
+            
+            <!-- Admin-eingetragene Doppel-Spiele -->
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-3">Admin-eingetragene Spiele</label>
+              <div class="space-y-2">
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.doublesAdminDefault === "confirmed" ? "border-green-500 bg-green-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="doublesAdminStatus" 
+                    value="confirmed"
+                    ${settings.doublesAdminDefault === "confirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Bestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Sofort berücksichtigt</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.doublesAdminDefault === "unconfirmed" ? "border-yellow-500 bg-yellow-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="doublesAdminStatus" 
+                    value="unconfirmed"
+                    ${settings.doublesAdminDefault === "unconfirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-yellow-600 focus:ring-yellow-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Unbestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Manuelle Bestätigung</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            <!-- Nutzer-eingetragene Doppel-Spiele -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Nutzer-eingetragene Spiele</label>
-              <select id="singlesUserStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
-                <option value="confirmed" ${settings.singlesUserDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
-                <option value="unconfirmed" ${settings.singlesUserDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
-                <option value="rejected" ${settings.singlesUserDefault === "rejected" ? "selected" : ""}>Abgelehnt</option>
-              </select>
+              <label class="block text-sm font-medium text-gray-700 mb-3">Nutzer-eingetragene Spiele</label>
+              <div class="space-y-2">
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.doublesUserDefault === "confirmed" ? "border-green-500 bg-green-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="doublesUserStatus" 
+                    value="confirmed"
+                    ${settings.doublesUserDefault === "confirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Bestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Sofort berücksichtigt</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.doublesUserDefault === "unconfirmed" ? "border-yellow-500 bg-yellow-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="doublesUserStatus" 
+                    value="unconfirmed"
+                    ${settings.doublesUserDefault === "unconfirmed" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-yellow-600 focus:ring-yellow-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Unbestätigt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Manuelle Bestätigung</p>
+                  </div>
+                </label>
+                
+                <label class="flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all ${settings.doublesUserDefault === "rejected" ? "border-red-500 bg-red-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                  <input 
+                    type="radio" 
+                    name="doublesUserStatus" 
+                    value="rejected"
+                    ${settings.doublesUserDefault === "rejected" ? "checked" : ""}
+                    onchange="updateMatchStatusSettings()"
+                    class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500">
+                  <div class="ml-3">
+                    <span class="font-semibold text-gray-800">Abgelehnt</span>
+                    <p class="text-xs text-gray-600 mt-0.5">Nicht berücksichtigt</p>
+                  </div>
+                </label>
+              </div>
             </div>
-          </div>
-          <p class="text-sm text-gray-600 mt-3">Diese Einstellungen bestimmen, welchen Status neue Einzel-Spiele automatisch erhalten. Nur bestätigte Spiele beeinflussen die Tabelle.</p>
-        </div>
-
-
-      <!-- Status-Einstellungen für Doppel-Spiele -->
-      <div class="bg-white rounded-lg p-6 border border-gray-200">
-        <h4 class="text-xl font-bold text-gray-800 mb-4">Doppel</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Admin-eingetragene Spiele</label>
-            <select id="doublesAdminStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
-              <option value="confirmed" ${settings.doublesAdminDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
-              <option value="unconfirmed" ${settings.doublesAdminDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Standard-Status für Nutzer-eingetragene Spiele</label>
-            <select id="doublesUserStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateMatchStatusSettings()">
-              <option value="confirmed" ${settings.doublesUserDefault === "confirmed" ? "selected" : ""}>Bestätigt</option>
-              <option value="unconfirmed" ${settings.doublesUserDefault === "unconfirmed" ? "selected" : ""}>Unbestätigt</option>
-              <option value="rejected" ${settings.doublesUserDefault === "rejected" ? "selected" : ""}>Abgelehnt</option>
-            </select>
-          </div>
-        </div>
-        <p class="text-sm text-gray-600 mt-3">Diese Einstellungen bestimmen, welchen Status neue Doppel-Spiele automatisch erhalten. Nur bestätigte Spiele beeinflussen die Pyramide.</p>
-      </div>
-            </div>
-
-      <!-- Challenge-Validierungs-Einstellungen -->
-      <div class="bg-white rounded-lg p-6 border border-gray-200">
-        <div class="flex items-start gap-3 mb-4">
-          <svg class="w-6 h-6 text-gray-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-          </svg>
-          <div>
-            <h3 class="text-xl font-bold text-gray-800 mb-1">Challenge-Validierung (Doppel)</h3>
-            <p class="text-sm text-gray-600">Legt fest, wie mit regelwidrigen Herausforderungen umgegangen wird</p>
           </div>
         </div>
         
-        <div class="space-y-3">
-          <label class="flex items-start p-4 bg-gray-50 rounded-lg border-2 cursor-pointer transition-all ${validationMode === "allow" ? "border-gray-500 bg-gray-100" : "border-gray-200 hover:border-gray-300"}">
-            <input 
-              type="radio" 
-              name="validationMode" 
-              value="allow"
-              ${validationMode === "allow" ? "checked" : ""}
-              onchange="updateValidationMode('allow')"
-              class="mt-1 h-4 w-4 text-gray-600 focus:ring-gray-500">
-            <div class="ml-3">
-              <span class="font-semibold text-gray-800">Erlauben</span>
-              <p class="text-sm text-gray-600 mt-1">Alle Herausforderungen werden ohne Prüfung zugelassen</p>
-            </div>
-          </label>
+        <!-- Info-Box unterhalb -->
+        <p class="text-sm text-gray-600 mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <strong>Info:</strong> Diese Einstellungen bestimmen, welchen Status neue Spiele automatisch erhalten. Nur bestätigte Spiele beeinflussen die Tabelle bzw. Pyramide.
+        </p>
+      </div>
+
+      <!-- Challenge-Validierungs-Einstellungen -->
+      <div class="bg-white rounded-lg p-6 border border-gray-200">
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">Herausforderungs-Validierung</h3>
+        </div>
+        
+        <!-- Grid Layout für Einzel und Doppel nebeneinander -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <label class="flex items-start p-4 bg-gray-50 rounded-lg border-2 cursor-pointer transition-all ${validationMode === "warn" ? "border-gray-500 bg-gray-100" : "border-gray-200 hover:border-gray-300"}">
-            <input 
-              type="radio" 
-              name="validationMode" 
-              value="warn"
-              ${validationMode === "warn" ? "checked" : ""}
-              onchange="updateValidationMode('warn')"
-              class="mt-1 h-4 w-4 text-gray-600 focus:ring-gray-500">
-            <div class="ml-3">
-              <span class="font-semibold text-gray-800">Warnen</span>
-              <p class="text-sm text-gray-600 mt-1">Zeigt eine Warnung an und fragt nach Bestätigung</p>
+          <!-- Linke Spalte: Einzel-Spiele -->
+          <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
+            <h4 class="text-lg font-bold text-gray-800 text-center mb-1">Einzel</h4>
+            <p class="text-sm text-gray-600 mb-2">Dürfen mehr als 2 Gruppenspiele für die selbe Paarung eingetragen werden?</p>
+            
+            <div class="space-y-3">
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${singlesValidationMode === "allow" ? "border-blue-500 bg-blue-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input 
+                  type="radio" 
+                  name="singlesValidationMode" 
+                  value="allow"
+                  ${singlesValidationMode === "allow" ? "checked" : ""}
+                  onchange="updateValidationMode('allow', 'singles')"
+                  class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Erlauben</span>
+                  
+                </div>
+              </label>
+              
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${singlesValidationMode === "warn" ? "border-orange-500 bg-orange-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input 
+                  type="radio" 
+                  name="singlesValidationMode" 
+                  value="warn"
+                  ${singlesValidationMode === "warn" ? "checked" : ""}
+                  onchange="updateValidationMode('warn', 'singles')"
+                  class="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Warnen</span>
+                </div>
+              </label>
+              
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${singlesValidationMode === "block" ? "border-red-500 bg-red-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input 
+                  type="radio" 
+                  name="singlesValidationMode" 
+                  value="block"
+                  ${singlesValidationMode === "block" ? "checked" : ""}
+                  onchange="updateValidationMode('block', 'singles')"
+                  class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Blockieren</span>
+                </div>
+              </label>
             </div>
-          </label>
+          </div>
           
-          <label class="flex items-start p-4 bg-gray-50 rounded-lg border-2 cursor-pointer transition-all ${validationMode === "block" ? "border-gray-500 bg-gray-100" : "border-gray-200 hover:border-gray-300"}">
-            <input 
-              type="radio" 
-              name="validationMode" 
-              value="block"
-              ${validationMode === "block" ? "checked" : ""}
-              onchange="updateValidationMode('block')"
-              class="mt-1 h-4 w-4 text-gray-600 focus:ring-gray-500">
-            <div class="ml-3">
-              <span class="font-semibold text-gray-800">Blockieren</span>
-              <p class="text-sm text-gray-600 mt-1">Verhindert regelwidrige Herausforderungen komplett</p>
+          <!-- Rechte Spalte: Doppel-Spiele -->
+          <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
+            <h4 class="text-lg font-bold text-gray-800 text-center mb-1">Doppel</h4>
+            <p class="text-sm text-gray-600 mb-2">Dürfen Spiele mit regelwidriger Herausforderung eingetragen werden?</p>
+            
+            <div class="space-y-3">
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${doublesValidationMode === "allow" ? "border-blue-500 bg-blue-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input 
+                  type="radio" 
+                  name="doublesValidationMode" 
+                  value="allow"
+                  ${doublesValidationMode === "allow" ? "checked" : ""}
+                  onchange="updateValidationMode('allow', 'doubles')"
+                  class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Erlauben</span>
+                </div>
+              </label>
+              
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${doublesValidationMode === "warn" ? "border-orange-500 bg-orange-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input 
+                  type="radio" 
+                  name="doublesValidationMode" 
+                  value="warn"
+                  ${doublesValidationMode === "warn" ? "checked" : ""}
+                  onchange="updateValidationMode('warn', 'doubles')"
+                  class="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Warnen</span>
+                </div>
+              </label>
+              
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${doublesValidationMode === "block" ? "border-red-500 bg-red-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input 
+                  type="radio" 
+                  name="doublesValidationMode" 
+                  value="block"
+                  ${doublesValidationMode === "block" ? "checked" : ""}
+                  onchange="updateValidationMode('block', 'doubles')"
+                  class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Blockieren</span>
+                </div>
+              </label>
             </div>
-          </label>
+          </div>
         </div>
       </div>
 
       <!-- Anzeige-Einstellungen für Matches-Tab -->
       <div class="bg-white rounded-lg p-6 border border-gray-200">
-        <div class="flex items-start gap-3 mb-4">
-          <svg class="w-6 h-6 text-gray-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-          </svg>
-          <div>
-            <h3 class="text-xl font-bold text-gray-800 mb-1">Anzeige-Einstellungen für Matches-Tab</h3>
-            <p class="text-sm text-gray-600">Legt fest, ob unbestätigte Spiele im Matches-Tab angezeigt werden</p>
-          </div>
+        <div class="mb-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">Anzeige-Einstellungen für Matches-Tab</h3>
+          <p class="text-sm text-gray-600">Legt fest, ob unbestätigte Spiele auf der Seite "Spiele" angezeigt werden</p>
         </div>
         
         <div class="space-y-3">
-          <label class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:border-gray-300 transition-all">
+          <label class="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${displaySettings.showUnconfirmedSingles ? "border-indigo-500 bg-indigo-50" : "bg-gray-50 border-gray-200 hover:border-gray-300"}">
             <input 
               type="checkbox" 
               id="showUnconfirmedSingles"
@@ -152,7 +332,7 @@ function AdminSettingsTab() {
             </div>
           </label>
           
-          <label class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:border-gray-300 transition-all">
+          <label class="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all ${displaySettings.showUnconfirmedDoubles ? "border-indigo-500 bg-indigo-50" : "bg-gray-50 border-gray-200 hover:border-gray-300"}">
             <input 
               type="checkbox" 
               id="showUnconfirmedDoubles"
@@ -166,9 +346,6 @@ function AdminSettingsTab() {
           </label>
         </div>
         
-        <p class="text-sm text-gray-600 mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <strong>Hinweis:</strong> Diese Einstellungen betreffen nur die Anzeige auf der Seite "Spiele". Unbestätigte Spiele haben keinen Einfluss auf Tabellen oder Rankings.
-        </p>
       </div>
     </div>
   `;

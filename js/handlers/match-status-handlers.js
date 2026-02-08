@@ -4,10 +4,11 @@
 // (toggleMatchStatusFilter → events/search-filters.js)
 
 async function updateMatchStatusSettings() {
-  const singlesAdminStatus = document.getElementById('singlesAdminStatus')?.value;
-  const singlesUserStatus = document.getElementById('singlesUserStatus')?.value;
-  const doublesAdminStatus = document.getElementById('doublesAdminStatus')?.value;
-  const doublesUserStatus = document.getElementById('doublesUserStatus')?.value;
+  // Werte aus Radiobuttons auslesen
+  const singlesAdminStatus = document.querySelector('input[name="singlesAdminStatus"]:checked')?.value;
+  const singlesUserStatus = document.querySelector('input[name="singlesUserStatus"]:checked')?.value;
+  const doublesAdminStatus = document.querySelector('input[name="doublesAdminStatus"]:checked')?.value;
+  const doublesUserStatus = document.querySelector('input[name="doublesUserStatus"]:checked')?.value;
 
   const newSettings = {};
   
@@ -19,7 +20,14 @@ async function updateMatchStatusSettings() {
   if (Object.keys(newSettings).length > 0) {
     try {
       await db.collection('settings').doc('defaultMatchStatus').set(newSettings, { merge: true });
-      Toast.success('Einstellungen gespeichert');
+      
+      // State aktualisieren
+      state.matchStatusSettings = { ...state.matchStatusSettings, ...newSettings };
+      
+      Toast.success('Status-Einstellungen gespeichert');
+      
+      // Seite neu rendern, um die Änderungen sofort anzuzeigen
+      render();
     } catch (error) {
       console.error('Fehler beim Speichern der Einstellungen:', error);
       Toast.error('Fehler beim Speichern der Einstellungen');
@@ -82,6 +90,7 @@ async function loadMatchesDisplaySettings() {
 
 // Sicherstellen, dass die Funktionen global verfügbar sind
 if (typeof window !== 'undefined') {
+  window.updateMatchStatusSettings = updateMatchStatusSettings;
   window.updateMatchesDisplaySettings = updateMatchesDisplaySettings;
   window.loadMatchesDisplaySettings = loadMatchesDisplaySettings;
 }

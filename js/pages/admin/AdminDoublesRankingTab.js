@@ -38,7 +38,7 @@ function AdminDoublesRankingTab() {
           </button>
           
           <div class="${isManualOrderExpanded ? 'block' : 'hidden'} p-4 border-t border-gray-200">
-            <p class="text-sm text-gray-600 mb-4">Hier kannst du die Reihenfolge der Doppel-Teams manuell anpassen.</p>
+            <p class="text-sm text-gray-600 mb-4">Hier kannst du die Reihenfolge in der Pyramide manuell anpassen.</p>
             
             <div class="space-y-3 mb-6">
               ${flatPositions

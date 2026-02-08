@@ -4,8 +4,7 @@
 function AdminExportTab() {
   return `
     <div class="space-y-6">
-      <h3 class="text-xl font-semibold text-gray-800">Daten exportieren</h3>
-      
+  
       <div class="bg-gray-50 p-6 rounded-lg">
         <p class="text-gray-600 mb-4">Wähle die Daten aus, die du exportieren möchtest. Alle ausgewählten Daten werden in separate Tabellenblätter einer Excel-Datei exportiert.</p>
         

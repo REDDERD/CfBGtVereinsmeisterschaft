@@ -109,11 +109,17 @@ function ChallengesSinglesTab() {
             ${
               hinspiel
                 ? `
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm ${hinspiel.p1Sets > hinspiel.p2Sets ? "font-bold text-green-600" : "text-gray-700"}">${p1.name}</span>
-                <span class="text-lg font-bold">${hinspiel.p1Sets} : ${hinspiel.p2Sets}</span>
-                <span class="text-sm ${hinspiel.p2Sets > hinspiel.p1Sets ? "font-bold text-green-600" : "text-gray-700"}">${p2.name}</span>
-              </div>
+                  <div class="grid grid-cols-3 items-center mb-2">
+                    <span class="text-sm text-left ${hinspiel.p1Sets > hinspiel.p2Sets ? "font-bold text-green-600" : "text-gray-700"}">
+                      ${p1.name}
+                    </span>
+                    <span class="text-lg font-bold text-center">
+                      ${hinspiel.p1Sets} : ${hinspiel.p2Sets}
+                    </span>
+                    <span class="text-sm text-right ${hinspiel.p2Sets > hinspiel.p1Sets ? "font-bold text-green-600" : "text-gray-700"}">
+                      ${p2.name}
+                    </span>
+                  </div>
               <div class="text-xs text-gray-600 text-center">
                 ${hinspiel.setDetails.map((set) => `${set.p1}:${set.p2}`).join(", ")}
               </div>
@@ -146,11 +152,17 @@ function ChallengesSinglesTab() {
             ${
               rueckspiel
                 ? `
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm ${rueckspiel.p1Sets > rueckspiel.p2Sets ? "font-bold text-green-600" : "text-gray-700"}">${p1.name}</span>
-                <span class="text-lg font-bold">${rueckspiel.p1Sets} : ${rueckspiel.p2Sets}</span>
-                <span class="text-sm ${rueckspiel.p2Sets > rueckspiel.p1Sets ? "font-bold text-green-600" : "text-gray-700"}">${p2.name}</span>
-              </div>
+                  <div class="grid grid-cols-3 items-center mb-2">
+                    <span class="text-sm text-left ${rueckspiel.p1Sets > rueckspiel.p2Sets ? "font-bold text-green-600" : "text-gray-700"}">
+                      ${p1.name}
+                    </span>
+                    <span class="text-lg font-bold text-center">
+                      ${rueckspiel.p1Sets} : ${rueckspiel.p2Sets}
+                    </span>
+                    <span class="text-sm text-right ${rueckspiel.p2Sets > rueckspiel.p1Sets ? "font-bold text-green-600" : "text-gray-700"}">
+                      ${p2.name}
+                    </span>
+                  </div>
               <div class="text-xs text-gray-600 text-center space-y-1">
                 ${rueckspiel.setDetails.map((set) => `${set.p1}:${set.p2}`).join(", ")}
               </div>
@@ -170,7 +182,7 @@ function ChallengesSinglesTab() {
                 </button>
               `
                   : `
-                <div class="text-center text-sm text-gray-400">${state.knockoutPhaseActive ?`Nicht gespielt` : hinspiel ? "Noch nicht gespielt" : "Hinspiel zuerst"}</div>
+                <div class="text-center text-sm text-gray-400">${state.knockoutPhaseActive ? `Nicht gespielt` : hinspiel ? "Noch nicht gespielt" : "Hinspiel zuerst"}</div>
               `
               }
             `

@@ -12,12 +12,8 @@ function AdminSettingsTab() {
 
   return `
     <div class="space-y-6">
-      <div class="mb-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-3">Einstellungen</h3>
-        <p class="text-gray-600">Verwalte die Standard-Einstellungen für Spielstatus, Challenge-Validierung und Anzeige von Spielen.</p>
-      </div>
 
-      <!-- Status-Einstellungen -->
+    <!-- Status-Einstellungen -->
       <div class="bg-white rounded-lg p-6 border border-gray-200">
         <h3 class="text-xl font-bold text-gray-800 mb-6">Status-Einstellungen</h3>
 

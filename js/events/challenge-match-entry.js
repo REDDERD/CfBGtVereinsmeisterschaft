@@ -11,7 +11,7 @@ function openSinglesMatchEntryForChallenge(player1Id, player2Id) {
   }
 
   const modalContent = `
-    <div class="space-y-4">
+    <div class="space-y-4 p-6">
       <h3 class="text-xl font-bold text-gray-800">${player1.name} vs ${player2.name}</h3>
       
       <div class="space-y-3">

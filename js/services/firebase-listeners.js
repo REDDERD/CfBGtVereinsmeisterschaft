@@ -167,6 +167,18 @@ function initFirebaseListeners() {
       }
       render();
     });
+  
+  // Singles Validation Mode
+  db.collection("settings")
+    .doc("singlesValidation")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        state.singlesValidationMode = doc.data().mode || 'allow';
+      } else {
+        state.singlesValidationMode = 'allow';
+      }
+      render();
+    });
 }
 
 // Load pyramid manually

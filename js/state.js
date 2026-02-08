@@ -75,6 +75,7 @@ const state = {
   
   // *** NEU: Challenge-Validierungsmodus ***
   doublesValidationMode: 'allow', // 'allow' | 'warn' | 'block'
+  singlesValidationMode: 'allow', // 'allow' | 'warn' | 'block'
   
   // *** NEU: Einstellungen für Anzeige unbestätigter Spiele im Matches-Tab ***
   matchesDisplaySettings: {

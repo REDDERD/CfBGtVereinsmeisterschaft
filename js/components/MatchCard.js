@@ -66,7 +66,10 @@ function MatchCard(match, context = 'home') {
   };
   
   const getStatusBadge = () => {
-    if (context !== 'admin') return '';
+    // Im Admin-Kontext: Zeige immer ein Status-Badge
+    // Im Matches-Kontext: Zeige nur Badge bei unbestätigten Spielen
+    if (context !== 'admin' && context !== 'matches') return '';
+    if (context === 'matches' && status !== 'unconfirmed') return '';
     
     const statusMap = {
       unconfirmed: {

@@ -4,61 +4,64 @@
 function MatchesPage() {
   // Filtere und kombiniere alle Spiele
   const allMatches = [];
-  
+
   // Einzelspiele (Gruppenphase)
   if (state.matchTypeFilters.showSingles) {
-    const singlesMatches = state.singlesMatches.map(match => ({
+    const singlesMatches = state.singlesMatches.map((match) => ({
       ...match,
-      type: 'singles'
+      type: "singles",
     }));
     allMatches.push(...singlesMatches);
   }
-  
+
   // KO-Spiele (sind auch Einzelspiele)
   if (state.matchTypeFilters.showSingles) {
-    const knockoutMatches = state.knockoutMatches.map(match => ({
+    const knockoutMatches = state.knockoutMatches.map((match) => ({
       ...match,
-      type: 'knockout'
+      type: "knockout",
     }));
     allMatches.push(...knockoutMatches);
   }
-  
+
   // Doppelspiele
   if (state.matchTypeFilters.showDoubles) {
-    const doublesMatches = state.doublesMatches.map(match => ({
+    const doublesMatches = state.doublesMatches.map((match) => ({
       ...match,
-      type: 'doubles'
+      type: "doubles",
     }));
     allMatches.push(...doublesMatches);
   }
-  
+
   // Filtern nach Suchbegriff
-  const searchQuery = state.matchesSearchQuery || '';
-  const filteredMatches = allMatches.filter(match => {
+  const searchQuery = state.matchesSearchQuery || "";
+  const filteredMatches = allMatches.filter((match) => {
     if (!searchQuery) return true;
-    
-    if (match.type === 'singles' || match.type === 'knockout') {
+
+    if (match.type === "singles" || match.type === "knockout") {
       const p1Name = getPlayerName(match.player1Id).toLowerCase();
       const p2Name = getPlayerName(match.player2Id).toLowerCase();
-      return p1Name.includes(searchQuery.toLowerCase()) || p2Name.includes(searchQuery.toLowerCase());
+      return (
+        p1Name.includes(searchQuery.toLowerCase()) ||
+        p2Name.includes(searchQuery.toLowerCase())
+      );
     } else {
       const names = [
         match.team1.player1Id,
         match.team1.player2Id,
         match.team2.player1Id,
-        match.team2.player2Id
-      ].map(id => getPlayerName(id).toLowerCase());
-      return names.some(n => n.includes(searchQuery.toLowerCase()));
+        match.team2.player2Id,
+      ].map((id) => getPlayerName(id).toLowerCase());
+      return names.some((n) => n.includes(searchQuery.toLowerCase()));
     }
   });
-  
+
   // Sortieren nach Datum (neueste zuerst)
   filteredMatches.sort((a, b) => {
     const aTime = a.date?.seconds || a.createdAt?.seconds || 0;
     const bTime = b.date?.seconds || b.createdAt?.seconds || 0;
     return bTime - aTime;
   });
-  
+
   return `
     <div class="space-y-6">
       <div class="bg-white rounded-xl shadow-lg p-6">
@@ -66,14 +69,13 @@ function MatchesPage() {
         
         <!-- Toggle-Filter für Spieltypen -->
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
-          <h4 class="font-semibold text-gray-700 mb-3">Filter nach Spieltyp</h4>
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap gap-2  mb-4">
             <button 
               onclick="toggleMatchTypeFilter('singles')" 
               class="px-4 py-2 rounded-lg border-2 transition-colors ${
                 state.matchTypeFilters.showSingles
-                  ? 'bg-yellow-100 border-yellow-400 text-yellow-800 font-semibold'
-                  : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                  ? "bg-yellow-100 border-yellow-400 text-yellow-800 font-semibold"
+                  : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
               }">
               Einzel
             </button>
@@ -81,32 +83,40 @@ function MatchesPage() {
               onclick="toggleMatchTypeFilter('doubles')" 
               class="px-4 py-2 rounded-lg border-2 transition-colors ${
                 state.matchTypeFilters.showDoubles
-                  ? 'bg-blue-100 border-blue-400 text-blue-800 font-semibold'
-                  : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                  ? "bg-blue-100 border-blue-400 text-blue-800 font-semibold"
+                  : "bg-white border-gray-300 text-gray-700 hover:border-gray-400"
               }">
               Doppel
             </button>
           </div>
+
+          <!-- Suchfeld -->
+          <div>
+            <input 
+              type="text" 
+              id="matchesSearchInput" 
+              placeholder="Nach Spielername suchen..." 
+              value="${searchQuery}" 
+              onkeyup="updateMatchesSearch(this.value)" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+          </div>
         </div>
         
-        <!-- Suchfeld -->
-        <div class="mb-6">
-          <input 
-            type="text" 
-            id="matchesSearchInput" 
-            placeholder="Nach Spielername suchen..." 
-            value="${searchQuery}" 
-            onkeyup="updateMatchesSearch(this.value)" 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-        </div>
+
         
         <!-- Spiele-Liste -->
         <div class="space-y-3">
-          ${filteredMatches.length === 0 ? `
+          ${
+            filteredMatches.length === 0
+              ? `
             <p class="text-gray-500 text-center py-8">
-              ${allMatches.length === 0 ? 'Keine Spiele gefunden' : 'Keine Spiele mit den ausgewählten Filtern gefunden'}
+              ${allMatches.length === 0 ? "Keine Spiele gefunden" : "Keine Spiele mit den ausgewählten Filtern gefunden"}
             </p>
-          ` : filteredMatches.map(match => MatchCard(match, 'matches')).join('')}
+          `
+              : filteredMatches
+                  .map((match) => MatchCard(match, "matches"))
+                  .join("")
+          }
         </div>
       </div>
     </div>`;

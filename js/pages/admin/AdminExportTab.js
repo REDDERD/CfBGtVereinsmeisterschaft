@@ -33,13 +33,14 @@ function AdminExportTab() {
             <span class="text-gray-700">Einzel Gruppentabellen</span>
           </label>
           
-          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded opacity-50">
             <input 
               type="checkbox" 
               id="export-singles-knockout"
               class="export-option w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              disabled
             >
-            <span class="text-gray-700">Einzel K.O.-Phase</span>
+            <span class="text-gray-500">Einzel K.O.-Phase (noch nicht implementiert)</span>
           </label>
           
           <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">

@@ -15,6 +15,7 @@ function AdminPage() {
     { id: "singlesTable", label: "Einzel" },
     { id: "doublesRanking", label: "Doppel" },
     { id: "matchApproval", label: "Spiele" },
+    { id: "settings", label: "Einstellungen" },
     { id: "export", label: "Export" },
   ];
 
@@ -39,6 +40,7 @@ function AdminPage() {
         ${state.adminTab === "singlesTable" ? AdminSinglesTableTab() : ""}
         ${state.adminTab === "doublesRanking" ? AdminDoublesRankingTab() : ""}
         ${state.adminTab === "matchApproval" ? AdminMatchApprovalTab() : ""}
+        ${state.adminTab === "settings" ? AdminSettingsTab() : ""}
         ${state.adminTab === "export" ? AdminExportTab() : ""}
       </div>
     </div>`;

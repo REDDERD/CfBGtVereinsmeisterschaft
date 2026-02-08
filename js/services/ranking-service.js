@@ -106,3 +106,16 @@ async function saveDoublesRanking() {
 
   Toast.success("Rangfolge gespeichert!");
 }
+
+/**
+ * Togglet den Zustand des ausklappbaren Containers für die manuelle Rangfolgen-Anpassung
+ */
+function toggleManualDoublesOrder() {
+  state.manualDoublesOrderExpanded = !state.manualDoublesOrderExpanded;
+  render();
+}
+
+// Sicherstellen, dass die Funktion global verfügbar ist
+if (typeof window !== 'undefined') {
+  window.toggleManualDoublesOrder = toggleManualDoublesOrder;
+}

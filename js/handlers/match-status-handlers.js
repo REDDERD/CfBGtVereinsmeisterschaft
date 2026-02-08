@@ -26,3 +26,62 @@ async function updateMatchStatusSettings() {
     }
   }
 }
+
+/**
+ * Aktualisiert die Einstellungen für die Anzeige unbestätigter Spiele im Matches-Tab
+ */
+async function updateMatchesDisplaySettings() {
+  const showUnconfirmedSingles = document.getElementById('showUnconfirmedSingles')?.checked || false;
+  const showUnconfirmedDoubles = document.getElementById('showUnconfirmedDoubles')?.checked || false;
+
+  const newSettings = {
+    showUnconfirmedSingles,
+    showUnconfirmedDoubles,
+  };
+
+  try {
+    await db.collection('settings').doc('matchesDisplay').set(newSettings);
+    
+    // State aktualisieren
+    state.matchesDisplaySettings = newSettings;
+    
+    Toast.success('Anzeige-Einstellungen gespeichert');
+    
+    // Seite neu rendern, um die Änderungen sofort anzuzeigen
+    render();
+  } catch (error) {
+    console.error('Fehler beim Speichern der Anzeige-Einstellungen:', error);
+    Toast.error('Fehler beim Speichern der Einstellungen');
+  }
+}
+
+/**
+ * Lädt die Einstellungen für die Anzeige unbestätigter Spiele aus Firebase
+ */
+async function loadMatchesDisplaySettings() {
+  try {
+    const doc = await db.collection('settings').doc('matchesDisplay').get();
+    
+    if (doc.exists) {
+      state.matchesDisplaySettings = doc.data();
+    } else {
+      // Standardwerte
+      state.matchesDisplaySettings = {
+        showUnconfirmedSingles: false,
+        showUnconfirmedDoubles: false,
+      };
+    }
+  } catch (error) {
+    console.error('Fehler beim Laden der Anzeige-Einstellungen:', error);
+    state.matchesDisplaySettings = {
+      showUnconfirmedSingles: false,
+      showUnconfirmedDoubles: false,
+    };
+  }
+}
+
+// Sicherstellen, dass die Funktionen global verfügbar sind
+if (typeof window !== 'undefined') {
+  window.updateMatchesDisplaySettings = updateMatchesDisplaySettings;
+  window.loadMatchesDisplaySettings = loadMatchesDisplaySettings;
+}

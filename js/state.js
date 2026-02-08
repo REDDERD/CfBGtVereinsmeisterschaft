@@ -75,4 +75,13 @@ const state = {
   
   // *** NEU: Challenge-Validierungsmodus ***
   doublesValidationMode: 'allow', // 'allow' | 'warn' | 'block'
+  
+  // *** NEU: Einstellungen für Anzeige unbestätigter Spiele im Matches-Tab ***
+  matchesDisplaySettings: {
+    showUnconfirmedSingles: false, // Unbestätigte Einzel-Spiele anzeigen
+    showUnconfirmedDoubles: false, // Unbestätigte Doppel-Spiele anzeigen
+  },
+  
+  // *** NEU: Zustand für ausklappbare manuelle Rangfolgen-Anpassung ***
+  manualDoublesOrderExpanded: false, // Toggle für ausklappbaren Container
 };

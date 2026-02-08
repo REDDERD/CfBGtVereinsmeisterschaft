@@ -139,6 +139,34 @@ function initFirebaseListeners() {
       }
       render();
     });
+  
+  // Matches Display Settings
+  db.collection("settings")
+    .doc("matchesDisplay")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        state.matchesDisplaySettings = doc.data();
+      } else {
+        // Fallback zu Standard-Werten
+        state.matchesDisplaySettings = {
+          showUnconfirmedSingles: false,
+          showUnconfirmedDoubles: false,
+        };
+      }
+      render();
+    });
+  
+  // Doubles Validation Mode
+  db.collection("settings")
+    .doc("doublesValidation")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        state.doublesValidationMode = doc.data().mode || 'allow';
+      } else {
+        state.doublesValidationMode = 'allow';
+      }
+      render();
+    });
 }
 
 // Load pyramid manually

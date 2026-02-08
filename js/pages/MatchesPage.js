@@ -4,31 +4,59 @@
 function MatchesPage() {
   // Filtere und kombiniere alle Spiele
   const allMatches = [];
+  const displaySettings = state.matchesDisplaySettings || { showUnconfirmedSingles: false, showUnconfirmedDoubles: false };
 
   // Einzelspiele (Gruppenphase)
   if (state.matchTypeFilters.showSingles) {
-    const singlesMatches = state.singlesMatches.map((match) => ({
-      ...match,
-      type: "singles",
-    }));
+    const singlesMatches = state.singlesMatches
+      .filter((match) => {
+        // Zeige bestätigte Spiele immer
+        if (match.status === 'confirmed' || !match.status) return true;
+        // Zeige unbestätigte Spiele nur, wenn Einstellung aktiviert
+        if (match.status === 'unconfirmed') return displaySettings.showUnconfirmedSingles;
+        // Zeige abgelehnte Spiele nicht
+        return false;
+      })
+      .map((match) => ({
+        ...match,
+        type: "singles",
+      }));
     allMatches.push(...singlesMatches);
   }
 
   // KO-Spiele (sind auch Einzelspiele)
   if (state.matchTypeFilters.showSingles) {
-    const knockoutMatches = state.knockoutMatches.map((match) => ({
-      ...match,
-      type: "knockout",
-    }));
+    const knockoutMatches = state.knockoutMatches
+      .filter((match) => {
+        // Zeige bestätigte Spiele immer
+        if (match.status === 'confirmed' || !match.status) return true;
+        // Zeige unbestätigte Spiele nur, wenn Einstellung aktiviert
+        if (match.status === 'unconfirmed') return displaySettings.showUnconfirmedSingles;
+        // Zeige abgelehnte Spiele nicht
+        return false;
+      })
+      .map((match) => ({
+        ...match,
+        type: "knockout",
+      }));
     allMatches.push(...knockoutMatches);
   }
 
   // Doppelspiele
   if (state.matchTypeFilters.showDoubles) {
-    const doublesMatches = state.doublesMatches.map((match) => ({
-      ...match,
-      type: "doubles",
-    }));
+    const doublesMatches = state.doublesMatches
+      .filter((match) => {
+        // Zeige bestätigte Spiele immer
+        if (match.status === 'confirmed' || !match.status) return true;
+        // Zeige unbestätigte Spiele nur, wenn Einstellung aktiviert
+        if (match.status === 'unconfirmed') return displaySettings.showUnconfirmedDoubles;
+        // Zeige abgelehnte Spiele nicht
+        return false;
+      })
+      .map((match) => ({
+        ...match,
+        type: "doubles",
+      }));
     allMatches.push(...doublesMatches);
   }
 

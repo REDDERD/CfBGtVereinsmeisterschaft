@@ -2,19 +2,131 @@
 // Validierung für Doppel-Herausforderungen
 
 /**
- * Prüft, ob eine Doubles Challenge regelkonform ist
+ * Findet Level und Index eines Spielers in der Pyramide.
+ * @param {string} playerId - Die Spieler-ID
+ * @param {Array<Array<string>>} levels - Die Pyramiden-Levels (Array von Arrays)
+ * @returns {{ level: number, index: number } | null} Level (0-basiert) und Index, oder null
+ */
+function findPlayerInPyramid(playerId, levels) {
+  for (let l = 0; l < levels.length; l++) {
+    const idx = levels[l].indexOf(playerId);
+    if (idx !== -1) {
+      return { level: l, index: idx };
+    }
+  }
+  return null;
+}
+
+/**
+ * Ermittelt alle gültigen Herausforderungsziele für einen Spieler in der Pyramide.
+ * 
+ * Regeln:
+ * 1. Gleiche Ebene, links: Alle Spieler mit kleinerem Index auf derselben Ebene
+ * 2. Eine Ebene höher, rechts: Spieler auf der darüberliegenden Ebene, deren
+ *    geometrisches Zentrum >= dem Zentrum des Herausforderers liegt.
+ *    Formel: (2*j + 1) * n >= (2*i + 1) * m
+ *    wobei i = Index des Herausforderers, n = Größe seiner Ebene,
+ *          j = Index auf der oberen Ebene, m = Größe der oberen Ebene.
+ * 
+ * @param {string} challengerId - Die ID des Herausforderers
+ * @param {Array<Array<string>>} levels - Die Pyramiden-Levels
+ * @returns {string[]} Array der herausforderbaren Spieler-IDs
+ */
+function getValidChallengeTargets(challengerId, levels) {
+  const pos = findPlayerInPyramid(challengerId, levels);
+  if (!pos) return [];
+
+  const { level: cLevel, index: cIndex } = pos;
+  const n = levels[cLevel].length; // Größe der eigenen Ebene
+  const targets = [];
+
+  // 1. Gleiche Ebene, links: alle Spieler mit kleinerem Index
+  for (let j = 0; j < cIndex; j++) {
+    targets.push(levels[cLevel][j]);
+  }
+
+  // 2. Eine Ebene höher, rechts (geometrisches Zentrum)
+  if (cLevel > 0) {
+    const upperLevel = levels[cLevel - 1];
+    const m = upperLevel.length; // Größe der oberen Ebene
+
+    for (let j = 0; j < m; j++) {
+      // Zentrum von j auf oberer Ebene: (2*j + 1) / (2*m)
+      // Zentrum von i auf eigener Ebene:  (2*i + 1) / (2*n)
+      // Bedingung "rechts": (2*j + 1) / (2*m) >= (2*i + 1) / (2*n)
+      // Äquivalent (ohne Division): (2*j + 1) * n >= (2*i + 1) * m
+      if ((2 * j + 1) * n >= (2 * cIndex + 1) * m) {
+        targets.push(upperLevel[j]);
+      }
+    }
+  }
+
+  return targets;
+}
+
+/**
+ * Prüft, ob eine Doubles Challenge regelkonform ist.
  * @param {string} challengerId - ID des Herausforderers
  * @param {string} challengedId - ID des Herausgeforderten
  * @returns {Object} { valid: boolean, reason: string }
  */
 function validateDoublesChallenge(challengerId, challengedId) {
-  // TODO: Hier wird die eigentliche Validierungslogik implementiert
-  // wenn die Regeln feststehen
-  
-  // Derzeit immer erlaubt
+  const levels = state.pyramid.levels || [];
+
+  if (levels.length === 0) {
+    return { valid: false, reason: "Pyramide ist nicht initialisiert." };
+  }
+
+  // Spieler in der Pyramide finden
+  const challengerPos = findPlayerInPyramid(challengerId, levels);
+  const challengedPos = findPlayerInPyramid(challengedId, levels);
+
+  if (!challengerPos) {
+    return { valid: false, reason: "Herausforderer ist nicht in der Pyramide." };
+  }
+  if (!challengedPos) {
+    return { valid: false, reason: "Herausgeforderter ist nicht in der Pyramide." };
+  }
+
+  // Herausforderer muss unterhalb stehen (höheres Level = weiter unten)
+  if (challengerPos.level < challengedPos.level) {
+    return {
+      valid: false,
+      reason: "Der Herausforderer steht über dem Herausgeforderten in der Pyramide."
+    };
+  }
+  if (challengerPos.level === challengedPos.level && challengerPos.index <= challengedPos.index) {
+    return {
+      valid: false,
+      reason: "Der Herausforderer steht nicht unterhalb des Herausgeforderten."
+    };
+  }
+
+  // Prüfen ob der Herausgeforderte ein gültiges Ziel ist
+  const validTargets = getValidChallengeTargets(challengerId, levels);
+
+  if (validTargets.includes(challengedId)) {
+    return { valid: true, reason: "" };
+  }
+
+  // Spezifischen Grund für die Ablehnung ermitteln
+  if (challengerPos.level === challengedPos.level) {
+    return {
+      valid: false,
+      reason: "Auf gleicher Ebene darf nur nach links herausgefordert werden."
+    };
+  }
+
+  if (challengerPos.level - challengedPos.level === 1) {
+    return {
+      valid: false,
+      reason: "Auf der übergeordneten Ebene darf nur nach rechts herausgefordert werden."
+    };
+  }
+
   return {
     valid: false,
-    reason: "Testgrund hier einpflegen!"
+    reason: "Herausforderung ist nur auf gleicher Ebene (links) oder eine Ebene höher (rechts) erlaubt."
   };
 }
 

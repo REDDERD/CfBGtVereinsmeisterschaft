@@ -30,6 +30,45 @@ function PlayerProfilePage(playerId) {
     }
   });
 
+  let doublesWins = 0, doublesLosses = 0;
+  doublesMatches.forEach((match) => {
+    if (!match.sets || match.sets.length < 2) return;
+    let t1Sets = 0, t2Sets = 0;
+    match.sets.forEach((set) => { if (set.t1 > set.t2) t1Sets++; else t2Sets++; });
+
+    const isTeam1 = match.team1.player1Id === playerId || match.team1.player2Id === playerId;
+    if ((isTeam1 && t1Sets > t2Sets) || (!isTeam1 && t2Sets > t1Sets)) {
+      doublesWins++;
+    } else {
+      doublesLosses++;
+    }
+  });
+
+  // Doppel-Statistiken berechnen
+  // Aktuelle Position aus der Pyramide berechnen
+  let currentDoublesPosition = 0;
+  const levels = state.pyramid.levels || [];
+  let positionCounter = 1;
+  
+  for (let levelIdx = 0; levelIdx < levels.length; levelIdx++) {
+    const level = levels[levelIdx];
+    for (let posIdx = 0; posIdx < level.length; posIdx++) {
+      if (level[posIdx] === playerId) {
+        currentDoublesPosition = positionCounter;
+        break;
+      }
+      positionCounter++;
+    }
+    if (currentDoublesPosition > 0) break;
+  }
+  
+  const startingDoublesPosition = player.doublesStartingPosition || 0;
+  const positionChange = (startingDoublesPosition > 0 && currentDoublesPosition > 0) 
+    ? startingDoublesPosition - currentDoublesPosition 
+    : 0;
+  const positionChangeText = positionChange > 0 ? `+${positionChange}` : positionChange < 0 ? `${positionChange}` : '±0';
+  const positionChangeColor = positionChange > 0 ? 'text-green-600' : positionChange < 0 ? 'text-red-600' : 'text-gray-600';
+
   return `
     <div class="space-y-6">
       <button onclick="navigateTo('players')" class="text-indigo-600 hover:text-indigo-800 flex items-center space-x-2">
@@ -39,14 +78,26 @@ function PlayerProfilePage(playerId) {
       <div class="bg-white rounded-xl shadow-lg p-6">
         <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">${player.name}</h2>
         
-        <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div class="p-4 bg-blue-50 rounded-lg">
             <div class="text-sm text-gray-600 mb-1">Einzel-Bilanz</div>
             <div class="text-xl md:text-2xl font-bold text-gray-800">${singlesWins}:${singlesLosses}</div>
           </div>
-          <div class="p-4 bg-green-50 rounded-lg">
-            <div class="text-sm text-gray-600 mb-1">Doppel-Spiele</div>
-            <div class="text-xl md:text-2xl font-bold text-gray-800">${doublesMatches.length}</div>
+          <div class="p-4 bg-purple-50 rounded-lg">
+            <div class="text-sm text-gray-600 mb-1">Position Doppel</div>
+            <div class="text-xl md:text-2xl font-bold text-gray-800">${currentDoublesPosition || '-'}</div>
+          </div>
+          <div class="p-4 bg-indigo-50 rounded-lg">
+            <div class="text-sm text-gray-600 mb-1">Veränderung</div>
+            <div class="text-xl md:text-2xl font-bold ${positionChangeColor}">${positionChangeText}</div>
+          </div>
+          <div class="p-4 bg-blue-100 rounded-lg">
+            <div class="text-sm text-gray-600 mb-1">Start-Position</div>
+            <div class="text-xl md:text-2xl font-bold text-gray-800">${startingDoublesPosition || '-'}</div>
+          </div>
+          <div class="p-4 bg-green-50 rounded-lg col-span-2 md:col-span-2">
+            <div class="text-sm text-gray-600 mb-1">Doppel-Bilanz</div>
+            <div class="text-xl md:text-2xl font-bold text-gray-800">${doublesWins}:${doublesLosses}</div>
           </div>
         </div>
 

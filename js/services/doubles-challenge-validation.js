@@ -27,6 +27,8 @@ function findPlayerInPyramid(playerId, levels) {
  *    Formel: (2*j + 1) * n >= (2*i + 1) * m
  *    wobei i = Index des Herausforderers, n = Größe seiner Ebene,
  *          j = Index auf der oberen Ebene, m = Größe der oberen Ebene.
+ * 3. Mindestanzahl: Jeder Spieler kann mindestens 2 Spieler herausfordern
+ *    (sofern mindestens 2 Spieler über ihm existieren).
  * 
  * @param {string} challengerId - Die ID des Herausforderers
  * @param {Array<Array<string>>} levels - Die Pyramiden-Levels
@@ -56,6 +58,20 @@ function getValidChallengeTargets(challengerId, levels) {
       // Bedingung "rechts": (2*j + 1) / (2*m) >= (2*i + 1) / (2*n)
       // Äquivalent (ohne Division): (2*j + 1) * n >= (2*i + 1) * m
       if ((2 * j + 1) * n >= (2 * cIndex + 1) * m) {
+        targets.push(upperLevel[j]);
+      }
+    }
+  }
+
+  // 3. Mindestanzahl-Regel: Mindestens 2 Spieler herausforderbar
+  if (targets.length < 2 && cLevel > 0) {
+    const upperLevel = levels[cLevel - 1];
+    const m = upperLevel.length;
+    
+    // Füge Spieler von der oberen Ebene hinzu (von links nach rechts),
+    // bis mindestens 2 Ziele erreicht sind oder keine mehr verfügbar
+    for (let j = 0; j < m && targets.length < 2; j++) {
+      if (!targets.includes(upperLevel[j])) {
         targets.push(upperLevel[j]);
       }
     }
@@ -113,7 +129,7 @@ function validateDoublesChallenge(challengerId, challengedId) {
   if (challengerPos.level === challengedPos.level) {
     return {
       valid: false,
-      reason: "Auf gleicher Ebene darf nur nach links herausgefordert werden."
+      reason: "Auf gleicher Ebene darf nur nach links herausgefordert werden (kleinerer Index)."
     };
   }
 
@@ -186,6 +202,42 @@ async function checkChallengeValidation(challengerId, challengedId) {
  * @returns {Promise<boolean>} true = fortfahren, false = abbrechen
  */
 async function checkDoublesMatchValidation(t1p1, t2p1) {
-  // Verwende die gleiche Logik wie bei Challenges
-  return await checkChallengeValidation(t1p1, t2p1);
+  const levels = state.pyramid.levels || [];
+  
+  if (levels.length === 0) {
+    return true; // Keine Validierung wenn Pyramide nicht initialisiert
+  }
+  
+  // Positionen beider Spieler ermitteln
+  const pos1 = findPlayerInPyramid(t1p1, levels);
+  const pos2 = findPlayerInPyramid(t2p1, levels);
+  
+  if (!pos1 || !pos2) {
+    return true; // Keine Validierung wenn Spieler nicht in Pyramide
+  }
+  
+  // Bestimme wer der untere Spieler ist (Herausforderer)
+  let challengerId, challengedId;
+  
+  if (pos1.level > pos2.level) {
+    // Spieler 1 ist tiefer (höheres Level = weiter unten)
+    challengerId = t1p1;
+    challengedId = t2p1;
+  } else if (pos2.level > pos1.level) {
+    // Spieler 2 ist tiefer
+    challengerId = t2p1;
+    challengedId = t1p1;
+  } else {
+    // Gleiche Ebene: der mit höherem Index ist der Herausforderer
+    if (pos1.index > pos2.index) {
+      challengerId = t1p1;
+      challengedId = t2p1;
+    } else {
+      challengerId = t2p1;
+      challengedId = t1p1;
+    }
+  }
+  
+  // Verwende die normale Challenge-Validierung mit dem unteren Spieler als Herausforderer
+  return await checkChallengeValidation(challengerId, challengedId);
 }

@@ -1,0 +1,13 @@
+{
+  "name": "vereinsmeisterschaft-backup",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backup-Skript für Firestore-Daten",
+  "main": "backup.js",
+  "scripts": {
+    "backup": "node backup.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

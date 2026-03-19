@@ -8,9 +8,6 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
       - name: Checkout repository  (main)
         uses: actions/checkout@v4
@@ -29,27 +26,18 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node scripts/backup.js
 
-      - name: Push backup to backup branch
+      - name: Push backup to backup repository
+        env:
+          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
         run: |
+          git clone https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/${{ github.repository_owner }}/CfBGtVereinsmeisterschaft-backup.git /tmp/backup-repo
+
+          mkdir -p /tmp/backup-repo/backup
+          cp backup/*.json /tmp/backup-repo/backup/
+
+          cd /tmp/backup-repo
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-
-          # Backup-Dateien in temporäres Verzeichnis sichern
-          cp -r backup /tmp/backup_files
-
-          # Backup-Branch auschecken oder neu erstellen
-          git fetch origin
-          if git ls-remote --exit-code --heads origin backup > /dev/null 2>&1; then
-            git checkout backup
-          else
-            git checkout --orphan backup
-            git rm -rf . --quiet
-          fi
-
-          # Backup-Ordner wiederherstellen und committen
-          mkdir -p backup
-          cp /tmp/backup_files/*.json backup/
-
           git add backup/
           git diff --staged --quiet || git commit -m "Datensicherung $(date +'%Y-%m-%d')"
-          git push origin backup
+          git push

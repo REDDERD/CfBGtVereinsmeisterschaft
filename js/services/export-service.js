@@ -158,6 +158,127 @@ function buildSettingsSheetData() {
   return { 'Einstellungen': data };
 }
 
+// ========== Sheet Builder: Spielerstatistiken ==========
+
+function buildPlayerStatsSheetData() {
+  // --- Einzel ---
+  const confirmedSingles = state.singlesMatches.filter(m => (m.status || 'confirmed') === 'confirmed');
+  const singleStats = {};
+  state.players.forEach(p => { singleStats[p.id] = { name: p.name, wins: 0, matches: 0 }; });
+
+  confirmedSingles.forEach(match => {
+    if (!match.sets || match.sets.length < 2) return;
+    const p1 = match.player1Id, p2 = match.player2Id;
+    if (!singleStats[p1] || !singleStats[p2]) return;
+    let p1Sets = 0, p2Sets = 0;
+    match.sets.forEach(s => { if (s.p1 > s.p2) p1Sets++; else p2Sets++; });
+    singleStats[p1].matches++;
+    singleStats[p2].matches++;
+    if (p1Sets > p2Sets) singleStats[p1].wins++;
+    else singleStats[p2].wins++;
+  });
+
+  const allSingle = Object.values(singleStats).filter(p => p.matches > 0);
+  const topSingleWins = [...allSingle].sort((a, b) => b.wins - a.wins || b.matches - a.matches).slice(0, 3);
+  const topSingleMatches = [...allSingle].sort((a, b) => b.matches - a.matches || b.wins - a.wins).slice(0, 3);
+  const topSingleWinRate = [...allSingle]
+    .map(p => ({ ...p, rate: p.wins / p.matches }))
+    .sort((a, b) => b.rate - a.rate || b.matches - a.matches)
+    .slice(0, 3);
+
+  const einzel = [];
+  const addSingleSection = (label, items, valueFn) => {
+    einzel.push({ Kategorie: label, Platz: '', Spieler: '', Wert: '' });
+    items.forEach((p, i) => einzel.push({ Kategorie: '', Platz: i + 1, Spieler: p.name, Wert: valueFn(p) }));
+    einzel.push({ Kategorie: '', Platz: '', Spieler: '', Wert: '' });
+  };
+  addSingleSection('Meiste Siege', topSingleWins, p => `${p.wins} Siege`);
+  addSingleSection('Meiste Spiele', topSingleMatches, p => `${p.matches} Spiele`);
+  addSingleSection('Beste Siegquote', topSingleWinRate, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`);
+
+  // --- Doppel ---
+  const confirmedDoubles = state.doublesMatches.filter(m => (m.status || 'confirmed') === 'confirmed');
+  const playerById = {};
+  state.players.forEach(p => { playerById[p.id] = p; });
+
+  const asMainPlayer = {}, asPartner = {}, totalStats = {}, partners = {}, duoStats = {};
+  state.players.forEach(p => {
+    asMainPlayer[p.id] = { name: p.name, wins: 0, matches: 0 };
+    asPartner[p.id] = { name: p.name, wins: 0, matches: 0 };
+    totalStats[p.id] = { name: p.name, matches: 0 };
+    partners[p.id] = new Set();
+  });
+
+  confirmedDoubles.forEach(match => {
+    if (!match.sets || match.sets.length < 2 || !match.team1 || !match.team2) return;
+    let t1Sets = 0, t2Sets = 0;
+    match.sets.forEach(s => { if (s.t1 > s.t2) t1Sets++; else t2Sets++; });
+    const team1Won = t1Sets > t2Sets;
+
+    [match.team1.player1Id, match.team1.player2Id, match.team2.player1Id, match.team2.player2Id].forEach(id => {
+      if (totalStats[id]) totalStats[id].matches++;
+    });
+    if (asMainPlayer[match.team1.player1Id]) asMainPlayer[match.team1.player1Id].matches++;
+    if (asPartner[match.team1.player2Id]) asPartner[match.team1.player2Id].matches++;
+    if (asMainPlayer[match.team2.player1Id]) asMainPlayer[match.team2.player1Id].matches++;
+    if (asPartner[match.team2.player2Id]) asPartner[match.team2.player2Id].matches++;
+
+    const t1p1 = match.team1.player1Id, t1p2 = match.team1.player2Id;
+    const t2p1 = match.team2.player1Id, t2p2 = match.team2.player2Id;
+    if (partners[t1p1] && t1p2) partners[t1p1].add(t1p2);
+    if (partners[t1p2] && t1p1) partners[t1p2].add(t1p1);
+    if (partners[t2p1] && t2p2) partners[t2p1].add(t2p2);
+    if (partners[t2p2] && t2p1) partners[t2p2].add(t2p1);
+
+    [[t1p1, t1p2, team1Won], [t2p1, t2p2, !team1Won]].forEach(([pA, pB, won]) => {
+      if (!pA || !pB) return;
+      const key = [pA, pB].sort().join('|');
+      if (!duoStats[key]) {
+        duoStats[key] = { name: `${playerById[pA]?.name || pA} & ${playerById[pB]?.name || pB}`, wins: 0, matches: 0 };
+      }
+      duoStats[key].matches++;
+      if (won) duoStats[key].wins++;
+    });
+
+    const winningTeam = team1Won ? match.team1 : match.team2;
+    if (asMainPlayer[winningTeam.player1Id]) asMainPlayer[winningTeam.player1Id].wins++;
+    if (asPartner[winningTeam.player2Id]) asPartner[winningTeam.player2Id].wins++;
+  });
+
+  const topMain = Object.values(asMainPlayer).filter(p => p.matches > 0).sort((a, b) => b.wins - a.wins || b.matches - a.matches).slice(0, 3);
+  const topPartner = Object.values(asPartner).filter(p => p.matches > 0).sort((a, b) => b.wins - a.wins || b.matches - a.matches).slice(0, 3);
+  const topWinRateMain = Object.values(asMainPlayer).filter(p => p.matches > 0).map(p => ({ ...p, rate: p.wins / p.matches })).sort((a, b) => b.rate - a.rate || b.matches - a.matches).slice(0, 3);
+  const topWinRatePartner = Object.values(asPartner).filter(p => p.matches > 0).map(p => ({ ...p, rate: p.wins / p.matches })).sort((a, b) => b.rate - a.rate || b.matches - a.matches).slice(0, 3);
+  const topTotalMatches = Object.values(totalStats).filter(p => p.matches > 0).sort((a, b) => b.matches - a.matches).slice(0, 3);
+  const topDuo = Object.values(duoStats).sort((a, b) => b.wins - a.wins || b.matches - a.matches).slice(0, 3);
+  const topDuoByMatches = Object.values(duoStats).sort((a, b) => b.matches - a.matches || b.wins - a.wins).slice(0, 3);
+  const topVersatile = state.players
+    .map(p => ({ name: p.name, partnerCount: partners[p.id]?.size || 0 }))
+    .filter(p => p.partnerCount > 0)
+    .sort((a, b) => b.partnerCount - a.partnerCount)
+    .slice(0, 3);
+
+  const doppel = [];
+  const addDoubleSection = (label, items, valueFn) => {
+    doppel.push({ Kategorie: label, Platz: '', Spieler: '', Wert: '' });
+    items.forEach((p, i) => doppel.push({ Kategorie: '', Platz: i + 1, Spieler: p.name, Wert: valueFn(p) }));
+    doppel.push({ Kategorie: '', Platz: '', Spieler: '', Wert: '' });
+  };
+  addDoubleSection('Meiste Siege als Spieler', topMain, p => `${p.wins} Siege`);
+  addDoubleSection('Meiste Siege als Mitspieler', topPartner, p => `${p.wins} Siege`);
+  addDoubleSection('Beste Siegquote als Spieler', topWinRateMain, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`);
+  addDoubleSection('Beste Siegquote als Mitspieler', topWinRatePartner, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`);
+  addDoubleSection('Meiste Doppel-Spiele gesamt', topTotalMatches, p => `${p.matches} Spiele`);
+  addDoubleSection('Bestes Duo', topDuo, p => `${p.wins} Siege (${p.matches} Spiele)`);
+  addDoubleSection('Häufigstes Duo', topDuoByMatches, p => `${p.matches} Spiele (${p.wins} Siege)`);
+  addDoubleSection('Vielseitigster Spieler', topVersatile, p => `${p.partnerCount} verschiedene Partner`);
+
+  return {
+    'Statistiken Einzel': einzel,
+    'Statistiken Doppel': doppel,
+  };
+}
+
 // ========== Hilfsfunktion: Sheet aus Daten hinzufügen ==========
 
 function addSheetFromData(workbook, data, sheetName) {

@@ -32,14 +32,13 @@ function AdminExportTab() {
             <span class="text-gray-700">Einzel Gruppentabellen</span>
           </label>
           
-          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded opacity-50">
-            <input 
-              type="checkbox" 
+          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+            <input
+              type="checkbox"
               id="export-singles-knockout"
               class="export-option w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-              disabled
             >
-            <span class="text-gray-500">Einzel K.O.-Phase (noch nicht implementiert)</span>
+            <span class="text-gray-700">Einzel K.O.-Phase</span>
           </label>
           
           <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
@@ -69,14 +68,13 @@ function AdminExportTab() {
             <span class="text-gray-700">Doppel-Spiele</span>
           </label>
           
-          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded opacity-50">
-            <input 
-              type="checkbox" 
+          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+            <input
+              type="checkbox"
               id="export-player-stats"
               class="export-option w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-              disabled
             >
-            <span class="text-gray-500">Spielerstatistiken (noch nicht implementiert)</span>
+            <span class="text-gray-700">Spielerstatistiken</span>
           </label>
           
           <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
@@ -125,6 +123,7 @@ function performExport() {
       document.getElementById("export-singles-matches")?.checked || false,
     doublesMatches:
       document.getElementById("export-doubles-matches")?.checked || false,
+    playerStats: document.getElementById("export-player-stats")?.checked || false,
     settings: document.getElementById("export-settings")?.checked || false,
   };
 
@@ -174,6 +173,14 @@ function performExport() {
     // Doppel-Spiele
     if (exportOptions.doublesMatches) {
       const sheetsData = buildDoublesMatchesSheetData();
+      Object.entries(sheetsData).forEach(([name, data]) => {
+        addSheetFromData(workbook, data, name);
+      });
+    }
+
+    // Spielerstatistiken
+    if (exportOptions.playerStats) {
+      const sheetsData = buildPlayerStatsSheetData();
       Object.entries(sheetsData).forEach(([name, data]) => {
         addSheetFromData(workbook, data, name);
       });

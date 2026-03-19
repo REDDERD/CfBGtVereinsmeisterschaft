@@ -179,6 +179,17 @@ function initFirebaseListeners() {
       }
       render();
     });
+
+  // Ankündigungen
+  db.collection("announcements")
+    .orderBy("createdAt", "desc")
+    .onSnapshot((snapshot) => {
+      state.announcements = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      render();
+    });
 }
 
 // Load pyramid manually

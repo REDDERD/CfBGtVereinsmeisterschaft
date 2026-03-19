@@ -86,4 +86,7 @@ const state = {
   
   // *** NEU: Zustand für ausklappbare manuelle Rangfolgen-Anpassung ***
   manualDoublesOrderExpanded: false, // Toggle für ausklappbaren Container
+
+  // Ankündigungen
+  announcements: [],
 };

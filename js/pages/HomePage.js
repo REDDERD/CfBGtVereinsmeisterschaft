@@ -44,9 +44,24 @@ function HomePage() {
   return `
     <div class="space-y-8">
       <div class="text-center">
-        <h2 class="text-2xl md:text-4xl font-bold text-gray-800 mb-4">Willkommen zur Vereinsmeisterschaft</h2>
-        <p class="text-lg md:text-xl text-gray-600">Aktuell ${state.players.length} registrierte Spieler</p>
+        <h2 class="text-2xl md:text-4xl font-bold text-gray-800">Willkommen zur Vereinsmeisterschaft</h2>
       </div>
+
+      ${(() => {
+        const active = state.announcements.filter(a => a.active);
+        if (active.length === 0) return '';
+        return active.map(a => `
+          <div class="relative rounded-xl overflow-hidden shadow-lg bg-gradient-to-r from-indigo-600 to-indigo-800">
+            <div class="px-6 py-5 flex items-center gap-4">
+              <div class="flex-shrink-0 relative flex items-center justify-center w-4 h-4">
+                <div class="absolute w-4 h-4 rounded-full bg-white opacity-30 animate-ping"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-white"></div>
+              </div>
+              <p class="text-white font-medium leading-relaxed">${renderAnnouncementText(a.text, 'font-bold underline underline-offset-2 hover:no-underline cursor-pointer')}</p>
+            </div>
+          </div>
+        `).join('');
+      })()}
       
       ${state.isAdmin && totalUnconfirmed > 0 ? `
         <div class="bg-orange-50 border-2 border-orange-400 rounded-xl shadow-lg p-6">

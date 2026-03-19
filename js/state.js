@@ -36,6 +36,7 @@ const state = {
   knockoutEntryMatch: null,
   matchesView: "singles",
   challengesView: "singles",
+  statisticsView: "singles",
   matchEntry: {
     set1P1: "",
     set1P2: "",

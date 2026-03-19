@@ -56,3 +56,8 @@ function setChallengesView(view) {
   state.challengesView = view;
   render();
 }
+
+function setStatisticsView(view) {
+  state.statisticsView = view;
+  render();
+}

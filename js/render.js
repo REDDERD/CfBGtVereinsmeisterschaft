@@ -22,6 +22,9 @@ function render() {
     case "challenges":
       content = ChallengesPage();
       break;
+    case "statistics":
+      content = StatisticsPage();
+      break;
     case "players":
       content = PlayersPage();
       break;

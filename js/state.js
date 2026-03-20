@@ -21,6 +21,7 @@ const state = {
   doublesSearchQuery: "",
   challengesSinglesSearchQuery: "",
   mobileMenuOpen: false,
+  mobileMoreOpen: false,
   singlesPhase: "group",
   knockoutPhaseActive: false,
   knockoutBracket: {

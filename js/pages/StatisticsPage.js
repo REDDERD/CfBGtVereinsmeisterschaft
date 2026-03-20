@@ -63,11 +63,35 @@ function renderStatisticsSingles() {
     .sort((a, b) => b.rate - a.rate || b.matches - a.matches)
     .slice(0, 3);
 
+  // Längste Siegesserie berechnen
+  const streaks = {};
+  state.players.forEach(p => {
+    streaks[p.id] = { id: p.id, name: p.name, maxStreak: 0, currentStreak: 0 };
+  });
+  const sortedMatches = [...confirmedMatches].sort((a, b) => (a.date?.seconds || 0) - (b.date?.seconds || 0));
+  sortedMatches.forEach(match => {
+    if (!match.sets || match.sets.length < 2) return;
+    const p1 = match.player1Id, p2 = match.player2Id;
+    if (!streaks[p1] || !streaks[p2]) return;
+    let p1Sets = 0, p2Sets = 0;
+    match.sets.forEach(set => { if (set.p1 > set.p2) p1Sets++; else p2Sets++; });
+    const winnerId = p1Sets > p2Sets ? p1 : p2;
+    const loserId = p1Sets > p2Sets ? p2 : p1;
+    streaks[winnerId].currentStreak++;
+    streaks[winnerId].maxStreak = Math.max(streaks[winnerId].maxStreak, streaks[winnerId].currentStreak);
+    streaks[loserId].currentStreak = 0;
+  });
+  const topStreak = Object.values(streaks)
+    .filter(p => p.maxStreak > 0)
+    .sort((a, b) => b.maxStreak - a.maxStreak || b.currentStreak - a.currentStreak)
+    .slice(0, 3);
+
   return `
     <div class="space-y-5 sm:space-y-8">
       ${renderStatCategory("Meiste Siege", topWins, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
       ${renderStatCategory("Meiste Spiele", topMatches, p => `${p.matches} Spiel${p.matches !== 1 ? 'e' : ''}`)}
       ${renderStatCategory("Beste Siegquote", topWinRate, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`)}
+      ${renderStatCategory("Längste Siegesserie", topStreak, p => `${p.maxStreak} Siege${p.currentStreak > 0 ? ` (aktuell: ${p.currentStreak})` : ''}`)}
     </div>`;
 }
 
@@ -147,6 +171,39 @@ function renderStatisticsDoubles() {
     .sort((a, b) => b.rate - a.rate || b.matches - a.matches)
     .slice(0, 3);
   const topTotalMatches = Object.values(totalStats).filter(p => p.matches > 0).sort((a, b) => b.matches - a.matches).slice(0, 3);
+  // Längste Siegesserie berechnen
+  const streaks = {};
+  state.players.forEach(p => {
+    streaks[p.id] = { id: p.id, name: p.name, maxStreak: 0, currentStreak: 0 };
+  });
+  const sortedMatches = [...confirmedMatches].sort((a, b) => (a.date?.seconds || 0) - (b.date?.seconds || 0));
+  sortedMatches.forEach(match => {
+    if (!match.sets || match.sets.length < 2) return;
+    if (!match.team1 || !match.team2) return;
+    let t1Sets = 0, t2Sets = 0;
+    match.sets.forEach(set => { if (set.t1 > set.t2) t1Sets++; else t2Sets++; });
+    const team1Won = t1Sets > t2Sets;
+    const winners = team1Won
+      ? [match.team1.player1Id, match.team1.player2Id]
+      : [match.team2.player1Id, match.team2.player2Id];
+    const losers = team1Won
+      ? [match.team2.player1Id, match.team2.player2Id]
+      : [match.team1.player1Id, match.team1.player2Id];
+    winners.forEach(id => {
+      if (!streaks[id]) return;
+      streaks[id].currentStreak++;
+      streaks[id].maxStreak = Math.max(streaks[id].maxStreak, streaks[id].currentStreak);
+    });
+    losers.forEach(id => {
+      if (!streaks[id]) return;
+      streaks[id].currentStreak = 0;
+    });
+  });
+  const topStreak = Object.values(streaks)
+    .filter(p => p.maxStreak > 0)
+    .sort((a, b) => b.maxStreak - a.maxStreak || b.currentStreak - a.currentStreak)
+    .slice(0, 3);
+
   const topDuo = Object.values(duoStats).sort((a, b) => b.wins - a.wins || b.matches - a.matches).slice(0, 3);
   const topDuoByMatches = Object.values(duoStats).sort((a, b) => b.matches - a.matches || b.wins - a.wins).slice(0, 3);
   const topVersatile = Object.values(partners)
@@ -169,6 +226,7 @@ function renderStatisticsDoubles() {
       ${renderStatCategory("Bestes Duo", topDuo, p => `${p.wins}S / ${p.matches}Sp`)}
       ${renderStatCategory("Häufigstes Duo", topDuoByMatches, p => `${p.matches}Sp / ${p.wins}S`)}
       ${renderStatCategory("Vielseitigster", topVersatile, p => `${p.partnerCount} Partner`)}
+      ${renderStatCategory("Längste Siegesserie", topStreak, p => `${p.maxStreak} Siege${p.currentStreak > 0 ? ` (aktuell: ${p.currentStreak})` : ''}`)}
     </div>`;
 }
 

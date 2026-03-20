@@ -89,6 +89,9 @@ function Navigation() {
                 </button>
               `
             }
+            <button onclick="toggleDarkMode()" class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors text-gray-700 hover:bg-gray-100" title="${state.darkMode ? 'Light Mode' : 'Dark Mode'}">
+              ${state.darkMode ? icons.sun : icons.moon}
+            </button>
           </div>
         </div>
       </div>
@@ -174,6 +177,10 @@ function Navigation() {
                 <span class="text-xs font-medium">Admin</span>
               </button>
             ` : ''}
+            <button onclick="closeMobileMore(); toggleDarkMode()" class="flex flex-col items-center gap-1.5 p-3 rounded-xl text-gray-700 hover:bg-gray-50">
+              ${state.darkMode ? icons.sun : icons.moon}
+              <span class="text-xs font-medium">${state.darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
           </div>
         </div>
       </div>

@@ -72,3 +72,23 @@ function setStatisticsView(view) {
   state.statisticsView = view;
   render();
 }
+
+function toggleDarkMode() {
+  state.darkMode = !state.darkMode;
+  localStorage.setItem('darkMode', state.darkMode ? 'true' : 'false');
+  applyDarkMode();
+  render();
+}
+
+function applyDarkMode() {
+  if (state.darkMode) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
+
+function initDarkMode() {
+  state.darkMode = localStorage.getItem('darkMode') === 'true';
+  applyDarkMode();
+}

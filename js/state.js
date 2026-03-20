@@ -90,4 +90,7 @@ const state = {
 
   // Ankündigungen
   announcements: [],
+
+  // Dark Mode
+  darkMode: false,
 };

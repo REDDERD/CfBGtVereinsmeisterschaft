@@ -18,7 +18,7 @@ function Navigation() {
   ];
 
   // Check if current page is one of the "more" pages
-  const isMorePage = ['challenges', 'statistics', 'players'].includes(state.currentPage);
+  const isMorePage = ['challenges', 'matches', 'players'].includes(state.currentPage);
 
   // Desktop Navigation (top bar)
   const desktopNav = `
@@ -111,11 +111,11 @@ function Navigation() {
           ${icons.users.replace('size-6', 'w-5 h-5')}
           <span class="text-[10px] font-medium">Doppel</span>
         </button>
-        <button onclick="navigateTo('matches')" class="flex flex-col items-center justify-center gap-0.5 ${
-          state.currentPage === 'matches' ? 'text-indigo-600' : 'text-gray-500'
+        <button onclick="navigateTo('statistics')" class="flex flex-col items-center justify-center gap-0.5 ${
+          state.currentPage === 'statistics' ? 'text-indigo-600' : 'text-gray-500'
         }">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-          <span class="text-[10px] font-medium">Spiele</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span class="text-[10px] font-medium">Statistik</span>
         </button>
         <button onclick="toggleMobileMore()" class="flex flex-col items-center justify-center gap-0.5 ${
           isMorePage || state.mobileMoreOpen ? 'text-indigo-600' : 'text-gray-500'
@@ -154,11 +154,11 @@ function Navigation() {
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span class="text-xs font-medium">Heraus&shy;forderungen</span>
             </button>
-            <button onclick="closeMobileMore(); navigateTo('statistics')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
-              state.currentPage === 'statistics' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
+            <button onclick="closeMobileMore(); navigateTo('matches')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
+              state.currentPage === 'matches' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
             }">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-              <span class="text-xs font-medium">Statistiken</span>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              <span class="text-xs font-medium">Alle Spiele</span>
             </button>
             <button onclick="closeMobileMore(); navigateTo('players')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
               state.currentPage === 'players' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'

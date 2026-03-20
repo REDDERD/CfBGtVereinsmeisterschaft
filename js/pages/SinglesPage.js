@@ -34,7 +34,11 @@ function SinglesPage() {
               ${GroupTable(1, group1)}
               ${GroupTable(2, group2)}
             </div>
-            ${state.user && !state.knockoutPhaseActive ? SinglesMatchEntry() : ""}
+            ${state.user && !state.knockoutPhaseActive ? SinglesMatchEntry() : !state.knockoutPhaseActive ? `
+              <div class="mt-4 p-2 bg-blue-100 border border-blue-400 rounded text-xs sm:text-sm text-blue-800 flex items-center gap-2">
+                ${icons.info} <span>Um Ergebnisse einzutragen, bitte einloggen.</span>
+              </div>
+            ` : ""}
           `}
         ` : `
           ${KnockoutBracketView()}

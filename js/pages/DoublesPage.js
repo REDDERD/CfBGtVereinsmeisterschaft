@@ -57,49 +57,49 @@ function DoublesPage() {
             </div>
           `
                 : `
-            <div class="space-y-1.5 sm:space-y-2">
-              ${levels
-                .map(
-                  (level, levelIdx) => `
-                <div class="flex flex-wrap justify-center items-center gap-1 sm:gap-2">
-                  ${level
-                    .map((playerId, posIdx) => {
-                      const player = state.players.find(
-                        (p) => p.id === playerId,
-                      );
-                      const pool = player?.doublesPool;
+            <div class="overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 px-4 sm:px-6">
+              <div class="space-y-1.5 sm:space-y-2 inline-block min-w-full">
+                ${levels
+                  .map(
+                    (level, levelIdx) => `
+                  <div class="flex flex-nowrap justify-center items-center gap-1 sm:gap-2">
+                    ${level
+                      .map((playerId, posIdx) => {
+                        const player = state.players.find(
+                          (p) => p.id === playerId,
+                        );
+                        const pool = player?.doublesPool;
 
-                      let colorClasses =
-                        "from-yellow-100 to-orange-100 border-yellow-400";
-                      if (state.doublesPoolVisualization && pool) {
-                        if (pool === "A") {
-                          colorClasses =
-                            "from-blue-100 to-blue-200 border-blue-400";
-                        } else if (pool === "B") {
-                          colorClasses =
-                            "from-green-100 to-green-200 border-green-400";
+                        let colorClasses =
+                          "from-yellow-100 to-orange-100 border-yellow-400";
+                        if (state.doublesPoolVisualization && pool) {
+                          if (pool === "A") {
+                            colorClasses =
+                              "from-blue-100 to-blue-200 border-blue-400";
+                          } else if (pool === "B") {
+                            colorClasses =
+                              "from-green-100 to-green-200 border-green-400";
+                          }
                         }
-                      }
 
-                      // Calculate dynamic width based on level size
-                      // On mobile: items should be smaller to fit more per row
-                      const name = getPlayerName(playerId);
-                      const shortName = name.length > 12 ? name.substring(0, 11) + '.' : name;
+                        const name = getPlayerName(playerId);
+                        const shortName = name.length > 12 ? name.substring(0, 11) + '.' : name;
 
-                      return `
-                    <div class="bg-gradient-to-r ${colorClasses} border-2 rounded-lg px-2 py-1.5 sm:px-4 sm:py-2.5 text-center shadow-sm transition-all duration-300" style="min-width: ${level.length > 4 ? '70px' : level.length > 3 ? '80px' : '90px'}">
-                      <div class="font-bold text-gray-800 text-xs sm:text-sm leading-tight" title="${name}">
-                        <span class="sm:hidden">${shortName}</span>
-                        <span class="hidden sm:inline">${name}</span>
+                        return `
+                      <div class="bg-gradient-to-r ${colorClasses} border-2 rounded-lg px-2 py-1.5 sm:px-4 sm:py-2.5 text-center shadow-sm flex-shrink-0" style="min-width: 70px">
+                        <div class="font-bold text-gray-800 text-xs sm:text-sm leading-tight whitespace-nowrap" title="${name}">
+                          <span class="sm:hidden">${shortName}</span>
+                          <span class="hidden sm:inline">${name}</span>
+                        </div>
                       </div>
-                    </div>
-                  `;
-                    })
-                    .join("")}
-                </div>
-              `,
-                )
-                .join("")}
+                    `;
+                      })
+                      .join("")}
+                  </div>
+                `,
+                  )
+                  .join("")}
+              </div>
             </div>
           `
           }
@@ -129,7 +129,11 @@ function DoublesPage() {
             : ""
         }
 
-        ${state.user && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : ""}
+        ${state.user && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : !state.user && levels.length > 0 && !state.pyramidLoading ? `
+          <div class="mt-4 p-2 bg-blue-100 border border-blue-400 rounded text-xs sm:text-sm text-blue-800 flex items-center gap-2">
+            ${icons.info} <span>Um Ergebnisse einzutragen, bitte einloggen.</span>
+          </div>
+        ` : ""}
       </div>
     </div>`;
 }

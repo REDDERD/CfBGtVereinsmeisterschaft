@@ -108,7 +108,7 @@ function HomePage() {
       ` : ""}
 
       <div class="grid grid-cols-2 gap-3 sm:gap-6">
-        <div onclick="navigateTo('singles')" class="bg-white rounded-xl shadow-lg p-4 sm:p-8 cursor-pointer hover:shadow-xl transition-shadow active:scale-[0.98]">
+        <div onclick="navigateTo('singles')" class="bg-white rounded-xl shadow-lg p-4 sm:p-8 cursor-pointer hover:shadow-xl transition-shadow active:scale-[0.98] flex flex-col items-center text-center sm:items-start sm:text-left">
           <div class="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
             <div class="text-yellow-500">${icons.user}</div>
             <h3 class="text-base sm:text-xl md:text-2xl font-bold text-gray-800">Einzel</h3>
@@ -116,7 +116,7 @@ function HomePage() {
           <p class="text-gray-600 text-xs sm:text-sm hidden sm:block">Gruppenphasen mit K.O.-System</p>
         </div>
 
-        <div onclick="navigateTo('doubles')" class="bg-white rounded-xl shadow-lg p-4 sm:p-8 cursor-pointer hover:shadow-xl transition-shadow active:scale-[0.98]">
+        <div onclick="navigateTo('doubles')" class="bg-white rounded-xl shadow-lg p-4 sm:p-8 cursor-pointer hover:shadow-xl transition-shadow active:scale-[0.98] flex flex-col items-center text-center sm:items-start sm:text-left">
           <div class="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
             <div class="text-blue-500">${icons.users}</div>
             <h3 class="text-base sm:text-xl md:text-2xl font-bold text-gray-800">Doppel</h3>

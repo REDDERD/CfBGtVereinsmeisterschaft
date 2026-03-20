@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
     <title>Badminton Vereinsmeisterschaft</title>
     
     <!-- Favicon -->
@@ -122,6 +122,32 @@
       
       .toast-close:hover {
         opacity: 1;
+      }
+
+      /* Hide scrollbar but keep scrolling */
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Safe area for iOS notch/home indicator */
+      .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+
+      /* Mobile-first: Ensure inputs are at least 16px to prevent iOS zoom */
+      @media (max-width: 767px) {
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+
+        /* Compact card padding on mobile */
+        .mobile-compact {
+          padding: 12px !important;
+        }
       }
 
       /* Modal Dialog */

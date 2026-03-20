@@ -1,21 +1,21 @@
 // js/pages/StatisticsPage.js
-// Statistiken-Seite
+// Statistiken-Seite - Mobile-First
 
 function StatisticsPage() {
   return `
-    <div class="space-y-6">
-      <div class="bg-white rounded-xl shadow-lg p-6">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Statistiken</h2>
+    <div class="space-y-4 sm:space-y-6">
+      <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-4">Statistiken</h2>
 
-        <div class="mb-6 flex flex-col sm:flex-row gap-2">
-          <button onclick="setStatisticsView('singles')" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+        <div class="mb-4 flex gap-2">
+          <button onclick="setStatisticsView('singles')" class="flex-1 px-3 sm:px-6 py-2.5 rounded-lg font-semibold transition-all text-sm sm:text-base ${
             state.statisticsView === "singles"
               ? "bg-indigo-600 text-white"
               : "bg-gray-200 text-gray-600 hover:bg-gray-300"
           }">
             Einzel
           </button>
-          <button onclick="setStatisticsView('doubles')" class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all ${
+          <button onclick="setStatisticsView('doubles')" class="flex-1 px-3 sm:px-6 py-2.5 rounded-lg font-semibold transition-all text-sm sm:text-base ${
             state.statisticsView === "doubles"
               ? "bg-indigo-600 text-white"
               : "bg-gray-200 text-gray-600 hover:bg-gray-300"
@@ -64,7 +64,7 @@ function renderStatisticsSingles() {
     .slice(0, 3);
 
   return `
-    <div class="space-y-8">
+    <div class="space-y-5 sm:space-y-8">
       ${renderStatCategory("Meiste Siege", topWins, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
       ${renderStatCategory("Meiste Spiele", topMatches, p => `${p.matches} Spiel${p.matches !== 1 ? 'e' : ''}`)}
       ${renderStatCategory("Beste Siegquote", topWinRate, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`)}
@@ -80,8 +80,8 @@ function renderStatisticsDoubles() {
   const asMainPlayer = {};
   const asPartner = {};
   const totalStats = {};
-  const partners = {}; // playerId -> Set of partnerIds
-  const duoStats = {}; // "id1|id2" -> { name, wins, matches }
+  const partners = {};
+  const duoStats = {};
 
   state.players.forEach(p => {
     asMainPlayer[p.id] = { id: p.id, name: p.name, wins: 0, matches: 0 };
@@ -102,7 +102,6 @@ function renderStatisticsDoubles() {
 
     const team1Won = t1Sets > t2Sets;
 
-    // Spiele zählen (alle 4 Spieler)
     [match.team1.player1Id, match.team1.player2Id, match.team2.player1Id, match.team2.player2Id].forEach(id => {
       if (totalStats[id]) totalStats[id].matches++;
     });
@@ -111,7 +110,6 @@ function renderStatisticsDoubles() {
     if (asMainPlayer[match.team2.player1Id]) asMainPlayer[match.team2.player1Id].matches++;
     if (asPartner[match.team2.player2Id]) asPartner[match.team2.player2Id].matches++;
 
-    // Partner erfassen (beide Teams)
     const t1p1 = match.team1.player1Id, t1p2 = match.team1.player2Id;
     const t2p1 = match.team2.player1Id, t2p2 = match.team2.player2Id;
     if (partners[t1p1] && t1p2) partners[t1p1].add(t1p2);
@@ -119,7 +117,6 @@ function renderStatisticsDoubles() {
     if (partners[t2p1] && t2p2) partners[t2p1].add(t2p2);
     if (partners[t2p2] && t2p1) partners[t2p2].add(t2p1);
 
-    // Duo-Statistiken (beide Teams, Spiele + Siege)
     [[t1p1, t1p2, team1Won], [t2p1, t2p2, !team1Won]].forEach(([pA, pB, won]) => {
       if (!pA || !pB) return;
       const key = [pA, pB].sort().join('|');
@@ -132,7 +129,6 @@ function renderStatisticsDoubles() {
       if (won) duoStats[key].wins++;
     });
 
-    // Siege zählen
     const winningTeam = team1Won ? match.team1 : match.team2;
     if (asMainPlayer[winningTeam.player1Id]) asMainPlayer[winningTeam.player1Id].wins++;
     if (asPartner[winningTeam.player2Id]) asPartner[winningTeam.player2Id].wins++;
@@ -164,15 +160,15 @@ function renderStatisticsDoubles() {
     .slice(0, 3);
 
   return `
-    <div class="space-y-8">
-      ${renderStatCategory("Meiste Siege als Spieler", topMain, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
-      ${renderStatCategory("Meiste Siege als Mitspieler", topPartner, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
-      ${renderStatCategory("Beste Siegquote als Spieler", topWinRateMain, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`)}
-      ${renderStatCategory("Beste Siegquote als Mitspieler", topWinRatePartner, p => `${Math.round(p.rate * 100)}% (${p.wins}/${p.matches})`)}
-      ${renderStatCategory("Meiste Doppel-Spiele gesamt", topTotalMatches, p => `${p.matches} Spiel${p.matches !== 1 ? 'e' : ''}`)}
-      ${renderStatCategory("Bestes Duo", topDuo, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''} (${p.matches} Spiele)`)}
-      ${renderStatCategory("Häufigstes Duo", topDuoByMatches, p => `${p.matches} Spiel${p.matches !== 1 ? 'e' : ''} (${p.wins} Siege)`)}
-      ${renderStatCategory("Vielseitigster Spieler", topVersatile, p => `${p.partnerCount} verschiedene Partner`)}
+    <div class="space-y-5 sm:space-y-8">
+      ${renderStatCategory("Meiste Siege (Spieler)", topMain, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
+      ${renderStatCategory("Meiste Siege (Mitspieler)", topPartner, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
+      ${renderStatCategory("Siegquote (Spieler)", topWinRateMain, p => `${Math.round(p.rate * 100)}%`)}
+      ${renderStatCategory("Siegquote (Mitspieler)", topWinRatePartner, p => `${Math.round(p.rate * 100)}%`)}
+      ${renderStatCategory("Meiste Doppel gesamt", topTotalMatches, p => `${p.matches} Spiele`)}
+      ${renderStatCategory("Bestes Duo", topDuo, p => `${p.wins}S / ${p.matches}Sp`)}
+      ${renderStatCategory("Häufigstes Duo", topDuoByMatches, p => `${p.matches}Sp / ${p.wins}S`)}
+      ${renderStatCategory("Vielseitigster", topVersatile, p => `${p.partnerCount} Partner`)}
     </div>`;
 }
 
@@ -191,20 +187,20 @@ function renderStatCategory(title, players, valueFn) {
   if (players.length === 0) {
     return `
       <div>
-        <h3 class="text-lg font-semibold text-gray-700 mb-3">${title}</h3>
-        <p class="text-gray-400 text-sm">Noch keine Spiele vorhanden.</p>
+        <h3 class="text-sm sm:text-base font-semibold text-gray-700 mb-2">${title}</h3>
+        <p class="text-gray-400 text-xs">Noch keine Spiele.</p>
       </div>`;
   }
 
   return `
     <div>
-      <h3 class="text-lg font-semibold text-gray-700 mb-3">${title}</h3>
-      <div class="space-y-2">
+      <h3 class="text-sm sm:text-base font-semibold text-gray-700 mb-2">${title}</h3>
+      <div class="space-y-1.5">
         ${players.map((p, i) => `
-          <div class="flex items-center gap-3 p-3 rounded-lg border ${cardBg[i]}">
-            <span class="w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${rankColors[i]}">${i + 1}</span>
-            <span class="flex-1 font-medium text-gray-800">${p.name}</span>
-            <span class="font-semibold text-gray-600">${valueFn(p)}</span>
+          <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg border ${cardBg[i]}">
+            <span class="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-sm font-bold ${rankColors[i]}">${i + 1}</span>
+            <span class="flex-1 font-medium text-gray-800 text-sm truncate">${p.name}</span>
+            <span class="font-semibold text-gray-600 text-xs sm:text-sm flex-shrink-0">${valueFn(p)}</span>
           </div>
         `).join('')}
       </div>

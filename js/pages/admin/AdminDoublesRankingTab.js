@@ -44,12 +44,12 @@ function AdminDoublesRankingTab() {
               ${flatPositions
                 .map(
                   (playerId, idx) => `
-                <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300">
-                  <div class="flex items-center space-x-4">
-                    <span class="font-bold text-gray-500 w-8">#${idx + 1}</span>
-                    <span class="font-medium text-gray-800">${getPlayerName(playerId)}</span>
+                <div class="flex items-center justify-between p-2.5 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-gray-300">
+                  <div class="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <span class="font-bold text-gray-500 w-6 sm:w-8 text-sm flex-shrink-0">#${idx + 1}</span>
+                    <span class="font-medium text-gray-800 text-sm truncate">${getPlayerName(playerId)}</span>
                   </div>
-                  <div class="flex space-x-2">
+                  <div class="flex gap-1 flex-shrink-0">
                     ${idx > 0 ? `<button onclick="movePlayerUp(${idx})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded" title="Nach oben"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg></button>` : ""}
                     ${idx < flatPositions.length - 1 ? `<button onclick="movePlayerDown(${idx})" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded" title="Nach unten"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>` : ""}
                     <button onclick="removePlayerFromRanking(${idx}, '${playerId}')" class="p-2 text-red-600 hover:bg-red-50 rounded" title="Aus Rangfolge löschen"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>

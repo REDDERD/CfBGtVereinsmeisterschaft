@@ -6,6 +6,7 @@ function navigateTo(page) {
   state.selectedPlayerId = null;
   state.prefilledDoubles = null;
   state.mobileMenuOpen = false;
+  state.mobileMoreOpen = false;
   
   // Beim Navigieren zur Singles-Seite: Wenn K.O.-Phase aktiv ist, zeige K.O.-Phase
   if (page === "singles" && state.knockoutPhaseActive) {
@@ -23,6 +24,16 @@ function viewPlayerProfile(playerId) {
 
 function toggleMobileMenu() {
   state.mobileMenuOpen = !state.mobileMenuOpen;
+  render();
+}
+
+function toggleMobileMore() {
+  state.mobileMoreOpen = !state.mobileMoreOpen;
+  render();
+}
+
+function closeMobileMore() {
+  state.mobileMoreOpen = false;
   render();
 }
 

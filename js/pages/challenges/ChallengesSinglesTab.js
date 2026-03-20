@@ -1,5 +1,5 @@
 // js/pages/challenges/ChallengesSinglesTab.js
-// Einzel-Herausforderungen Tab
+// Einzel-Herausforderungen Tab - Mobile-First
 
 function ChallengesSinglesTab() {
   const group1Players = getGroupPlayers(1);
@@ -55,8 +55,7 @@ function ChallengesSinglesTab() {
     if (!match || !match.sets) return null;
 
     const sets = match.sets;
-    let p1Sets = 0,
-      p2Sets = 0;
+    let p1Sets = 0, p2Sets = 0;
 
     sets.forEach((set) => {
       if (set.p1 > set.p2) p1Sets++;
@@ -88,106 +87,61 @@ function ChallengesSinglesTab() {
     const p2 = matchup.player2;
     const matches = getMatchesForPairing(p1.id, p2.id);
 
-    const hinspiel = matches[0]
-      ? getMatchResult(matches[0], p1.id, p2.id)
-      : null;
-    const rueckspiel = matches[1]
-      ? getMatchResult(matches[1], p1.id, p2.id)
-      : null;
+    const hinspiel = matches[0] ? getMatchResult(matches[0], p1.id, p2.id) : null;
+    const rueckspiel = matches[1] ? getMatchResult(matches[1], p1.id, p2.id) : null;
+
+    function renderMatchSlot(label, result, canEnter) {
+      if (result) {
+        return `
+          <div class="border rounded p-2 bg-gray-50">
+            <div class="text-[10px] font-semibold text-gray-500 mb-1">${label}</div>
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs truncate ${result.p1Sets > result.p2Sets ? "font-bold text-green-600" : "text-gray-600"}">${p1.name}</span>
+              <span class="text-sm font-bold flex-shrink-0">${result.p1Sets}:${result.p2Sets}</span>
+              <span class="text-xs truncate text-right ${result.p2Sets > result.p1Sets ? "font-bold text-green-600" : "text-gray-600"}">${p2.name}</span>
+            </div>
+            <div class="text-[10px] text-gray-500 text-center mt-1">
+              ${result.setDetails.map((set) => `${set.p1}:${set.p2}`).join(", ")}
+              <span class="ml-1">${new Date(result.date.seconds * 1000).toLocaleDateString("de-DE")}</span>
+            </div>
+          </div>`;
+      }
+
+      if (canEnter && state.user && !state.knockoutPhaseActive) {
+        return `
+          <div class="border rounded p-2">
+            <div class="text-[10px] font-semibold text-gray-500 mb-1">${label}</div>
+            <button
+              onclick="openSinglesMatchEntryForChallenge('${p1.id}', '${p2.id}')"
+              class="w-full px-2 py-1.5 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors">
+              Eintragen
+            </button>
+          </div>`;
+      }
+
+      return `
+        <div class="border rounded p-2">
+          <div class="text-[10px] font-semibold text-gray-500 mb-1">${label}</div>
+          <div class="text-center text-xs text-gray-400 py-1">
+            ${state.knockoutPhaseActive ? 'Nicht gespielt' : label === 'Rückspiel' && !hinspiel ? 'Hinspiel zuerst' : 'Ausstehend'}
+          </div>
+        </div>`;
+    }
 
     return `
-      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
-        <div class="text-center mb-3">
-          <h3 class="font-bold text-gray-800">${p1.name} <span class="text-gray-500">vs</span> ${p2.name}</h3>
-          <p class="text-xs text-gray-500">Gruppe ${groupNum}</p>
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-3 hover:shadow-md transition-shadow">
+        <div class="text-center mb-2">
+          <h3 class="font-bold text-gray-800 text-sm">
+            <span class="truncate">${p1.name}</span>
+            <span class="text-gray-400 mx-1">vs</span>
+            <span class="truncate">${p2.name}</span>
+          </h3>
+          <p class="text-[10px] text-gray-400">Gruppe ${groupNum}</p>
         </div>
-        
-        <div class="space-y-2">
-          <!-- Hinspiel -->
-          <div class="border rounded p-2 ${hinspiel ? "bg-gray-50" : "bg-white"}">
-            <div class="text-xs font-semibold text-gray-600 mb-1">Hinspiel</div>
-            ${
-              hinspiel
-                ? `
-                  <div class="grid grid-cols-3 items-center mb-2">
-                    <span class="text-sm text-left ${hinspiel.p1Sets > hinspiel.p2Sets ? "font-bold text-green-600" : "text-gray-700"}">
-                      ${p1.name}
-                    </span>
-                    <span class="text-lg font-bold text-center">
-                      ${hinspiel.p1Sets} : ${hinspiel.p2Sets}
-                    </span>
-                    <span class="text-sm text-right ${hinspiel.p2Sets > hinspiel.p1Sets ? "font-bold text-green-600" : "text-gray-700"}">
-                      ${p2.name}
-                    </span>
-                  </div>
-              <div class="text-xs text-gray-600 text-center">
-                ${hinspiel.setDetails.map((set) => `${set.p1}:${set.p2}`).join(", ")}
-              </div>
-              <div class="text-xs text-gray-500 text-center mt-2">
-                ${new Date(hinspiel.date.seconds * 1000).toLocaleDateString("de-DE")}
-              </div>
-            `
-                : `
-              ${
-                state.user && !state.knockoutPhaseActive
-                  ? `
-                <button 
-                  onclick="openSinglesMatchEntryForChallenge('${p1.id}', '${p2.id}')"
-                  class="w-full px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition-colors"
-                >
-                  Ergebnis eintragen
-                </button>
-              `
-                  : `
-                <div class="text-center text-sm text-gray-400">${state.knockoutPhaseActive ? `Nicht gespielt` : `Noch nicht gespielt`}</div>
-              `
-              }
-            `
-            }
-          </div>
-          
-          <!-- Rückspiel -->
-          <div class="border rounded p-2 ${rueckspiel ? "bg-gray-50" : "bg-white"}">
-            <div class="text-xs font-semibold text-gray-600 mb-1">Rückspiel</div>
-            ${
-              rueckspiel
-                ? `
-                  <div class="grid grid-cols-3 items-center mb-2">
-                    <span class="text-sm text-left ${rueckspiel.p1Sets > rueckspiel.p2Sets ? "font-bold text-green-600" : "text-gray-700"}">
-                      ${p1.name}
-                    </span>
-                    <span class="text-lg font-bold text-center">
-                      ${rueckspiel.p1Sets} : ${rueckspiel.p2Sets}
-                    </span>
-                    <span class="text-sm text-right ${rueckspiel.p2Sets > rueckspiel.p1Sets ? "font-bold text-green-600" : "text-gray-700"}">
-                      ${p2.name}
-                    </span>
-                  </div>
-              <div class="text-xs text-gray-600 text-center space-y-1">
-                ${rueckspiel.setDetails.map((set) => `${set.p1}:${set.p2}`).join(", ")}
-              </div>
-              <div class="text-xs text-gray-500 text-center mt-2">
-                ${new Date(rueckspiel.date.seconds * 1000).toLocaleDateString("de-DE")}
-              </div>
-            `
-                : `
-              ${
-                state.user && hinspiel && !state.knockoutPhaseActive
-                  ? `
-                <button 
-                  onclick="openSinglesMatchEntryForChallenge('${p1.id}', '${p2.id}')"
-                  class="w-full px-3 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition-colors"
-                >
-                  Ergebnis eintragen
-                </button>
-              `
-                  : `
-                <div class="text-center text-sm text-gray-400">${state.knockoutPhaseActive ? `Nicht gespielt` : hinspiel ? "Noch nicht gespielt" : "Hinspiel zuerst"}</div>
-              `
-              }
-            `
-            }
-          </div>
+
+        <div class="space-y-1.5">
+          ${renderMatchSlot('Hinspiel', hinspiel, true)}
+          ${renderMatchSlot('Rückspiel', rueckspiel, !!hinspiel)}
         </div>
       </div>
     `;
@@ -195,70 +149,46 @@ function ChallengesSinglesTab() {
 
   return `
     <div>
-      <!-- Disclaimer für K.O.-Phase -->
-      ${
-        state.knockoutPhaseActive
-          ? `
-        <div class="mb-6 p-3 bg-blue-50 border border-blue-300 rounded-lg">
-          <p class="flex items-center gap-2 text-sm text-blue-800">
+      ${state.knockoutPhaseActive ? `
+        <div class="mb-4 p-2.5 bg-blue-50 border border-blue-300 rounded-lg">
+          <p class="flex items-center gap-2 text-xs sm:text-sm text-blue-800">
             ${icons.info}
-            <span>Die Gruppenphase ist beendet.Gruppenspiele nicht mehr möglich.</span>
+            <span>Die Gruppenphase ist beendet.</span>
           </p>
         </div>
+      ` : ""}
 
-      `
-          : ""
-      }
-      
-      <!-- Suchfeld -->
-      <div class="mb-6">
-        <input 
-          type="text" 
-          id="challengesSinglesSearchInput" 
-          placeholder="Nach Spielername suchen..." 
-          value="${searchQuery}" 
-          onkeyup="updateChallengesSinglesSearch(this.value)" 
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg"
-        >
+      <div class="mb-4">
+        <input
+          type="text"
+          id="challengesSinglesSearchInput"
+          placeholder="Spieler suchen..."
+          value="${searchQuery}"
+          onkeyup="updateChallengesSinglesSearch(this.value)"
+          class="w-full px-3 py-2.5 border border-gray-300 rounded-lg">
       </div>
-      
-      ${
-        filteredGroup1.length === 0 && filteredGroup2.length === 0
-          ? `
-        <div class="text-center py-8 text-gray-500">
-          Keine Paarungen gefunden
-        </div>
-      `
-          : `
-        <!-- Gruppe 1 -->
-        ${
-          filteredGroup1.length > 0
-            ? `
-          <div class="mb-8">
-            <h3 class="text-lg font-bold text-gray-700 mb-4">Gruppe 1</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      ${filteredGroup1.length === 0 && filteredGroup2.length === 0
+        ? `<div class="text-center py-6 text-gray-500 text-sm">Keine Paarungen gefunden</div>`
+        : `
+        ${filteredGroup1.length > 0 ? `
+          <div class="mb-6">
+            <h3 class="text-sm sm:text-base font-bold text-gray-700 mb-3">Gruppe 1</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
               ${filteredGroup1.map((matchup) => renderMatchupCard(matchup, 1)).join("")}
             </div>
           </div>
-        `
-            : ""
-        }
-        
-        <!-- Gruppe 2 -->
-        ${
-          filteredGroup2.length > 0
-            ? `
+        ` : ""}
+
+        ${filteredGroup2.length > 0 ? `
           <div>
-            <h3 class="text-lg font-bold text-gray-700 mb-4">Gruppe 2</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <h3 class="text-sm sm:text-base font-bold text-gray-700 mb-3">Gruppe 2</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
               ${filteredGroup2.map((matchup) => renderMatchupCard(matchup, 2)).join("")}
             </div>
           </div>
-        `
-            : ""
-        }
-      `
-      }
+        ` : ""}
+      `}
     </div>
   `;
 }

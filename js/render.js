@@ -43,7 +43,7 @@ function render() {
 
   app.innerHTML = `
     ${Navigation()}
-    <div class="container mx-auto px-4 py-4 sm:py-8 max-w-7xl w-full">
+    <div class="container mx-auto px-3 sm:px-4 py-3 sm:py-8 max-w-7xl w-full pb-20 md:pb-8">
       ${content}
     </div>
   `;

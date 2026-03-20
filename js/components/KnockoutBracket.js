@@ -1,5 +1,5 @@
 // js/components/KnockoutBracket.js
-// K.O.-Bracket Komponente - Enthält KnockoutBracketView und KnockoutMatchEntryModal
+// K.O.-Bracket Komponente - Mobile-First
 
 function KnockoutBracketView() {
   const config = state.knockoutConfig || {};
@@ -78,10 +78,10 @@ function KnockoutBracketView() {
         player2Id: p2,
         player1Name: p1
           ? getPlayerName(p1)
-          : `Gewinner Viertelfinale ${matchNum === 1 ? 1 : 3}`,
+          : `Gew. VF ${matchNum === 1 ? 1 : 3}`,
         player2Name: p2
           ? getPlayerName(p2)
-          : `Gewinner Viertelfinale ${matchNum === 1 ? 2 : 4}`,
+          : `Gew. VF ${matchNum === 1 ? 2 : 4}`,
       };
     }
     if (round === "thirdPlace") {
@@ -90,8 +90,8 @@ function KnockoutBracketView() {
       return {
         player1Id: p1,
         player2Id: p2,
-        player1Name: p1 ? getPlayerName(p1) : "Verlierer Halbfinale 1",
-        player2Name: p2 ? getPlayerName(p2) : "Verlierer Halbfinale 2",
+        player1Name: p1 ? getPlayerName(p1) : "Verl. HF 1",
+        player2Name: p2 ? getPlayerName(p2) : "Verl. HF 2",
       };
     }
     if (round === "final") {
@@ -100,8 +100,8 @@ function KnockoutBracketView() {
       return {
         player1Id: p1,
         player2Id: p2,
-        player1Name: p1 ? getPlayerName(p1) : "Gewinner Halbfinale 1",
-        player2Name: p2 ? getPlayerName(p2) : "Gewinner Halbfinale 2",
+        player1Name: p1 ? getPlayerName(p1) : "Gew. HF 1",
+        player2Name: p2 ? getPlayerName(p2) : "Gew. HF 2",
       };
     }
     return {
@@ -135,64 +135,70 @@ function KnockoutBracketView() {
     }
 
     const playerRow = (playerId, name, isPlayer1) => {
-      const setScores = isPlayed ? match.sets.map((set, idx) => {
+      const setScores = isPlayed ? match.sets.map((set) => {
         const playerScore = isPlayer1 ? set.p1 : set.p2;
         const opponentScore = isPlayer1 ? set.p2 : set.p1;
         const wonSet = playerScore > opponentScore;
-        return `<div class="px-2 py-1 text-xs rounded ${wonSet ? 'border-2 border-green-700 bg-white font-semibold' : 'bg-gray-100'}">${playerScore}</div>`;
+        return `<span class="inline-block px-1.5 py-0.5 text-xs rounded ${wonSet ? 'border border-green-600 bg-white font-semibold' : 'bg-gray-100'}">${playerScore}</span>`;
       }).join('') : '';
-      
+
       return `
-      <div class="p-2 ${isPlayed && winnerId === playerId ? "bg-green-100 font-bold" : "bg-gray-50"} rounded text-sm flex justify-between items-center">
-        <span>${name}</span>
-        ${isPlayed ? `<div class="flex gap-1">${setScores}</div>` : ''}
+      <div class="px-2.5 py-2 ${isPlayed && winnerId === playerId ? "bg-green-100 font-bold" : "bg-gray-50"} rounded text-sm flex justify-between items-center gap-2">
+        <span class="truncate flex-1">${name}</span>
+        ${isPlayed ? `<div class="flex gap-0.5 flex-shrink-0">${setScores}</div>` : ''}
       </div>`;
     };
 
     return `
-      <div class="bg-white p-4 rounded-lg border-2 border-${borderColor}-400">
-        <div class="text-sm font-medium text-gray-700 mb-3">${title}</div>
-        <div class="space-y-2">
+      <div class="bg-white p-3 sm:p-4 rounded-lg border-2 border-${borderColor}-400">
+        <div class="text-xs sm:text-sm font-medium text-gray-700 mb-2">${title}</div>
+        <div class="space-y-1.5">
           ${playerRow(players.player1Id, players.player1Name, true)}
-          <div class="text-center text-xs text-gray-500">vs</div>
+          <div class="text-center text-xs text-gray-400">vs</div>
           ${playerRow(players.player2Id, players.player2Name, false)}
         </div>
         ${
           !isPlayed && state.user && canPlay
             ? `
-          <button onclick="openKnockoutMatchEntry('${round}', ${matchNum})" class="mt-3 w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Ergebnis eintragen</button>
+          <button onclick="openKnockoutMatchEntry('${round}', ${matchNum})" class="mt-2 w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Ergebnis eintragen</button>
         `
             : !isPlayed && state.user
-              ? '<div class="mt-3 text-center text-xs text-gray-400">Warte auf vorherige Spiele</div>'
+              ? '<div class="mt-2 text-center text-xs text-gray-400">Warte auf vorherige Spiele</div>'
               : ""
         }
       </div>`;
   };
 
   return `
-    <div class="space-y-6">
+    <div class="space-y-4">
       ${state.knockoutEntryMatch ? KnockoutMatchEntryModal() : ""}
-      <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg border-2 border-yellow-400">
-        <h3 class="text-xl md:text-2xl font-bold text-gray-800 mb-6">K.O.-Phase</h3>
-        <div class="mb-6">
-          <h4 class="font-bold text-gray-700 mb-3">Viertelfinale</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            ${renderKnockoutMatchCard("quarter", 1, "Viertelfinale 1")}
-            ${renderKnockoutMatchCard("quarter", 2, "Viertelfinale 2")}
-            ${renderKnockoutMatchCard("quarter", 3, "Viertelfinale 3")}
-            ${renderKnockoutMatchCard("quarter", 4, "Viertelfinale 4")}
+      <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 sm:p-6 rounded-lg border-2 border-yellow-400">
+        <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">K.O.-Phase</h3>
+
+        <!-- Viertelfinale: 2x2 grid on mobile, 4 cols on desktop -->
+        <div class="mb-4">
+          <h4 class="font-bold text-gray-700 mb-2 text-sm sm:text-base">Viertelfinale</h4>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            ${renderKnockoutMatchCard("quarter", 1, "VF 1")}
+            ${renderKnockoutMatchCard("quarter", 2, "VF 2")}
+            ${renderKnockoutMatchCard("quarter", 3, "VF 3")}
+            ${renderKnockoutMatchCard("quarter", 4, "VF 4")}
           </div>
         </div>
-        <div class="mb-6">
-          <h4 class="font-bold text-gray-700 mb-3">Halbfinale</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${renderKnockoutMatchCard("semi", 1, "Halbfinale 1")}
-            ${renderKnockoutMatchCard("semi", 2, "Halbfinale 2")}
+
+        <!-- Halbfinale: 2 cols -->
+        <div class="mb-4">
+          <h4 class="font-bold text-gray-700 mb-2 text-sm sm:text-base">Halbfinale</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+            ${renderKnockoutMatchCard("semi", 1, "HF 1")}
+            ${renderKnockoutMatchCard("semi", 2, "HF 2")}
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          ${renderKnockoutMatchCard("thirdPlace", 1, "🥉 Spiel um Platz 3", "amber")}
-          ${renderKnockoutMatchCard("final", 1, "🥇 Finale", "yellow")}
+
+        <!-- Finale & Platz 3 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+          ${renderKnockoutMatchCard("thirdPlace", 1, "Spiel um Platz 3", "amber")}
+          ${renderKnockoutMatchCard("final", 1, "Finale", "yellow")}
         </div>
       </div>
     </div>`;
@@ -275,61 +281,56 @@ function KnockoutMatchEntryModal() {
   };
 
   return `
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div class="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-lg p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800">${roundNames[round]}</h3>
+          <h3 class="text-lg sm:text-xl font-bold text-gray-800">${roundNames[round]}</h3>
           <button onclick="closeKnockoutMatchEntry()" class="p-2 hover:bg-gray-100 rounded-full">${icons.x}</button>
         </div>
-        <div class="mb-4 p-4 bg-indigo-50 rounded-lg">
+        <div class="mb-4 p-3 bg-indigo-50 rounded-lg">
           <div class="text-center">
-            <span class="font-bold text-lg">${player1Name}</span>
-            <span class="mx-3 text-gray-500">vs</span>
-            <span class="font-bold text-lg">${player2Name}</span>
+            <div class="font-bold text-base sm:text-lg">${player1Name}</div>
+            <div class="text-gray-500 text-sm my-1">vs</div>
+            <div class="font-bold text-base sm:text-lg">${player2Name}</div>
           </div>
         </div>
         <input type="hidden" id="koPlayer1Id" value="${player1Id || ""}">
         <input type="hidden" id="koPlayer2Id" value="${player2Id || ""}">
         <input type="hidden" id="koRound" value="${round}">
         <input type="hidden" id="koMatchNum" value="${matchNum}">
-        <div class="space-y-4 mb-6">
+        <div class="space-y-3 mb-5">
           ${[1, 2, 3]
             .map(
               (i) => `
-<div class="grid grid-cols-2 gap-2 items-end">
-  <div class="col-span-2">
-    <label class="block text-sm font-medium text-gray-700 ml-1">
-      Satz ${i}
-    </label>
-  </div>
-  <div>
-    <input
-      type="number"
-      id="koSet${i}P1"
-      min="0"
-      max="30"
-      ${i === 3 ? `oninput="updateKnockoutMatchEntry('koSet${i}P1', this.value)" ${state.knockoutEntry?.set3Disabled ? "disabled" : ""}` : `oninput="updateKnockoutMatchEntry('koSet${i}P1', this.value)"`}
-      class="w-full px-3 py-2 border rounded-lg ${i === 3 && state.knockoutEntry?.set3Disabled ? "bg-gray-200" : ""}"
-    >
-  </div>
-  <div>
-    <input
-      type="number"
-      id="koSet${i}P2"
-      min="0"
-      max="30"
-      ${i === 3 ? `oninput="updateKnockoutMatchEntry('koSet${i}P2', this.value)" ${state.knockoutEntry?.set3Disabled ? "disabled" : ""}` : `oninput="updateKnockoutMatchEntry('koSet${i}P2', this.value)"`}
-      class="w-full px-3 py-2 border rounded-lg ${i === 3 && state.knockoutEntry?.set3Disabled ? "bg-gray-200" : ""}"
-    >
-  </div>
+<div class="flex items-center gap-2">
+  <span class="text-sm font-medium text-gray-600 w-12 flex-shrink-0">Satz ${i}</span>
+  <input
+    type="number"
+    id="koSet${i}P1"
+    min="0"
+    max="30"
+    placeholder="${player1Name.substring(0, 6)}"
+    ${i === 3 ? `oninput="updateKnockoutMatchEntry('koSet${i}P1', this.value)" ${state.knockoutEntry?.set3Disabled ? "disabled" : ""}` : `oninput="updateKnockoutMatchEntry('koSet${i}P1', this.value)"`}
+    class="flex-1 px-3 py-2.5 border rounded-lg text-center ${i === 3 && state.knockoutEntry?.set3Disabled ? "bg-gray-200" : ""}"
+  >
+  <span class="text-gray-400 font-bold">:</span>
+  <input
+    type="number"
+    id="koSet${i}P2"
+    min="0"
+    max="30"
+    placeholder="${player2Name.substring(0, 6)}"
+    ${i === 3 ? `oninput="updateKnockoutMatchEntry('koSet${i}P2', this.value)" ${state.knockoutEntry?.set3Disabled ? "disabled" : ""}` : `oninput="updateKnockoutMatchEntry('koSet${i}P2', this.value)"`}
+    class="flex-1 px-3 py-2.5 border rounded-lg text-center ${i === 3 && state.knockoutEntry?.set3Disabled ? "bg-gray-200" : ""}"
+  >
 </div>
           `,
             )
             .join("")}
         </div>
         <div class="flex gap-3">
-          <button onclick="closeKnockoutMatchEntry()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Abbrechen</button>
-          <button onclick="saveKnockoutMatch()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Speichern</button>
+          <button onclick="closeKnockoutMatchEntry()" class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Abbrechen</button>
+          <button onclick="saveKnockoutMatch()" class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Speichern</button>
         </div>
       </div>
     </div>`;

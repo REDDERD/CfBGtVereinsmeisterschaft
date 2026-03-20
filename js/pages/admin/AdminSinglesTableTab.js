@@ -18,12 +18,12 @@ function AdminSinglesTableTab() {
 
   return `
     <div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
         ${GroupTable(1, group1)}
         ${GroupTable(2, group2)}
       </div>
-      <div class="bg-gray-50 rounded-lg p-6 mb-6">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">K.O.-Phase konfigurieren</h3>
+      <div class="bg-gray-50 rounded-lg p-3 sm:p-6 mb-4 sm:mb-6">
+        <h3 class="text-base sm:text-xl font-bold text-gray-800 mb-3">K.O.-Phase konfigurieren</h3>
         ${
           !state.knockoutPhaseActive
             ? `

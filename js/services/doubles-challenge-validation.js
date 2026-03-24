@@ -147,66 +147,122 @@ function validateDoublesChallenge(challengerId, challengedId) {
 }
 
 /**
+ * Hilfsfunktion: Prüft ob zwei Datumsobjekte denselben Kalendertag haben.
+ */
+function isSameDay(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
+}
+
+/**
+ * Prüft, ob das Tageslimit für Herausforderungen eingehalten wird.
+ * Jeder Spieler darf pro Tag 1x herausfordern und 1x herausgefordert werden.
+ * @param {string} challengerId
+ * @param {string} challengedId
+ * @returns {{ valid: boolean, reason: string }}
+ */
+function checkDailyLimitValidation(challengerId, challengedId) {
+  const today = new Date();
+  const levels = state.pyramid.levels || [];
+
+  const todaysMatches = state.doublesMatches.filter(match => {
+    if (match.status === 'rejected') return false;
+    if (!match.date) return false;
+    const matchDate = match.date.toDate ? match.date.toDate() : new Date(match.date);
+    return isSameDay(matchDate, today);
+  });
+
+  for (const match of todaysMatches) {
+    const p1 = match.team1?.player1Id;
+    const p2 = match.team2?.player1Id;
+    if (!p1 || !p2) continue;
+
+    // Rollen im gespeicherten Spiel anhand aktueller Pyramiden-Positionen bestimmen
+    const pos1 = findPlayerInPyramid(p1, levels);
+    const pos2 = findPlayerInPyramid(p2, levels);
+    if (!pos1 || !pos2) continue;
+
+    let matchChallengerId, matchChallengedId;
+    if (pos1.level > pos2.level || (pos1.level === pos2.level && pos1.index > pos2.index)) {
+      matchChallengerId = p1;
+      matchChallengedId = p2;
+    } else {
+      matchChallengerId = p2;
+      matchChallengedId = p1;
+    }
+
+    if (matchChallengerId === challengerId) {
+      return {
+        valid: false,
+        reason: `${getPlayerName(challengerId)} hat heute bereits eine Herausforderung ausgesprochen.`
+      };
+    }
+    if (matchChallengedId === challengedId) {
+      return {
+        valid: false,
+        reason: `${getPlayerName(challengedId)} wurde heute bereits herausgefordert.`
+      };
+    }
+  }
+
+  return { valid: true, reason: '' };
+}
+
+/**
  * Prüft die Challenge-Validierung und zeigt ggf. Modal/warnt/blockiert
- * basierend auf den Admin-Einstellungen
- * @param {string} challengerId 
- * @param {string} challengedId 
+ * basierend auf den Admin-Einstellungen.
+ * Berücksichtigt sowohl die Pyramiden-Positionsregeln als auch das Tageslimit.
+ * @param {string} challengerId
+ * @param {string} challengedId
  * @returns {Promise<boolean>} true = fortfahren, false = abbrechen
  */
 async function checkChallengeValidation(challengerId, challengedId) {
-  // Validierungsmodus aus State holen
   const validationMode = state.doublesValidationMode || 'allow';
-  
-  // Validierung durchführen
-  const validation = validateDoublesChallenge(challengerId, challengedId);
-  
-  // Wenn gültig, immer erlauben
-  if (validation.valid) {
-    return true;
-  }
-  
-  // Wenn ungültig, je nach Modus reagieren
+
+  const pyramidValidation = validateDoublesChallenge(challengerId, challengedId);
+  const dailyValidation = checkDailyLimitValidation(challengerId, challengedId);
+
+  const isValid = pyramidValidation.valid && dailyValidation.valid;
+  const reason = !pyramidValidation.valid ? pyramidValidation.reason : dailyValidation.reason;
+
+  if (isValid) return true;
+
   switch (validationMode) {
     case 'allow':
-      // Nichts tun, trotzdem erlauben
       return true;
-      
-    case 'warn':
-      // Warnung mit Modal anzeigen
+
+    case 'warn': {
       const challengerName = getPlayerName(challengerId);
       const challengedName = getPlayerName(challengedId);
-      
       const confirmed = await Modal.warn({
         title: 'Regelverstoß möglich',
-        message: `Die Herausforderung ${challengerName} vs ${challengedName} verstößt möglicherweise gegen die Herausforderungsregeln:\n\n${validation.reason}\n\nMöchtest du die Herausforderung trotzdem eintragen?`,
+        message: `Die Herausforderung ${challengerName} vs ${challengedName} verstößt möglicherweise gegen die Herausforderungsregeln:\n\n${reason}\n\nMöchtest du die Herausforderung trotzdem eintragen?`,
         confirmText: 'Ja, eintragen',
         cancelText: 'Abbrechen'
       });
-      
       return confirmed;
-      
+    }
+
     case 'block':
-      // Komplett blockieren
-      Toast.error(`Herausforderung nicht erlaubt: ${validation.reason}`);
+      Toast.error(`Herausforderung nicht erlaubt: ${reason}`);
       return false;
 
-    case 'admin_only':
-      // Admins dürfen mit Warnung eintragen, Nicht-Admins werden blockiert
+    case 'admin_only': {
       if (!state.isAdmin) {
-        Toast.error(`Herausforderung nicht erlaubt: ${validation.reason}`);
+        Toast.error(`Herausforderung nicht erlaubt: ${reason}`);
         return false;
       }
       const challengerNameAdmin = getPlayerName(challengerId);
       const challengedNameAdmin = getPlayerName(challengedId);
-
       const confirmedAdmin = await Modal.warn({
         title: 'Regelverstoß möglich (Admin)',
-        message: `Die Herausforderung ${challengerNameAdmin} vs ${challengedNameAdmin} verstößt möglicherweise gegen die Herausforderungsregeln:\n\n${validation.reason}\n\nAls Admin kannst du das Spiel trotzdem eintragen. Möchtest du fortfahren?`,
+        message: `Die Herausforderung ${challengerNameAdmin} vs ${challengedNameAdmin} verstößt möglicherweise gegen die Herausforderungsregeln:\n\n${reason}\n\nAls Admin kannst du das Spiel trotzdem eintragen. Möchtest du fortfahren?`,
         confirmText: 'Ja, eintragen',
         cancelText: 'Abbrechen'
       });
-
       return confirmedAdmin;
+    }
 
     default:
       return true;

@@ -26,7 +26,7 @@ function Navigation() {
       <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
           <div class="cursor-pointer flex items-center" onclick="navigateTo('home')">
-            <img src="logo.gif" alt="CfB Gütersloh Logo" class="h-12" />
+            <img src="assets/logo.gif" alt="CfB Gütersloh Logo" class="h-12" />
           </div>
 
           <div class="flex items-center space-x-1">
@@ -191,7 +191,7 @@ function Navigation() {
   const mobileTopBar = `
     <header class="md:hidden bg-white shadow-sm px-4 py-3 flex items-center justify-center">
       <div class="cursor-pointer flex items-center" onclick="navigateTo('home')">
-        <img src="logo.gif" alt="CfB Gütersloh Logo" class="h-8" />
+        <img src="assets/logo.gif" alt="CfB Gütersloh Logo" class="h-8" />
       </div>
     </header>
   `;

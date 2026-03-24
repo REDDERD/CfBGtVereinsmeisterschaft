@@ -6,7 +6,8 @@
   "main": "backup.js",
   "scripts": {
     "backup": "node backup.js",
-    "seed": "node emulator-seed.js"
+    "seed": "node emulator-seed.js",
+    "clone-prod": "node clone-prod-to-emulator.js"
   },
   "dependencies": {
     "firebase-admin": "^12.0.0"

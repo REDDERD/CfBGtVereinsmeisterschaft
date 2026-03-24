@@ -1,11 +1,14 @@
 // js/services/firebase-listeners.js
 // Firebase Realtime Listeners
 
+// Speichert aktive Saison-Listener zum Aufräumen bei Saisonwechsel
+let seasonUnsubscribers = [];
+
 function initFirebaseListeners() {
   // Auth State
   auth.onAuthStateChanged(async (user) => {
     state.user = user;
-    
+
     // Load admin status from Firestore if user is logged in
     if (user) {
       try {
@@ -23,85 +26,40 @@ function initFirebaseListeners() {
     } else {
       state.isAdmin = false;
     }
-    
+
     render();
   });
 
-  // Players
-  db.collection("players")
-    .orderBy("name")
-    .onSnapshot((snapshot) => {
-      state.players = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      render();
-    });
+  // ========== Globale Listener (saisonunabhängig) ==========
 
-  // Singles Matches
-  db.collection("singlesMatches")
-    .orderBy("date", "desc")
-    .onSnapshot((snapshot) => {
-      const allSingles = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      
-      // Filtere nach Gruppenspiele und KO-Spiele
-      state.singlesMatches = allSingles;
-      
-      // Extrahiere die KO-Matches für separate Anzeige
-      state.knockoutMatches = allSingles.filter(match => 
-        match.round && match.round !== 'group1' && match.round !== 'group2'
-      );
-      
-      render();
-    });
-
-  // Doubles Matches
-  db.collection("doublesMatches")
-    .orderBy("date", "desc")
-    .onSnapshot((snapshot) => {
-      state.doublesMatches = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      render();
-    });
-
-  // Pyramid
-  db.collection("pyramid")
-    .doc("current")
+  // Active Season Setting — muss zuerst geladen werden
+  db.collection("settings")
+    .doc("activeSeason")
     .onSnapshot((doc) => {
-      // Only update if we're not in the middle of a manual load
-      // Manual loads happen after match entry to ensure proper processing
-      if (!state.pyramidLoading) {
-        if (doc.exists) {
-          const data = doc.data();
-          const levelsArray = pyramidLevelsToArray(data);
-          state.pyramid = {
-            levels: levelsArray,
-          };
-          state.pyramidInitialized = true;
-        } else {
-          state.pyramidInitialized = false;
-        }
-        render();
+      const previousSeason = state.activeSeason;
+      if (doc.exists) {
+        state.activeSeason = doc.data().year;
+      } else {
+        // Fallback: aktuelles Jahr
+        state.activeSeason = new Date().getFullYear();
+      }
+      // Bei Saisonwechsel: Saison-Listener neu starten
+      if (previousSeason !== state.activeSeason) {
+        initSeasonListeners();
       }
     });
 
-  // Challenges
-  db.collection("challenges")
-    .where("status", "==", "pending")
+  // Alle Saisons laden (für Admin-Dropdown)
+  db.collection("seasons")
     .onSnapshot((snapshot) => {
-      state.challenges = snapshot.docs.map((doc) => ({
-        id: doc.id,
+      state.seasons = snapshot.docs.map((doc) => ({
+        year: parseInt(doc.id),
         ...doc.data(),
       }));
       render();
     });
 
-  // Knockout Settings
+  // Knockout Settings (global)
   db.collection("settings")
     .doc("knockout")
     .onSnapshot((doc) => {
@@ -112,7 +70,7 @@ function initFirebaseListeners() {
       }
     });
 
-  // Knockout Config
+  // Knockout Config (global)
   db.collection("settings")
     .doc("knockoutConfig")
     .onSnapshot((doc) => {
@@ -122,14 +80,13 @@ function initFirebaseListeners() {
       }
     });
 
-  // Match Status Settings
+  // Match Status Settings (global)
   db.collection("settings")
     .doc("defaultMatchStatus")
     .onSnapshot((doc) => {
       if (doc.exists) {
         state.matchStatusSettings = doc.data();
       } else {
-        // Fallback zu Standard-Werten
         state.matchStatusSettings = {
           singlesAdminDefault: 'confirmed',
           singlesUserDefault: 'unconfirmed',
@@ -139,15 +96,14 @@ function initFirebaseListeners() {
       }
       render();
     });
-  
-  // Matches Display Settings
+
+  // Matches Display Settings (global)
   db.collection("settings")
     .doc("matchesDisplay")
     .onSnapshot((doc) => {
       if (doc.exists) {
         state.matchesDisplaySettings = doc.data();
       } else {
-        // Fallback zu Standard-Werten
         state.matchesDisplaySettings = {
           showUnconfirmedSingles: false,
           showUnconfirmedDoubles: false,
@@ -155,8 +111,8 @@ function initFirebaseListeners() {
       }
       render();
     });
-  
-  // Doubles Validation Mode
+
+  // Doubles Validation Mode (global)
   db.collection("settings")
     .doc("doublesValidation")
     .onSnapshot((doc) => {
@@ -167,8 +123,8 @@ function initFirebaseListeners() {
       }
       render();
     });
-  
-  // Singles Validation Mode
+
+  // Singles Validation Mode (global)
   db.collection("settings")
     .doc("singlesValidation")
     .onSnapshot((doc) => {
@@ -180,7 +136,7 @@ function initFirebaseListeners() {
       render();
     });
 
-  // Ankündigungen
+  // Ankündigungen (global, saisonunabhängig)
   db.collection("announcements")
     .orderBy("createdAt", "desc")
     .onSnapshot((snapshot) => {
@@ -192,6 +148,104 @@ function initFirebaseListeners() {
     });
 }
 
+// ========== Saison-Listener (werden bei Saisonwechsel neu gestartet) ==========
+
+function initSeasonListeners() {
+  // Alte Listener aufräumen
+  seasonUnsubscribers.forEach(unsub => unsub());
+  seasonUnsubscribers = [];
+
+  // State zurücksetzen für neue Saison
+  state.players = [];
+  state.singlesMatches = [];
+  state.doublesMatches = [];
+  state.knockoutMatches = [];
+  state.pyramid = { levels: [] };
+  state.pyramidInitialized = false;
+  state.challenges = [];
+
+  // Players
+  seasonUnsubscribers.push(
+    seasonCollection("players")
+      .orderBy("name")
+      .onSnapshot((snapshot) => {
+        state.players = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        render();
+      })
+  );
+
+  // Singles Matches
+  seasonUnsubscribers.push(
+    seasonCollection("singlesMatches")
+      .orderBy("date", "desc")
+      .onSnapshot((snapshot) => {
+        const allSingles = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        state.singlesMatches = allSingles;
+
+        state.knockoutMatches = allSingles.filter(match =>
+          match.round && match.round !== 'group1' && match.round !== 'group2'
+        );
+
+        render();
+      })
+  );
+
+  // Doubles Matches
+  seasonUnsubscribers.push(
+    seasonCollection("doublesMatches")
+      .orderBy("date", "desc")
+      .onSnapshot((snapshot) => {
+        state.doublesMatches = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        render();
+      })
+  );
+
+  // Pyramid
+  seasonUnsubscribers.push(
+    seasonDoc("pyramid", "current")
+      .onSnapshot((doc) => {
+        if (!state.pyramidLoading) {
+          if (doc.exists) {
+            const data = doc.data();
+            const levelsArray = pyramidLevelsToArray(data);
+            state.pyramid = {
+              levels: levelsArray,
+            };
+            state.pyramidInitialized = true;
+          } else {
+            state.pyramidInitialized = false;
+          }
+          render();
+        }
+      })
+  );
+
+  // Challenges
+  seasonUnsubscribers.push(
+    seasonCollection("challenges")
+      .where("status", "==", "pending")
+      .onSnapshot((snapshot) => {
+        state.challenges = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        render();
+      })
+  );
+
+  render();
+}
+
 // Load pyramid manually
 async function loadPyramid() {
 
@@ -199,7 +253,7 @@ async function loadPyramid() {
     state.pyramidLoading = true;
     render();
 
-    const doc = await db.collection("pyramid").doc("current").get();
+    const doc = await seasonDoc("pyramid", "current").get();
     if (doc.exists) {
       const data = doc.data();
       const levelsArray = pyramidLevelsToArray(data);
@@ -224,13 +278,13 @@ async function loadPyramid() {
         const newPyramidData = buildPyramidLevels(flatPositions);
 
         // Save updated pyramid
-        await db.collection("pyramid").doc("current").set({
+        await seasonDoc("pyramid", "current").set({
           ...newPyramidData,
           lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
         });
 
         // Reload after update
-        const updatedDoc = await db.collection("pyramid").doc("current").get();
+        const updatedDoc = await seasonDoc("pyramid", "current").get();
         if (updatedDoc.exists) {
           const updatedData = updatedDoc.data();
           const updatedLevels = pyramidLevelsToArray(updatedData);

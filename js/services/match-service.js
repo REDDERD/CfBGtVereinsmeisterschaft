@@ -117,7 +117,7 @@ async function addSinglesMatch() {
   // Bestimme die Runde basierend auf der Spielergruppe
   const round = player1.singlesGroup === 1 ? "group1" : "group2";
 
-  await db.collection("singlesMatches").add({
+  await seasonCollection("singlesMatches").add({
     player1Id: p1,
     player2Id: p2,
     sets,
@@ -274,7 +274,7 @@ async function addDoublesMatch() {
       });
 
       if (confirmed) {
-        await db.collection("challenges").doc(challengeToComplete.id).update({
+        await seasonCollection("challenges").doc(challengeToComplete.id).update({
           status: "completed",
           completedAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
@@ -286,7 +286,7 @@ async function addDoublesMatch() {
 
   const matchStatus = _getDefaultMatchStatus("doubles");
 
-  await db.collection("doublesMatches").add({
+  await seasonCollection("doublesMatches").add({
     team1: { player1Id: t1p1, player2Id: t1p2 },
     team2: { player1Id: t2p1, player2Id: t2p2 },
     sets,
@@ -311,8 +311,7 @@ async function addDoublesMatch() {
 
   // Wenn aus einer Challenge heraus, als erledigt markieren
   if (state.prefilledDoubles && state.prefilledDoubles.challengeId) {
-    await db
-      .collection("challenges")
+    await seasonCollection("challenges")
       .doc(state.prefilledDoubles.challengeId)
       .update({
         status: "completed",
@@ -334,7 +333,7 @@ async function addDoublesMatch() {
 // ========== Pyramide nach Herausforderung aktualisieren ==========
 
 async function updatePyramidAfterChallenge(winnerId, loserId) {
-  const pyramidDoc = await db.collection("pyramid").doc("current").get();
+  const pyramidDoc = await seasonCollection("pyramid").doc("current").get();
   if (!pyramidDoc.exists) {
     console.log("Pyramid doc does not exist");
     return;
@@ -359,10 +358,7 @@ async function updatePyramidAfterChallenge(winnerId, loserId) {
 
     const newPyramidData = buildPyramidLevels(flatPositions);
 
-    await db
-      .collection("pyramid")
-      .doc("current")
-      .set({
+    await seasonDoc("pyramid", "current").set({
         ...newPyramidData,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       });
@@ -383,7 +379,7 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
   }
 
   try {
-    const matchDoc = await db.collection(collection).doc(matchId).get();
+    const matchDoc = await seasonCollection(collection).doc(matchId).get();
 
     if (!matchDoc.exists) {
       Toast.error("Spiel nicht gefunden");
@@ -392,7 +388,7 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
 
     const oldStatus = matchDoc.data().status;
 
-    await db.collection(collection).doc(matchId).update({
+    await seasonCollection(collection).doc(matchId).update({
       status: newStatus,
       statusChangedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });

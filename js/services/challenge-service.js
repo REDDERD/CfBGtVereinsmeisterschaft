@@ -35,7 +35,7 @@ async function addChallenge() {
   // Convert to Firestore timestamp
   const timestamp = firebase.firestore.Timestamp.fromDate(selectedDate);
 
-  await db.collection("challenges").add({
+  await seasonCollection("challenges").add({
     challengerId: challenger,
     challengedId: challenged,
     date: timestamp,
@@ -60,7 +60,7 @@ async function markChallengeCompleted(challengeId) {
   });
   
   if (confirmed) {
-    await db.collection("challenges").doc(challengeId).update({
+    await seasonCollection("challenges").doc(challengeId).update({
       status: "completed",
       completedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
@@ -101,12 +101,12 @@ async function initPyramid() {
   };
 
   try {
-    await db.collection("pyramid").doc("current").set(dataToSave);
+    await seasonCollection("pyramid").doc("current").set(dataToSave);
     state.pyramidInitialized = true;
     Toast.success("Pyramide erfolgreich initialisiert!");
 
     // Force re-read from Firebase
-    const doc = await db.collection("pyramid").doc("current").get();
+    const doc = await seasonCollection("pyramid").doc("current").get();
   } catch (error) {
     console.error("❌ Fehler beim Initialisieren:", error);
     Toast.error("Fehler: " + error.message);
@@ -115,7 +115,7 @@ async function initPyramid() {
 
 async function debugFirebase() {
   try {
-    const doc = await db.collection("pyramid").doc("current").get();
+    const doc = await seasonCollection("pyramid").doc("current").get();
 
     if (doc.exists) {
       const data = doc.data();

@@ -22,3 +22,26 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   auth.useEmulator("http://localhost:9099");
   console.log("🔧 Firebase Emulator aktiv (lokale Testumgebung)");
 }
+
+// ========== Saison-basierte Collection-Hilfe ==========
+
+/**
+ * Gibt eine Firestore-Collection-Referenz zurück, die auf die aktive Saison zeigt.
+ * Verwendung: seasonCollection("players") → db.collection("seasons/{year}/players")
+ */
+function seasonCollection(collectionName) {
+  const year = state.activeSeason;
+  if (!year) {
+    console.error("Keine aktive Saison gesetzt!");
+    throw new Error("Keine aktive Saison gesetzt");
+  }
+  return db.collection("seasons").doc(String(year)).collection(collectionName);
+}
+
+/**
+ * Gibt eine Document-Referenz innerhalb der aktiven Saison zurück.
+ * Verwendung: seasonDoc("pyramid", "current") → db.collection("seasons/{year}/pyramid").doc("current")
+ */
+function seasonDoc(collectionName, docId) {
+  return seasonCollection(collectionName).doc(docId);
+}

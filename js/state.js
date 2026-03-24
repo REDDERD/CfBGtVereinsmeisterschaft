@@ -3,6 +3,8 @@
 
 const state = {
   currentPage: "home",
+  activeSeason: null, // Aktive Saison (Jahr), wird aus settings/activeSeason geladen
+  seasons: [], // Liste aller Saisons [{year, label, archiveVisible, ...}]
   user: null,
   isAdmin: false,
   players: [],

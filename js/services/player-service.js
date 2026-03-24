@@ -16,7 +16,7 @@ async function addPlayer() {
     return;
   }
 
-  await db.collection("players").add({
+  await seasonCollection("players").add({
     name,
     singlesGroup: null,
     doublesPool: null,
@@ -51,7 +51,7 @@ async function savePlayer(playerId) {
     return;
   }
 
-  await db.collection("players").doc(playerId).update({
+  await seasonCollection("players").doc(playerId).update({
     name,
     singlesGroup,
     doublesPool,
@@ -74,7 +74,7 @@ async function deletePlayer(playerId) {
   });
 
   if (confirmed) {
-    await db.collection("players").doc(playerId).delete();
+    await seasonCollection("players").doc(playerId).delete();
     Toast.success("Spieler gelöscht");
   }
 }

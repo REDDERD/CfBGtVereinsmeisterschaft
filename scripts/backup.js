@@ -14,13 +14,19 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-const COLLECTIONS = [
+// Saison-abhängige Collections (liegen unter seasons/{year}/...)
+const SEASON_COLLECTIONS = [
   'players',
   'singlesMatches',
   'doublesMatches',
   'pyramid',
   'challenges',
+];
+
+// Globale Collections
+const GLOBAL_COLLECTIONS = [
   'settings',
+  'users',
   'announcements',
 ];
 
@@ -48,19 +54,46 @@ async function runBackup() {
   const backupData = {
     timestamp: now.toISOString(),
     projectId: serviceAccount.project_id,
-    collections: {},
+    global: {},
+    seasons: {},
   };
 
   console.log(`Starte Datensicherung (${dateStr})...`);
 
-  for (const collectionName of COLLECTIONS) {
+  // 1. Globale Collections sichern
+  console.log('\n--- Globale Collections ---');
+  for (const collectionName of GLOBAL_COLLECTIONS) {
     process.stdout.write(`  ${collectionName} ... `);
     const snapshot = await db.collection(collectionName).get();
-    backupData.collections[collectionName] = {};
+    backupData.global[collectionName] = {};
     snapshot.forEach(doc => {
-      backupData.collections[collectionName][doc.id] = serialize(doc.data());
+      backupData.global[collectionName][doc.id] = serialize(doc.data());
     });
     console.log(`${snapshot.size} Dokumente`);
+  }
+
+  // 2. Alle Saisons ermitteln
+  const seasonsSnapshot = await db.collection('seasons').get();
+  const seasonYears = seasonsSnapshot.docs.map(doc => doc.id);
+
+  if (seasonYears.length === 0) {
+    console.log('\nKeine Saisons gefunden.');
+  }
+
+  // 3. Saison-Collections sichern
+  for (const year of seasonYears) {
+    console.log(`\n--- Saison ${year} ---`);
+    backupData.seasons[year] = {};
+
+    for (const collectionName of SEASON_COLLECTIONS) {
+      process.stdout.write(`  ${collectionName} ... `);
+      const snapshot = await db.collection('seasons').doc(year).collection(collectionName).get();
+      backupData.seasons[year][collectionName] = {};
+      snapshot.forEach(doc => {
+        backupData.seasons[year][collectionName][doc.id] = serialize(doc.data());
+      });
+      console.log(`${snapshot.size} Dokumente`);
+    }
   }
 
   const backupDir = path.join(__dirname, '..', 'backup');

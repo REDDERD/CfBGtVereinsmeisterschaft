@@ -57,10 +57,7 @@ async function removePlayerFromRanking(index, playerId) {
       levelsObject[`level${idx + 1}`] = level;
     });
 
-    await db
-      .collection("pyramid")
-      .doc("current")
-      .set({
+    await seasonDoc("pyramid", "current").set({
         ...levelsObject,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
       });
@@ -96,10 +93,7 @@ async function saveDoublesRanking() {
     levelsObject[`level${idx + 1}`] = level;
   });
 
-  await db
-    .collection("pyramid")
-    .doc("current")
-    .set({
+  await seasonDoc("pyramid", "current").set({
       ...levelsObject,
       lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
     });

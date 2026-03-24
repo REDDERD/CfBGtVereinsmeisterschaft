@@ -16,6 +16,7 @@ function AdminPage() {
     { id: "doublesRanking", label: "Doppel" },
     { id: "matchApproval", label: "Spiele" },
     { id: "announcements", label: "News" },
+    { id: "season", label: "Saison" },
     { id: "settings", label: "Einstell." },
     { id: "export", label: "Export" },
   ];
@@ -47,6 +48,7 @@ function AdminPage() {
         ${state.adminTab === "doublesRanking" ? AdminDoublesRankingTab() : ""}
         ${state.adminTab === "matchApproval" ? AdminMatchApprovalTab() : ""}
         ${state.adminTab === "announcements" ? AdminAnnouncementsTab() : ""}
+        ${state.adminTab === "season" ? AdminSeasonTab() : ""}
         ${state.adminTab === "settings" ? AdminSettingsTab() : ""}
         ${state.adminTab === "export" ? AdminExportTab() : ""}
       </div>

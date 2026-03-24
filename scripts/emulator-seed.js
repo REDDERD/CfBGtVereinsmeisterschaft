@@ -15,9 +15,11 @@ admin.initializeApp({
 const db = admin.firestore();
 const authAdmin = admin.auth();
 
+const SEASON_YEAR = "2026";
+
 const USERS = [
-  { email: "admin@test.de", password: "admin", isAdmin: true },
-  { email: "simple@test.de", password: "test",  isAdmin: false },
+  { email: "admin@test.de", password: "adminpw", isAdmin: true },
+  { email: "simple@test.de", password: "testpw",  isAdmin: false },
 ];
 
 async function createUser({ email, password, isAdmin }) {
@@ -36,13 +38,31 @@ async function createUser({ email, password, isAdmin }) {
   return uid;
 }
 
+// Hilfsfunktion: Collection innerhalb einer Saison
+function seasonCol(collectionName) {
+  return db.collection("seasons").doc(SEASON_YEAR).collection(collectionName);
+}
+
 async function seed() {
   console.log("Seed-Script gestartet...\n");
 
-  // 1. Nutzer anlegen
+  // 1. Nutzer anlegen (global)
   const [adminUid] = await Promise.all(USERS.map(createUser));
 
-  // 3. Settings-Dokumente anlegen
+  // 2. Aktive Saison setzen (global)
+  await db.collection("settings").doc("activeSeason").set({
+    year: parseInt(SEASON_YEAR),
+  });
+  console.log(`Aktive Saison auf ${SEASON_YEAR} gesetzt`);
+
+  // 3. Saison-Dokument anlegen
+  await db.collection("seasons").doc(SEASON_YEAR).set({
+    label: `Saison ${SEASON_YEAR}`,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  console.log(`Saison-Dokument ${SEASON_YEAR} angelegt`);
+
+  // 4. Settings-Dokumente anlegen (global)
   const settings = {
     defaultMatchStatus: {
       singlesAdminDefault: "confirmed",
@@ -65,7 +85,7 @@ async function seed() {
   }
   console.log("Settings angelegt");
 
-  // 4. Testdaten: Spieler
+  // 5. Testdaten: Spieler (in Saison)
   const players = [
     { name: "Anna Müller", singlesGroup: 1, doublesPool: "A" },
     { name: "Ben Schmidt", singlesGroup: 1, doublesPool: "A" },
@@ -77,17 +97,17 @@ async function seed() {
 
   const playerIds = [];
   for (const p of players) {
-    const ref = await db.collection("players").add({
+    const ref = await seasonCol("players").add({
       ...p,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     playerIds.push(ref.id);
   }
-  console.log(`${players.length} Spieler angelegt`);
+  console.log(`${players.length} Spieler angelegt (Saison ${SEASON_YEAR})`);
 
-  // 5. Beispiel-Matches
+  // 6. Beispiel-Matches (in Saison)
   const now = admin.firestore.Timestamp.now();
-  await db.collection("singlesMatches").add({
+  await seasonCol("singlesMatches").add({
     player1Id: playerIds[0],
     player2Id: playerIds[1],
     sets: [
@@ -99,7 +119,7 @@ async function seed() {
     status: "confirmed",
     date: now,
   });
-  await db.collection("singlesMatches").add({
+  await seasonCol("singlesMatches").add({
     player1Id: playerIds[2],
     player2Id: playerIds[3],
     sets: [
@@ -110,12 +130,13 @@ async function seed() {
     status: "unconfirmed",
     date: now,
   });
-  console.log("2 Beispiel-Matches angelegt");
+  console.log(`2 Beispiel-Matches angelegt (Saison ${SEASON_YEAR})`);
 
   console.log("\nSeed abgeschlossen!");
   console.log("--------------------------------------------------");
   console.log(`Admin-Login: ${USERS[0].email}  ${USERS[0].password}`);
   console.log(`Simple-Login: ${USERS[1].email}  ${USERS[1].password}`);
+  console.log(`Aktive Saison: ${SEASON_YEAR}`);
   console.log("--------------------------------------------------");
 }
 

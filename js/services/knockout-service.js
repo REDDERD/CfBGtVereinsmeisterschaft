@@ -77,14 +77,14 @@ async function saveKnockoutMatch() {
     );
 
     if (existingMatch) {
-      await db.collection("singlesMatches").doc(existingMatch.id).update({
+      await seasonCollection("singlesMatches").doc(existingMatch.id).update({
         player1Id,
         player2Id,
         sets,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } else {
-      await db.collection("singlesMatches").add({
+      await seasonCollection("singlesMatches").add({
         round,
         matchNum,
         player1Id,
@@ -197,7 +197,7 @@ async function deactivateKnockoutPhase() {
   );
   
   for (const match of knockoutMatchesToDelete) {
-    await db.collection("singlesMatches").doc(match.id).delete();
+    await seasonCollection("singlesMatches").doc(match.id).delete();
   }
 
   Toast.success("K.O.-Phase deaktiviert.");

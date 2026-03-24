@@ -173,7 +173,7 @@ async function submitChallengeMatch(player1Id, player2Id) {
   }
 
   try {
-    await db.collection("singlesMatches").add({
+    await seasonCollection("singlesMatches").add({
       player1Id: player1Id,
       player2Id: player2Id,
       sets,

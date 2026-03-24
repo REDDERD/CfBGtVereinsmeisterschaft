@@ -124,7 +124,7 @@ async function saveSinglesMatchEdit(matchId) {
   }
 
   try {
-    await db.collection("singlesMatches").doc(matchId).update({
+    await seasonCollection("singlesMatches").doc(matchId).update({
       sets: sets,
     });
 
@@ -150,7 +150,7 @@ async function deleteSinglesMatch(matchId) {
   if (!confirmed) return;
 
   try {
-    await db.collection("singlesMatches").doc(matchId).delete();
+    await seasonCollection("singlesMatches").doc(matchId).delete();
     Toast.success("Spiel erfolgreich gelöscht!");
     render();
   } catch (error) {
@@ -334,7 +334,7 @@ async function saveDoublesMatchEdit(matchId) {
   }
 
   try {
-    await db.collection("doublesMatches").doc(matchId).update({
+    await seasonCollection("doublesMatches").doc(matchId).update({
       sets: sets,
     });
 
@@ -360,7 +360,7 @@ async function deleteDoublesMatch(matchId) {
   if (!confirmed) return;
 
   try {
-    await db.collection("doublesMatches").doc(matchId).delete();
+    await seasonCollection("doublesMatches").doc(matchId).delete();
     Toast.success("Doppel-Spiel erfolgreich gelöscht!");
     render();
   } catch (error) {

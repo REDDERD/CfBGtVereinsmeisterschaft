@@ -93,6 +93,21 @@ async function addSinglesMatch() {
     } else if (state.singlesValidationMode === "block") {
       Toast.error("Bereits Hin- und Rückrunde gespielt.");
       return;
+    } else if (state.singlesValidationMode === "admin_only") {
+      if (!state.isAdmin) {
+        Toast.error("Bereits Hin- und Rückrunde gespielt.");
+        return;
+      }
+      const confirmed = await Modal.warn({
+        title: "Paarung bereits 2x gespielt (Admin)",
+        message: `${player1.name} und ${player2.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Da es nur Hin- und Rückrunde gibt, macht es wenig Sinn, mehr als 2 Spiele pro Paarung einzutragen. Als Admin kannst du das Spiel trotzdem eintragen. Möchtest du fortfahren?`,
+        confirmText: "Ja, eintragen",
+        cancelText: "Abbrechen",
+      });
+
+      if (!confirmed) {
+        return;
+      }
     }
   }
 

@@ -7,7 +7,7 @@
  * @param {string} type - 'singles' | 'doubles'
  */
 async function updateValidationMode(mode, type = 'doubles') {
-  if (!['allow', 'warn', 'block'].includes(mode)) {
+  if (!['allow', 'warn', 'block', 'admin_only'].includes(mode)) {
     Toast.error('Ungültiger Validierungsmodus');
     return;
   }
@@ -38,7 +38,8 @@ async function updateValidationMode(mode, type = 'doubles') {
     const modeText = {
       'allow': 'Erlauben',
       'warn': 'Warnen',
-      'block': 'Blockieren'
+      'block': 'Blockieren',
+      'admin_only': 'Erlauben (nur Admins)'
     }[mode];
     
     const typeText = type === 'singles' ? 'Einzel' : 'Doppel';

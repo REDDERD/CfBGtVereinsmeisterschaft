@@ -189,7 +189,25 @@ async function checkChallengeValidation(challengerId, challengedId) {
       // Komplett blockieren
       Toast.error(`Herausforderung nicht erlaubt: ${validation.reason}`);
       return false;
-      
+
+    case 'admin_only':
+      // Admins dürfen mit Warnung eintragen, Nicht-Admins werden blockiert
+      if (!state.isAdmin) {
+        Toast.error(`Herausforderung nicht erlaubt: ${validation.reason}`);
+        return false;
+      }
+      const challengerNameAdmin = getPlayerName(challengerId);
+      const challengedNameAdmin = getPlayerName(challengedId);
+
+      const confirmedAdmin = await Modal.warn({
+        title: 'Regelverstoß möglich (Admin)',
+        message: `Die Herausforderung ${challengerNameAdmin} vs ${challengedNameAdmin} verstößt möglicherweise gegen die Herausforderungsregeln:\n\n${validation.reason}\n\nAls Admin kannst du das Spiel trotzdem eintragen. Möchtest du fortfahren?`,
+        confirmText: 'Ja, eintragen',
+        cancelText: 'Abbrechen'
+      });
+
+      return confirmedAdmin;
+
     default:
       return true;
   }

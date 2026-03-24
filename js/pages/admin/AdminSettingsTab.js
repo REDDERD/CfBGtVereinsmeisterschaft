@@ -244,9 +244,9 @@ function AdminSettingsTab() {
               </label>
               
               <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${singlesValidationMode === "block" ? "border-red-500 bg-red-50" : "bg-white border-gray-200 hover:border-gray-300"}">
-                <input 
-                  type="radio" 
-                  name="singlesValidationMode" 
+                <input
+                  type="radio"
+                  name="singlesValidationMode"
                   value="block"
                   ${singlesValidationMode === "block" ? "checked" : ""}
                   onchange="updateValidationMode('block', 'singles')"
@@ -255,9 +255,23 @@ function AdminSettingsTab() {
                   <span class="font-semibold text-gray-800">Blockieren</span>
                 </div>
               </label>
+
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${singlesValidationMode === "admin_only" ? "border-purple-500 bg-purple-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input
+                  type="radio"
+                  name="singlesValidationMode"
+                  value="admin_only"
+                  ${singlesValidationMode === "admin_only" ? "checked" : ""}
+                  onchange="updateValidationMode('admin_only', 'singles')"
+                  class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Erlauben (nur Admins)</span>
+                  <p class="text-xs text-gray-600 mt-0.5">Admins werden gewarnt, Nicht-Admins blockiert</p>
+                </div>
+              </label>
             </div>
           </div>
-          
+
           <!-- Rechte Spalte: Doppel-Spiele -->
           <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
             <h4 class="text-lg font-bold text-gray-800 text-center mb-1">Doppel</h4>
@@ -291,15 +305,29 @@ function AdminSettingsTab() {
               </label>
               
               <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${doublesValidationMode === "block" ? "border-red-500 bg-red-50" : "bg-white border-gray-200 hover:border-gray-300"}">
-                <input 
-                  type="radio" 
-                  name="doublesValidationMode" 
+                <input
+                  type="radio"
+                  name="doublesValidationMode"
                   value="block"
                   ${doublesValidationMode === "block" ? "checked" : ""}
                   onchange="updateValidationMode('block', 'doubles')"
                   class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500">
                 <div class="ml-3">
                   <span class="font-semibold text-gray-800">Blockieren</span>
+                </div>
+              </label>
+
+              <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${doublesValidationMode === "admin_only" ? "border-purple-500 bg-purple-50" : "bg-white border-gray-200 hover:border-gray-300"}">
+                <input
+                  type="radio"
+                  name="doublesValidationMode"
+                  value="admin_only"
+                  ${doublesValidationMode === "admin_only" ? "checked" : ""}
+                  onchange="updateValidationMode('admin_only', 'doubles')"
+                  class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500">
+                <div class="ml-3">
+                  <span class="font-semibold text-gray-800">Erlauben (nur Admins)</span>
+                  <p class="text-xs text-gray-600 mt-0.5">Admins werden gewarnt, Nicht-Admins blockiert</p>
                 </div>
               </label>
             </div>

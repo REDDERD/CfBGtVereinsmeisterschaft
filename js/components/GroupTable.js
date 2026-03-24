@@ -30,9 +30,9 @@ function GroupTable(groupNum, standings) {
                       (player, idx) => `
                 <tr class="border-b border-gray-200">
                   <td class="py-2 pr-1 font-bold text-gray-600">${idx + 1}</td>
-                  <td class="py-2 pr-2 font-medium truncate max-w-[120px]">${player.name}</td>
+                  <td class="py-2 pr-2 font-medium truncate max-w-[120px] text-gray-800">${player.name}</td>
                   <td class="py-2 pr-1 text-center text-gray-600">${player.matches}/${player.totalGames}</td>
-                  <td class="py-2 pr-1 text-center font-semibold">${player.points}</td>
+                  <td class="py-2 pr-1 text-center font-semibold text-gray-800">${player.points}</td>
                   <td class="py-2 pr-1 text-center hidden sm:table-cell text-gray-600">${player.setsWon}:${player.setsLost}</td>
                   <td class="py-2 text-center hidden md:table-cell ${player.pointDiff > 0 ? 'text-green-600' : player.pointDiff < 0 ? 'text-red-600' : 'text-gray-600'}">${player.pointDiff > 0 ? '+' : ''}${player.pointDiff}</td>
                 </tr>
@@ -76,9 +76,9 @@ function FrozenGroupTable(groupNum, standings) {
                       (player, idx) => `
                 <tr class="border-b border-gray-200">
                   <td class="py-2 pr-1 font-bold text-gray-600">${idx + 1}</td>
-                  <td class="py-2 pr-2 font-medium truncate max-w-[120px]">${player.name}</td>
+                  <td class="py-2 pr-2 font-medium truncate max-w-[120px] text-gray-800">${player.name}</td>
                   <td class="py-2 pr-1 text-center text-gray-600">${player.matches}/${player.totalGames || 0}</td>
-                  <td class="py-2 pr-1 text-center font-semibold">${player.points}</td>
+                  <td class="py-2 pr-1 text-center font-semibold text-gray-800">${player.points}</td>
                   <td class="py-2 pr-1 text-center hidden sm:table-cell text-gray-600">${player.setsWon}:${player.setsLost}</td>
                   <td class="py-2 text-center hidden md:table-cell ${(player.pointDiff || 0) > 0 ? 'text-green-600' : (player.pointDiff || 0) < 0 ? 'text-red-600' : 'text-gray-600'}">${(player.pointDiff || 0) > 0 ? '+' : ''}${player.pointDiff || 0}</td>
                 </tr>

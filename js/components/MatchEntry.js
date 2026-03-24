@@ -102,8 +102,8 @@ function DoublesMatchEntry() {
   const t2p1Name = t2p1Obj?.name || "Spieler 1";
   const t2p2Name = t2p2Obj?.name || "Spieler 2";
 
-  const team1Label = selectedT1P1 && selectedT1P2 ? `${t1p1Name} & ${t1p2Name}` : "Team 1";
-  const team2Label = selectedT2P1 && selectedT2P2 ? `${t2p1Name} & ${t2p2Name}` : "Team 2";
+  const team1Label = selectedT1P1 && selectedT1P2 ? `${t1p1Name} & ${t1p2Name}` : "Herausgefordert";
+  const team2Label = selectedT2P1 && selectedT2P2 ? `${t2p1Name} & ${t2p2Name}` : "Herausforderer";
 
   // Short labels for mobile inputs
   const team1Short = selectedT1P1 && selectedT1P2 ? `T1` : "T1";
@@ -164,7 +164,7 @@ function DoublesMatchEntry() {
       <!-- Team selection -->
       <div class="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team 1</label>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5 tracking-wide">Herausgefordert</label>
           <select id="doublesT1P1" onchange="updateDoublesPlayerSelection('doublesT1P1', this.value)" class="w-full px-2 py-2.5 border rounded-lg mb-1.5 bg-white text-sm">
             <option value="">Spieler 1</option>
             ${availableT1P1.map((p) => `<option value="${p.id}" ${prefill.challengerId === p.id || selectedT1P1 === p.id ? "selected" : ""}>${p.name}</option>`).join("")}
@@ -175,7 +175,7 @@ function DoublesMatchEntry() {
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Team 2</label>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5 tracking-wide">Herausforderer</label>
           <select id="doublesT2P1" onchange="updateDoublesPlayerSelection('doublesT2P1', this.value)" class="w-full px-2 py-2.5 border rounded-lg mb-1.5 bg-white text-sm">
             <option value="">Spieler 1</option>
             ${availableT2P1.map((p) => `<option value="${p.id}" ${prefill.challengedId === p.id || selectedT2P1 === p.id ? "selected" : ""}>${p.name}</option>`).join("")}

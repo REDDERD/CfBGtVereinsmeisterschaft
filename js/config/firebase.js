@@ -15,3 +15,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+
+// Emulator-Modus: wird automatisch aktiviert wenn die App lokal läuft
+if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+  db.useEmulator("localhost", 8080);
+  auth.useEmulator("http://localhost:9099");
+  console.log("🔧 Firebase Emulator aktiv (lokale Testumgebung)");
+}

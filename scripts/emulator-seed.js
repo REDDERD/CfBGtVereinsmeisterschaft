@@ -16,8 +16,8 @@ const db = admin.firestore();
 const authAdmin = admin.auth();
 
 const USERS = [
-  { email: "admin@test.de", password: "adminpw", isAdmin: true },
-  { email: "simple@test.de", password: "simplepw", isAdmin: false },
+  { email: "admin@test.de", password: "admin", isAdmin: true },
+  { email: "simple@test.de", password: "test",  isAdmin: false },
 ];
 
 async function createUser({ email, password, isAdmin }) {

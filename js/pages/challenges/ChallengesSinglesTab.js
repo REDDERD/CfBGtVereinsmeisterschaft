@@ -107,7 +107,7 @@ function ChallengesSinglesTab() {
           </div>`;
       }
 
-      if (canEnter && state.user && !state.knockoutPhaseActive) {
+      if (canEnter && state.user && !isReadOnly() && !state.knockoutPhaseActive) {
         return `
           <div class="border rounded p-2">
             <div class="text-[10px] font-semibold text-gray-500 mb-1">${label}</div>

@@ -2,17 +2,27 @@
 // Navigation und View-Steuerung
 
 function navigateTo(page) {
+  // Im Archiv-Modus: Admin und Challenges blockieren
+  if (state.archiveMode && (page === 'admin' || page === 'challenges')) {
+    return;
+  }
+
   state.currentPage = page;
   state.selectedPlayerId = null;
   state.prefilledDoubles = null;
   state.mobileMenuOpen = false;
   state.mobileMoreOpen = false;
-  
+
   // Beim Navigieren zur Singles-Seite: Wenn K.O.-Phase aktiv ist, zeige K.O.-Phase
   if (page === "singles" && state.knockoutPhaseActive) {
     state.singlesView = "knockout";
   }
-  
+
+  // Im Archiv-Modus: Hash aktualisieren
+  if (state.archiveMode) {
+    updateArchiveHash(page);
+  }
+
   render();
 }
 

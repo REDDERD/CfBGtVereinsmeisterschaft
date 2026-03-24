@@ -46,7 +46,7 @@ function DoublesPage() {
             <div class="text-center py-8 bg-gray-50 rounded-lg">
               <p class="text-gray-600">Pyramide noch nicht initialisiert</p>
               ${
-                state.user
+                state.user && !isReadOnly()
                   ? `
                 <button onclick="initPyramid()" class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                   Pyramide initialisieren
@@ -129,7 +129,7 @@ function DoublesPage() {
             : ""
         }
 
-        ${state.user && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : !state.user && levels.length > 0 && !state.pyramidLoading ? `
+        ${state.user && !isReadOnly() && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : !state.user && !isReadOnly() && levels.length > 0 && !state.pyramidLoading ? `
           <div class="mt-4 p-2 bg-blue-100 border border-blue-400 rounded text-xs sm:text-sm text-blue-800 flex items-center gap-2">
             ${icons.info} <span>Um Ergebnisse einzutragen, bitte einloggen.</span>
           </div>

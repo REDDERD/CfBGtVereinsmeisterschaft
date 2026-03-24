@@ -4,7 +4,10 @@
 const state = {
   currentPage: "home",
   activeSeason: null, // Aktive Saison (Jahr), wird aus settings/activeSeason geladen
+  liveActiveSeason: null, // Die "echte" aktive Saison (bleibt im Archiv-Modus erhalten)
   seasons: [], // Liste aller Saisons [{year, label, archiveVisible, ...}]
+  archiveMode: false, // true wenn Archiv angezeigt wird
+  archiveYear: null, // Das Jahr das im Archiv angezeigt wird
   user: null,
   isAdmin: false,
   players: [],

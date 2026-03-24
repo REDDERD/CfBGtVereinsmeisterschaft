@@ -10,7 +10,7 @@ function ChallengesDoublesTab() {
   return `
     <div class="space-y-4 sm:space-y-6">
       ${
-        state.user
+        state.user && !isReadOnly()
           ? `
         <div class="bg-gray-50 rounded-lg p-3 sm:p-6">
           <h3 class="text-base sm:text-xl font-bold text-gray-800 mb-3">Neue Herausforderung</h3>
@@ -72,7 +72,7 @@ function ChallengesDoublesTab() {
                       </div>
                     </div>
                     ${
-                      state.user
+                      state.user && !isReadOnly()
                         ? `
                       <div class="flex gap-2">
                         <button onclick="enterResultFromChallenge('${challenge.id}')" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium">

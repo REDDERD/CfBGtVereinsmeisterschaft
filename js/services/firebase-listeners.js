@@ -36,16 +36,23 @@ function initFirebaseListeners() {
   db.collection("settings")
     .doc("activeSeason")
     .onSnapshot((doc) => {
-      const previousSeason = state.activeSeason;
+      let liveYear;
       if (doc.exists) {
-        state.activeSeason = doc.data().year;
+        liveYear = doc.data().year;
       } else {
-        // Fallback: aktuelles Jahr
-        state.activeSeason = new Date().getFullYear();
+        liveYear = new Date().getFullYear();
       }
-      // Bei Saisonwechsel: Saison-Listener neu starten
-      if (previousSeason !== state.activeSeason) {
-        initSeasonListeners();
+
+      // Immer die "echte" Live-Saison tracken
+      state.liveActiveSeason = liveYear;
+
+      // Nur aktualisieren wenn NICHT im Archiv-Modus
+      if (!state.archiveMode) {
+        const previousSeason = state.activeSeason;
+        state.activeSeason = liveYear;
+        if (previousSeason !== state.activeSeason) {
+          initSeasonListeners();
+        }
       }
     });
 
@@ -248,6 +255,8 @@ function initSeasonListeners() {
 
 // Load pyramid manually
 async function loadPyramid() {
+  // Im Archiv-Modus niemals Pyramide schreiben (neue Spieler hinzufügen etc.)
+  if (state.archiveMode) return;
 
   try {
     state.pyramidLoading = true;

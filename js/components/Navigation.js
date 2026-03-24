@@ -2,6 +2,8 @@
 // Navigation Komponente - Mobile-First mit Bottom Tab Bar
 
 function Navigation() {
+  const inArchive = state.archiveMode;
+
   const navItems = [
     { id: 'home', label: 'Home', icon: icons.home || '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>' },
     { id: 'singles', label: 'Einzel', icon: icons.user },
@@ -42,12 +44,14 @@ function Navigation() {
               ${icons.users}
               <span class="font-medium">Doppel</span>
             </button>
-            <button onclick="navigateTo('challenges')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-              state.currentPage === "challenges" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
-            }">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span class="font-medium">Herausforderungen</span>
-            </button>
+            ${!inArchive ? `
+              <button onclick="navigateTo('challenges')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                state.currentPage === "challenges" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
+              }">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="font-medium">Herausforderungen</span>
+              </button>
+            ` : ''}
             <button onclick="navigateTo('statistics')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
               state.currentPage === "statistics" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
             }">
@@ -67,28 +71,39 @@ function Navigation() {
               <span class="font-medium">Spieler</span>
             </button>
 
-            ${state.user
-              ? `
-                ${state.isAdmin ? `
-                  <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                    state.currentPage === "admin" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
-                  }">
-                    ${icons.settings}
-                    <span class="font-medium">Admin</span>
+            ${!inArchive ? `
+              <button onclick="navigateTo('archive')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                state.currentPage === "archive" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
+              }">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/></svg>
+                <span class="font-medium">Archiv</span>
+              </button>
+            ` : ''}
+
+            ${!inArchive ? `
+              ${state.user
+                ? `
+                  ${state.isAdmin ? `
+                    <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                      state.currentPage === "admin" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
+                    }">
+                      ${icons.settings}
+                      <span class="font-medium">Admin</span>
+                    </button>
+                  ` : ''}
+                  <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    ${icons.logout}
+                    <span>Logout</span>
                   </button>
-                ` : ''}
-                <button onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                  ${icons.logout}
-                  <span>Logout</span>
-                </button>
-              `
-              : `
-                <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                  ${icons.login}
-                  <span>Admin Login</span>
-                </button>
-              `
-            }
+                `
+                : `
+                  <button onclick="navigateTo('admin')" class="flex items-center space-x-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    ${icons.login}
+                    <span>Admin Login</span>
+                  </button>
+                `
+              }
+            ` : ''}
             <button onclick="toggleDarkMode()" class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors text-gray-700 hover:bg-gray-100" title="${state.darkMode ? 'Light Mode' : 'Dark Mode'}">
               ${state.darkMode ? icons.sun : icons.moon}
             </button>
@@ -126,22 +141,29 @@ function Navigation() {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
           <span class="text-[10px] font-medium">Mehr</span>
         </button>
-        ${state.user
-          ? `
-            <button onclick="handleLogout()" class="flex flex-col items-center justify-center gap-0.5 text-red-500">
-              ${icons.logout.replace('size-5', 'w-5 h-5')}
-              <span class="text-[10px] font-medium">Logout</span>
-            </button>
-          `
-          : `
-            <button onclick="navigateTo('admin')" class="flex flex-col items-center justify-center gap-0.5 ${
-              state.currentPage === 'admin' ? 'text-indigo-600' : 'text-gray-500'
-            }">
-              ${icons.login.replace('size-5', 'w-5 h-5')}
-              <span class="text-[10px] font-medium">Login</span>
-            </button>
-          `
-        }
+        ${!inArchive ? `
+          ${state.user
+            ? `
+              <button onclick="handleLogout()" class="flex flex-col items-center justify-center gap-0.5 text-red-500">
+                ${icons.logout.replace('size-5', 'w-5 h-5')}
+                <span class="text-[10px] font-medium">Logout</span>
+              </button>
+            `
+            : `
+              <button onclick="navigateTo('admin')" class="flex flex-col items-center justify-center gap-0.5 ${
+                state.currentPage === 'admin' ? 'text-indigo-600' : 'text-gray-500'
+              }">
+                ${icons.login.replace('size-5', 'w-5 h-5')}
+                <span class="text-[10px] font-medium">Login</span>
+              </button>
+            `
+          }
+        ` : `
+          <button onclick="exitArchiveMode()" class="flex flex-col items-center justify-center gap-0.5 text-amber-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/></svg>
+            <span class="text-[10px] font-medium">Zurück</span>
+          </button>
+        `}
       </div>
     </nav>
 
@@ -151,12 +173,14 @@ function Navigation() {
         <div class="absolute bottom-16 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 safe-area-bottom" onclick="event.stopPropagation()">
           <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
           <div class="grid grid-cols-3 gap-3">
-            <button onclick="closeMobileMore(); navigateTo('challenges')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
-              state.currentPage === 'challenges' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
-            }">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span class="text-xs font-medium">Heraus&shy;forderungen</span>
-            </button>
+            ${!inArchive ? `
+              <button onclick="closeMobileMore(); navigateTo('challenges')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
+                state.currentPage === 'challenges' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
+              }">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-xs font-medium">Heraus&shy;forderungen</span>
+              </button>
+            ` : ''}
             <button onclick="closeMobileMore(); navigateTo('matches')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
               state.currentPage === 'matches' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
             }">
@@ -169,7 +193,15 @@ function Navigation() {
               ${icons.usergroup}
               <span class="text-xs font-medium">Spieler</span>
             </button>
-            ${state.user && state.isAdmin ? `
+            ${!inArchive ? `
+              <button onclick="closeMobileMore(); navigateTo('archive')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
+                state.currentPage === 'archive' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
+              }">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/></svg>
+                <span class="text-xs font-medium">Archiv</span>
+              </button>
+            ` : ''}
+            ${!inArchive && state.user && state.isAdmin ? `
               <button onclick="closeMobileMore(); navigateTo('admin')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
                 state.currentPage === 'admin' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
               }">

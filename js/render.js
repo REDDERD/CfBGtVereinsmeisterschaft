@@ -20,7 +20,7 @@ function render() {
       content = DoublesPage();
       break;
     case "challenges":
-      content = ChallengesPage();
+      content = state.archiveMode ? HomePage() : ChallengesPage();
       break;
     case "statistics":
       content = StatisticsPage();
@@ -35,14 +35,30 @@ function render() {
       content = PlayerProfilePage(state.selectedPlayerId);
       break;
     case "admin":
-      content = AdminPage();
+      content = state.archiveMode ? HomePage() : AdminPage();
+      break;
+    case "archive":
+      content = ArchivePage();
       break;
     default:
       content = HomePage();
   }
 
+  // Archiv-Banner
+  const archiveBanner = state.archiveMode ? `
+    <div class="bg-amber-100 dark:bg-amber-900 border-b-2 border-amber-400 dark:border-amber-600 px-4 py-2 flex items-center justify-between">
+      <span class="font-semibold text-amber-800 dark:text-amber-200 text-sm sm:text-base">
+        Archiv: Saison ${state.archiveYear}
+      </span>
+      <button onclick="exitArchiveMode()" class="px-3 py-1 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition-colors">
+        Zur aktuellen Saison
+      </button>
+    </div>
+  ` : '';
+
   app.innerHTML = `
     ${Navigation()}
+    ${archiveBanner}
     <div class="container mx-auto px-3 sm:px-4 py-3 sm:py-8 max-w-7xl w-full pb-20 md:pb-8">
       ${content}
     </div>

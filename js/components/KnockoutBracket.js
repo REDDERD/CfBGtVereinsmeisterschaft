@@ -158,11 +158,11 @@ function KnockoutBracketView() {
           ${playerRow(players.player2Id, players.player2Name, false)}
         </div>
         ${
-          !isPlayed && state.user && canPlay
+          !isPlayed && state.user && !isReadOnly() && canPlay
             ? `
           <button onclick="openKnockoutMatchEntry('${round}', ${matchNum})" class="mt-2 w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Ergebnis eintragen</button>
         `
-            : !isPlayed && state.user
+            : !isPlayed && state.user && !isReadOnly()
               ? '<div class="mt-2 text-center text-xs text-gray-400">Warte auf vorherige Spiele</div>'
               : ""
         }

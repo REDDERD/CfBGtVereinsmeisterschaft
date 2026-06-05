@@ -34,5 +34,4 @@ if (archiveHash) {
   render();
 }
 
-// Load pyramid on startup
-loadPyramid();
+// Pyramide wird jetzt von initSeasonListeners() beim ersten Players-Snapshot geladen.

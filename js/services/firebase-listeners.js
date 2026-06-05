@@ -172,6 +172,10 @@ function initSeasonListeners() {
   state.matchesLoading = true;
   state.challenges = [];
 
+  // Pyramide wird einmalig beim ersten Players-Snapshot geladen,
+  // damit activeSeason UND state.players garantiert verfügbar sind.
+  let pyramidLoadTriggered = false;
+
   // Players
   seasonUnsubscribers.push(
     seasonCollection("players")
@@ -181,6 +185,10 @@ function initSeasonListeners() {
           id: doc.id,
           ...doc.data(),
         }));
+        if (!pyramidLoadTriggered && !state.archiveMode) {
+          pyramidLoadTriggered = true;
+          loadPyramid();
+        }
         render();
       })
   );

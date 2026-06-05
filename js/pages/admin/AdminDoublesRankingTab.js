@@ -12,6 +12,31 @@ function AdminDoublesRankingTab() {
         <h3 class="text-xl font-bold text-gray-800 mb-3">Doppel-Rangfolge bearbeiten</h3>
       </div>
 
+      <div class="bg-gray-50 rounded-lg p-3 sm:p-4 mb-6">
+        <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-3">Kampfloses Spiel eintragen</h3>
+        <p class="text-xs text-gray-500 mb-3">Nur die ersten Spieler jedes Teams angeben. Die Pyramide wird automatisch aktualisiert.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-bold text-green-700 mb-1">Gewinner (Spieler 1)</label>
+            <select id="walkoverDoublesWinner" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-green-50 focus:ring-2 focus:ring-green-400 focus:border-transparent">
+              <option value="">Spieler wählen...</option>
+              ${state.players.filter(p => p.doublesPool).map(p => `<option value="${p.id}">${p.name} (Pool ${p.doublesPool})</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-red-700 mb-1">Verlierer (Spieler 1)</label>
+            <select id="walkoverDoublesLoser" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-red-50 focus:ring-2 focus:ring-red-400 focus:border-transparent">
+              <option value="">Spieler wählen...</option>
+              ${state.players.filter(p => p.doublesPool).map(p => `<option value="${p.id}">${p.name} (Pool ${p.doublesPool})</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="addDoublesWalkover()" class="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm font-semibold transition-colors">Kampflos eintragen</button>
+          <span class="text-xs text-gray-400">Ergebnis wird als 21:0, 21:0 gespeichert</span>
+        </div>
+      </div>
+
       ${
         flatPositions.length === 0
           ? `

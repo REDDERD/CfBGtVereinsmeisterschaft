@@ -29,8 +29,10 @@ function MatchCard(match, context = 'home') {
       });
     }
   } else {
-    player1Name = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
-    player2Name = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
+    const t1p2 = match.team1?.player2Id;
+    const t2p2 = match.team2?.player2Id;
+    player1Name = t1p2 ? `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(t1p2)}` : getPlayerName(match.team1.player1Id);
+    player2Name = t2p2 ? `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(t2p2)}` : getPlayerName(match.team2.player1Id);
     scoreText = match.sets ? match.sets.map(s => `${s.t1}:${s.t2}`).join(', ') : 'Ausstehend';
     player1Sets = 0;
     player2Sets = 0;
@@ -62,6 +64,11 @@ function MatchCard(match, context = 'home') {
     };
     const s = statusMap[status] || statusMap['confirmed'];
     return `<span class="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded border ${s.color}">${s.label}</span>`;
+  };
+
+  const getWalkoverBadge = () => {
+    if (!match.walkover) return '';
+    return '<span class="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-gray-100 text-gray-500 border border-gray-300">Kampflos</span>';
   };
 
   const getKnockoutBadge = () => {
@@ -111,6 +118,7 @@ function MatchCard(match, context = 'home') {
           <div class="flex flex-wrap items-center gap-1 mb-1.5">
             ${getTypeBadge()}
             ${getKnockoutBadge()}
+            ${getWalkoverBadge()}
             ${getStatusBadge()}
             ${dateStr ? `<span class="text-xs text-gray-400">${dateStr}</span>` : ''}
           </div>

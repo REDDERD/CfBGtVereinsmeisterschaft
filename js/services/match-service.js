@@ -434,6 +434,143 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
   }
 }
 
+// ========== Kampflose Spiele ==========
+
+async function addSinglesWalkover() {
+  const winnerId = document.getElementById("walkoverSinglesWinner").value;
+  const loserId  = document.getElementById("walkoverSinglesLoser").value;
+
+  if (!winnerId || !loserId) {
+    Toast.error("Bitte Gewinner und Verlierer auswählen");
+    return;
+  }
+  if (winnerId === loserId) {
+    Toast.error("Gewinner und Verlierer müssen verschiedene Spieler sein");
+    return;
+  }
+
+  const winner = state.players.find(p => p.id === winnerId);
+  const loser  = state.players.find(p => p.id === loserId);
+  if (!winner || !loser) { Toast.error("Spieler nicht gefunden"); return; }
+
+  // Gruppenprüfung (identisch zu addSinglesMatch)
+  if (winner.singlesGroup !== loser.singlesGroup) {
+    const confirmed = await Modal.warn({
+      title: "Spieler in unterschiedlichen Gruppen",
+      message: `${winner.name} ist in Gruppe ${winner.singlesGroup} und ${loser.name} ist in Gruppe ${loser.singlesGroup}. Gruppenspiele sollten nur innerhalb derselben Gruppe stattfinden. Möchtest du das Spiel trotzdem eintragen?`,
+      confirmText: "Ja, eintragen",
+      cancelText: "Abbrechen",
+    });
+    if (!confirmed) return;
+  }
+
+  // Paarungslimit-Prüfung (identisch zu addSinglesMatch)
+  const existingMatches = state.singlesMatches.filter(
+    m => ((m.player1Id === winnerId && m.player2Id === loserId) ||
+          (m.player1Id === loserId  && m.player2Id === winnerId)) &&
+         m.status !== "rejected",
+  );
+
+  if (existingMatches.length >= 2) {
+    if (state.singlesValidationMode === "warn") {
+      const confirmed = await Modal.warn({
+        title: "Paarung bereits 2x gespielt",
+        message: `${winner.name} und ${loser.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Möchtest du das Spiel trotzdem eintragen?`,
+        confirmText: "Ja, eintragen",
+        cancelText: "Abbrechen",
+      });
+      if (!confirmed) return;
+    } else if (state.singlesValidationMode === "block") {
+      Toast.error("Bereits Hin- und Rückrunde gespielt.");
+      return;
+    } else if (state.singlesValidationMode === "admin_only") {
+      const confirmed = await Modal.warn({
+        title: "Paarung bereits 2x gespielt (Admin)",
+        message: `${winner.name} und ${loser.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Als Admin kannst du das Spiel trotzdem eintragen. Möchtest du fortfahren?`,
+        confirmText: "Ja, eintragen",
+        cancelText: "Abbrechen",
+      });
+      if (!confirmed) return;
+    }
+  }
+
+  const round = winner.singlesGroup === 1 ? "group1" : "group2";
+
+  await seasonCollection("singlesMatches").add({
+    player1Id: winnerId,
+    player2Id: loserId,
+    sets: [{ p1: 21, p2: 0 }, { p1: 21, p2: 0 }],
+    round,
+    status: "confirmed",
+    walkover: true,
+    date: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+
+  document.getElementById("walkoverSinglesWinner").value = "";
+  document.getElementById("walkoverSinglesLoser").value = "";
+  Toast.success("Kampfloses Einzel-Spiel eingetragen!");
+}
+
+async function addDoublesWalkover() {
+  const winnerId = document.getElementById("walkoverDoublesWinner").value;
+  const loserId  = document.getElementById("walkoverDoublesLoser").value;
+
+  if (!winnerId || !loserId) {
+    Toast.error("Bitte Gewinner und Verlierer auswählen");
+    return;
+  }
+  if (winnerId === loserId) {
+    Toast.error("Gewinner und Verlierer müssen verschiedene Spieler sein");
+    return;
+  }
+
+  // Pyramiden-Positionsprüfung (identisch zu addDoublesMatch)
+  const validationPassed = await checkDoublesMatchValidation(winnerId, loserId);
+  if (!validationPassed) return;
+
+  await seasonCollection("doublesMatches").add({
+    team1: { player1Id: winnerId, player2Id: null },
+    team2: { player1Id: loserId,  player2Id: null },
+    sets: [{ t1: 21, t2: 0 }, { t1: 21, t2: 0 }],
+    status: "confirmed",
+    walkover: true,
+    date: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+
+  await updatePyramidAfterChallenge(winnerId, loserId);
+
+  document.getElementById("walkoverDoublesWinner").value = "";
+  document.getElementById("walkoverDoublesLoser").value = "";
+
+  state.pyramidLoading = true;
+  render();
+  await loadPyramid();
+  Toast.success("Kampfloses Doppel-Spiel eingetragen!");
+}
+
+function updateWalkoverSinglesLoser(winnerId) {
+  const loserSelect = document.getElementById("walkoverSinglesLoser");
+  if (!loserSelect) return;
+
+  if (!winnerId) {
+    loserSelect.innerHTML = '<option value="">Erst Gewinner wählen...</option>';
+    loserSelect.disabled = true;
+    return;
+  }
+
+  const winner = state.players.find(p => p.id === winnerId);
+  if (!winner || !winner.singlesGroup) {
+    loserSelect.innerHTML = '<option value="">Keine Gruppe zugewiesen</option>';
+    loserSelect.disabled = true;
+    return;
+  }
+
+  const sameGroup = state.players.filter(p => p.singlesGroup === winner.singlesGroup && p.id !== winnerId);
+  loserSelect.innerHTML = '<option value="">Spieler wählen...</option>' +
+    sameGroup.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  loserSelect.disabled = false;
+}
+
 // ========== Hilfsfunktion: Standard-Status ermitteln ==========
 
 function _getDefaultMatchStatus(type) {

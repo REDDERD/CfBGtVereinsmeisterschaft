@@ -271,7 +271,7 @@ function buildPlayerStatsSheetData() {
   addDoubleSection('Meiste Doppel-Spiele gesamt', topTotalMatches, p => `${p.matches} Spiele`);
   addDoubleSection('Bestes Duo', topDuo, p => `${p.wins} Siege (${p.matches} Spiele)`);
   addDoubleSection('Häufigstes Duo', topDuoByMatches, p => `${p.matches} Spiele (${p.wins} Siege)`);
-  addDoubleSection('Vielseitigster Spieler', topVersatile, p => `${p.partnerCount} verschiedene Partner`);
+  addDoubleSection('Meiste Mitspieler', topVersatile, p => `${p.partnerCount} verschiedene Partner`);
 
   return {
     'Statistiken Einzel': einzel,

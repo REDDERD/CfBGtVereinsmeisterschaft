@@ -242,7 +242,7 @@ function renderStatisticsDoubles() {
       ${renderStatCategory("Meiste Doppel gesamt", topTotalMatches, p => `${p.matches} Spiele`)}
       ${renderStatCategory("Bestes Duo", topDuo, p => `${p.wins}S / ${p.matches}Sp`)}
       ${renderStatCategory("Häufigstes Duo", topDuoByMatches, p => `${p.matches}Sp / ${p.wins}S`)}
-      ${renderStatCategory("Vielseitigster", topVersatile, p => `${p.partnerCount} Partner`)}
+      ${renderStatCategory("Meiste Mitspieler", topVersatile, p => `${p.partnerCount} Partner`)}
       ${renderStatCategory("Längste Siegesserie", topStreak, p => `${p.maxStreak} Siege${p.currentStreak > 0 ? ` (aktuell: ${p.currentStreak})` : ''}`)}
     </div>`;
 }

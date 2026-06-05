@@ -169,6 +169,7 @@ function initSeasonListeners() {
   state.knockoutMatches = [];
   state.pyramid = { levels: [] };
   state.pyramidInitialized = false;
+  state.matchesLoading = true;
   state.challenges = [];
 
   // Players
@@ -200,6 +201,7 @@ function initSeasonListeners() {
           match.round && match.round !== 'group1' && match.round !== 'group2'
         );
 
+        state.matchesLoading = false;
         render();
       })
   );

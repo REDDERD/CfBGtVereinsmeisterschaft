@@ -17,6 +17,7 @@ const state = {
   pyramid: { levels: [] },
   pyramidLoading: false,
   pyramidInitialized: false,
+  matchesLoading: true,
   challenges: [],
   editingPlayer: null,
   selectedPlayerId: null,

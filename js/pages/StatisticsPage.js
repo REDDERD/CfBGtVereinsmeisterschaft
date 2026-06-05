@@ -24,7 +24,24 @@ function StatisticsPage() {
           </button>
         </div>
 
-        ${state.statisticsView === "singles" ? renderStatisticsSingles() : renderStatisticsDoubles()}
+        ${state.matchesLoading ? `
+          <div class="space-y-5 sm:space-y-8">
+            ${[0,1,2,3].map(() => `
+              <div>
+                <div class="skeleton h-4 w-36 mb-3 rounded"></div>
+                <div class="space-y-1.5">
+                  ${[0,1,2].map(() => `
+                    <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg border border-gray-200">
+                      <div class="skeleton w-6 h-6 sm:w-8 sm:h-8 rounded-full flex-shrink-0"></div>
+                      <div class="skeleton h-4 flex-1"></div>
+                      <div class="skeleton h-4 w-16 flex-shrink-0"></div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : state.statisticsView === "singles" ? renderStatisticsSingles() : renderStatisticsDoubles()}
       </div>
     </div>`;
 }

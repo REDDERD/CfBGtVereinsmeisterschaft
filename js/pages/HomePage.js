@@ -127,7 +127,23 @@ function HomePage() {
 
       <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
         <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3">Letzte Ergebnisse</h3>
-        ${recentMatches.length === 0 ? `
+        ${state.matchesLoading ? `
+          <div class="space-y-2">
+            ${[0,1,2].map(() => `
+              <div class="border border-gray-200 rounded-lg p-3 sm:p-4">
+                <div class="flex items-center gap-1.5 mb-2">
+                  <div class="skeleton h-4 w-10 rounded-full"></div>
+                  <div class="skeleton h-4 w-16"></div>
+                </div>
+                <div class="flex items-center gap-2 mb-1.5">
+                  <div class="skeleton h-4 w-32"></div>
+                  <div class="skeleton h-4 w-10 ml-auto"></div>
+                </div>
+                <div class="skeleton h-4 w-28"></div>
+              </div>
+            `).join('')}
+          </div>
+        ` : recentMatches.length === 0 ? `
           <p class="text-gray-500 text-center py-6 text-sm">Noch keine Spiele eingetragen</p>
         ` : `
           <div class="space-y-2">

@@ -31,8 +31,30 @@ function SinglesPage() {
             </div>
           ` : `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4">
+              ${state.matchesLoading ? `
+                ${[1, 2].map(() => `
+                  <div class="bg-gray-50 rounded-lg p-3 sm:p-4">
+                    <div class="skeleton h-6 w-24 mb-3 rounded"></div>
+                    <div class="flex gap-2 pb-2 mb-1 border-b border-gray-200">
+                      <div class="skeleton h-3 w-4"></div>
+                      <div class="skeleton h-3 flex-1"></div>
+                      <div class="skeleton h-3 w-6"></div>
+                      <div class="skeleton h-3 w-6"></div>
+                    </div>
+                    ${[0,1,2,3].map(() => `
+                      <div class="flex items-center gap-2 py-2 border-b border-gray-200">
+                        <div class="skeleton h-4 w-4 flex-shrink-0"></div>
+                        <div class="skeleton h-4 flex-1"></div>
+                        <div class="skeleton h-4 w-8"></div>
+                        <div class="skeleton h-4 w-6"></div>
+                      </div>
+                    `).join('')}
+                  </div>
+                `).join('')}
+              ` : `
               ${GroupTable(1, group1)}
               ${GroupTable(2, group2)}
+              `}
             </div>
             ${state.user && !isReadOnly() && !state.knockoutPhaseActive ? SinglesMatchEntry() : !state.knockoutPhaseActive && !isReadOnly() ? `
               <div class="mt-4 p-2 bg-blue-100 border border-blue-400 rounded text-xs sm:text-sm text-blue-800 flex items-center gap-2">

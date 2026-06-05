@@ -98,8 +98,21 @@ function MatchesPage() {
         </div>
 
         <div class="space-y-2">
-          ${
-            filteredMatches.length === 0
+          ${state.matchesLoading ? `
+            ${[0,1,2,3,4].map(() => `
+              <div class="border border-gray-200 rounded-lg p-3 sm:p-4">
+                <div class="flex items-center gap-1.5 mb-2">
+                  <div class="skeleton h-4 w-10 rounded-full"></div>
+                  <div class="skeleton h-4 w-16"></div>
+                </div>
+                <div class="flex items-center gap-2 mb-1.5">
+                  <div class="skeleton h-4 w-32"></div>
+                  <div class="skeleton h-4 w-10 ml-auto"></div>
+                </div>
+                <div class="skeleton h-4 w-28"></div>
+              </div>
+            `).join('')}
+          ` : filteredMatches.length === 0
               ? `<p class="text-gray-500 text-center py-6 text-sm">Keine Spiele gefunden</p>`
               : filteredMatches.map((match) => MatchCard(match, "matches")).join("")
           }

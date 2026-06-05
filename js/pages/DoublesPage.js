@@ -41,6 +41,20 @@ function DoublesPage() {
               </div>
             </div>
           `
+              : state.matchesLoading && !state.pyramidInitialized
+                ? `
+            <div class="overflow-x-auto scrollbar-hide -mx-4 sm:-mx-6 px-4 sm:px-6">
+              <div class="space-y-1.5 sm:space-y-2 inline-block min-w-full">
+                ${[1, 2, 3, 4, 5].map(count => `
+                  <div class="flex flex-nowrap justify-center gap-1 sm:gap-2">
+                    ${Array(count).fill(0).map(() => `
+                      <div class="skeleton rounded-lg flex-shrink-0" style="min-width:70px; height:42px;"></div>
+                    `).join('')}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `
               : levels.length === 0 && !state.pyramidInitialized
                 ? `
             <div class="text-center py-8 bg-gray-50 rounded-lg">

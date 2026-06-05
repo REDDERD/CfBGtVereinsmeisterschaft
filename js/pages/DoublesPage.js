@@ -12,16 +12,26 @@ function DoublesPage() {
           ${
             levels.length > 0
               ? `
-          <button
-            onclick="togglePoolVisualization()"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors ${state.doublesPoolVisualization ? "bg-indigo-100 border-indigo-300 text-indigo-700" : "bg-gray-50 border-gray-200 text-gray-600"}"
-            role="switch"
-            aria-checked="${state.doublesPoolVisualization}">
-            <span class="font-medium">Pools</span>
-            <div class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${state.doublesPoolVisualization ? "bg-indigo-600" : "bg-gray-300"}">
-              <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${state.doublesPoolVisualization ? "translate-x-4" : "translate-x-0.5"}"></span>
-            </div>
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="openPyramidHistoryModal()"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+              </svg>
+              <span class="font-medium">Verlauf</span>
+            </button>
+            <button
+              onclick="togglePoolVisualization()"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors ${state.doublesPoolVisualization ? "bg-indigo-100 border-indigo-300 text-indigo-700" : "bg-gray-50 border-gray-200 text-gray-600"}"
+              role="switch"
+              aria-checked="${state.doublesPoolVisualization}">
+              <span class="font-medium">Pools</span>
+              <div class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${state.doublesPoolVisualization ? "bg-indigo-600" : "bg-gray-300"}">
+                <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${state.doublesPoolVisualization ? "translate-x-4" : "translate-x-0.5"}"></span>
+              </div>
+            </button>
+          </div>
           `
               : ""
           }
@@ -149,5 +159,6 @@ function DoublesPage() {
           </div>
         ` : ""}
       </div>
+
     </div>`;
 }

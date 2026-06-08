@@ -1,0 +1,20 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
+import { resolve } from 'path'
+
+export default defineConfig({
+  base: '/CfBGtVereinsmeisterschaft/v2/',
+  plugins: [
+    vue(),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
+  build: {
+    outDir: 'dist',
+  },
+})

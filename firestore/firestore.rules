@@ -1,9 +1,364 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Lokal im Emulator: alles erlaubt
+
+    // ===================================================================
+    // AUTH-HILFSFUNKTIONEN
+    // ===================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+
+    // ===================================================================
+    // BADMINTON-SATZ-VALIDIERUNG
+    // Entspricht validateSet() aus js/utils/validation.js
+    // ===================================================================
+
+    // Prüft ob ein einzelner Satz ein gültiges Badminton-Ergebnis hat
+    function isValidSetScore(p1, p2) {
+      let h = p1 > p2 ? p1 : p2;
+      let l = p1 > p2 ? p2 : p1;
+      return p1 is int && p2 is int && p1 != p2 &&
+             ((h == 21 && l <= 19) ||
+              (h >= 21 && h <= 30 && (h - l) == 2) ||
+              (h == 30 && l == 29));
+    }
+
+    // Einzel-Satz mit Feldern p1, p2
+    function isValidSinglesSet(s) {
+      return s is map && 'p1' in s && 'p2' in s && isValidSetScore(s.p1, s.p2);
+    }
+
+    // Doppel-Satz mit Feldern t1, t2
+    function isValidDoublesSet(s) {
+      return s is map && 't1' in s && 't2' in s && isValidSetScore(s.t1, s.t2);
+    }
+
+    // 2-3 valide Einzel-Sätze; bei 2 Sätzen gleicher Sieger, bei 3 Sätzen unterschiedliche Sieger in S1/S2
+    function isValidSinglesSets(sets) {
+      return sets is list && sets.size() >= 2 && sets.size() <= 3 &&
+             isValidSinglesSet(sets[0]) && isValidSinglesSet(sets[1]) &&
+             (sets.size() == 2
+               ? (sets[0].p1 > sets[0].p2) == (sets[1].p1 > sets[1].p2)
+               : (sets[0].p1 > sets[0].p2) != (sets[1].p1 > sets[1].p2) &&
+                 isValidSinglesSet(sets[2]));
+    }
+
+    // 2-3 valide Doppel-Sätze; bei 2 Sätzen gleicher Sieger, bei 3 Sätzen unterschiedliche Sieger in S1/S2
+    function isValidDoublesSets(sets) {
+      return sets is list && sets.size() >= 2 && sets.size() <= 3 &&
+             isValidDoublesSet(sets[0]) && isValidDoublesSet(sets[1]) &&
+             (sets.size() == 2
+               ? (sets[0].t1 > sets[0].t2) == (sets[1].t1 > sets[1].t2)
+               : (sets[0].t1 > sets[0].t2) != (sets[1].t1 > sets[1].t2) &&
+                 isValidDoublesSet(sets[2]));
+    }
+
+    // Kampflos-Sätze Einzel: exakt 21:0, 21:0
+    function isWalkoverSinglesSets(sets) {
+      return sets is list && sets.size() == 2 &&
+             sets[0].p1 == 21 && sets[0].p2 == 0 &&
+             sets[1].p1 == 21 && sets[1].p2 == 0;
+    }
+
+    // Kampflos-Sätze Doppel: exakt 21:0, 21:0
+    function isWalkoverDoublesSets(sets) {
+      return sets is list && sets.size() == 2 &&
+             sets[0].t1 == 21 && sets[0].t2 == 0 &&
+             sets[1].t1 == 21 && sets[1].t2 == 0;
+    }
+
+
+    // ===================================================================
+    // FELD-VALIDIERUNGS-HILFSFUNKTIONEN
+    // ===================================================================
+
+    function isValidMatchStatus(status) {
+      return status in ['confirmed', 'unconfirmed', 'rejected'];
+    }
+
+    function isValidSinglesGroup(g) {
+      return g == null || g in [1, 2];
+    }
+
+    function isValidDoublesPool(p) {
+      return p == null || p in ['A', 'B'];
+    }
+
+    function isValidValidationMode(mode) {
+      return mode in ['allow', 'warn', 'block', 'admin_only'];
+    }
+
+
+    // ===================================================================
+    // USERS
+    // ===================================================================
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+
+    // ===================================================================
+    // SEASONS
+    // ===================================================================
+    match /seasons/{year} {
+      allow read: if true;
+
+      allow create: if isAdmin() &&
+        int(year) >= 2020 && int(year) <= 2099 &&
+        request.resource.data.keys().hasAll(['label', 'archiveVisible', 'createdAt']) &&
+        request.resource.data.label is string && request.resource.data.label.size() > 0 &&
+        request.resource.data.archiveVisible is bool &&
+        request.resource.data.createdAt is timestamp;
+
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archiveVisible', 'label']) &&
+        request.resource.data.archiveVisible is bool;
+
+      allow delete: if isAdmin();
+    }
+
+
+    // ===================================================================
+    // PLAYERS
+    // ===================================================================
+    match /seasons/{year}/players/{playerId} {
+      allow read: if true;
+
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasAll(['name', 'singlesGroup', 'doublesPool', 'createdAt']) &&
+        request.resource.data.name is string && request.resource.data.name.size() > 0 &&
+        isValidSinglesGroup(request.resource.data.singlesGroup) &&
+        isValidDoublesPool(request.resource.data.doublesPool) &&
+        request.resource.data.createdAt is timestamp;
+
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'singlesGroup', 'doublesPool']) &&
+        request.resource.data.name is string && request.resource.data.name.size() > 0 &&
+        isValidSinglesGroup(request.resource.data.singlesGroup) &&
+        isValidDoublesPool(request.resource.data.doublesPool);
+
+      allow delete: if isAdmin();
+    }
+
+
+    // ===================================================================
+    // SINGLES MATCHES
+    // ===================================================================
+    match /seasons/{year}/singlesMatches/{matchId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated() && (
+        // --- Normales Gruppenspiel oder Challenge-Spieleintrag (submitChallengeMatch) ---
+        // round und status sind optional (submitChallengeMatch schreibt diese nicht)
+        (!('walkover' in request.resource.data) &&
+         !('matchNum' in request.resource.data) &&
+         request.resource.data.player1Id is string && request.resource.data.player1Id.size() > 0 &&
+         request.resource.data.player2Id is string && request.resource.data.player2Id.size() > 0 &&
+         request.resource.data.player1Id != request.resource.data.player2Id &&
+         isValidSinglesSets(request.resource.data.sets) &&
+         request.resource.data.date is timestamp &&
+         (!('round' in request.resource.data) || request.resource.data.round in ['group1', 'group2']) &&
+         (!('status' in request.resource.data) || isValidMatchStatus(request.resource.data.status))
+        ) ||
+        // --- Kampfloser Einzel-Sieg (walkover) ---
+        (request.resource.data.walkover == true &&
+         !('matchNum' in request.resource.data) &&
+         request.resource.data.player1Id is string && request.resource.data.player1Id.size() > 0 &&
+         request.resource.data.player2Id is string && request.resource.data.player2Id.size() > 0 &&
+         request.resource.data.player1Id != request.resource.data.player2Id &&
+         request.resource.data.round in ['group1', 'group2'] &&
+         request.resource.data.status == 'confirmed' &&
+         isWalkoverSinglesSets(request.resource.data.sets) &&
+         request.resource.data.date is timestamp
+        ) ||
+        // --- Knockout-Spiel (nur Admin, hat matchNum-Feld) ---
+        (isAdmin() &&
+         'matchNum' in request.resource.data &&
+         request.resource.data.player1Id is string && request.resource.data.player1Id.size() > 0 &&
+         request.resource.data.player2Id is string && request.resource.data.player2Id.size() > 0 &&
+         request.resource.data.player1Id != request.resource.data.player2Id &&
+         request.resource.data.round is string && request.resource.data.round.size() > 0 &&
+         request.resource.data.matchNum is int &&
+         isValidSinglesSets(request.resource.data.sets) &&
+         isValidMatchStatus(request.resource.data.status) &&
+         request.resource.data.date is timestamp
+        )
+      );
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+
+    // ===================================================================
+    // DOUBLES MATCHES
+    // ===================================================================
+    match /seasons/{year}/doublesMatches/{matchId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated() && (
+        // --- Normales Doppelspiel ---
+        (!('walkover' in request.resource.data) &&
+         request.resource.data.team1 is map && request.resource.data.team2 is map &&
+         request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
+         request.resource.data.team1.player2Id is string && request.resource.data.team1.player2Id.size() > 0 &&
+         request.resource.data.team2.player1Id is string && request.resource.data.team2.player1Id.size() > 0 &&
+         request.resource.data.team2.player2Id is string && request.resource.data.team2.player2Id.size() > 0 &&
+         // Alle 4 Spieler-IDs müssen verschieden sein
+         request.resource.data.team1.player1Id != request.resource.data.team1.player2Id &&
+         request.resource.data.team1.player1Id != request.resource.data.team2.player1Id &&
+         request.resource.data.team1.player1Id != request.resource.data.team2.player2Id &&
+         request.resource.data.team1.player2Id != request.resource.data.team2.player1Id &&
+         request.resource.data.team1.player2Id != request.resource.data.team2.player2Id &&
+         request.resource.data.team2.player1Id != request.resource.data.team2.player2Id &&
+         isValidDoublesSets(request.resource.data.sets) &&
+         request.resource.data.status in ['confirmed', 'unconfirmed'] &&
+         request.resource.data.date is timestamp
+        ) ||
+        // --- Kampfloser Doppel-Sieg (walkover, nur team1/team2.player1Id gesetzt) ---
+        (request.resource.data.walkover == true &&
+         request.resource.data.team1 is map && request.resource.data.team2 is map &&
+         request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
+         request.resource.data.team2.player1Id is string && request.resource.data.team2.player1Id.size() > 0 &&
+         request.resource.data.team1.player1Id != request.resource.data.team2.player1Id &&
+         isWalkoverDoublesSets(request.resource.data.sets) &&
+         request.resource.data.status == 'confirmed' &&
+         request.resource.data.date is timestamp
+        )
+      );
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+
+    // ===================================================================
+    // CHALLENGES
+    // ===================================================================
+    match /seasons/{year}/challenges/{challengeId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['challengerId', 'challengedId', 'date', 'status', 'createdAt']) &&
+        request.resource.data.challengerId is string && request.resource.data.challengerId.size() > 0 &&
+        request.resource.data.challengedId is string && request.resource.data.challengedId.size() > 0 &&
+        request.resource.data.challengerId != request.resource.data.challengedId &&
+        request.resource.data.date is timestamp &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.createdAt is timestamp;
+
+      allow update: if (
+        // Eingeloggte Nutzer dürfen eine offene Challenge als abgeschlossen markieren
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt']) &&
+        resource.data.status == 'pending' &&
+        request.resource.data.status == 'completed' &&
+        request.resource.data.completedAt is timestamp
+      ) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+
+    // ===================================================================
+    // PYRAMID
+    // ===================================================================
+    match /seasons/{year}/pyramid/{doc} {
+      allow read: if true;
+      // Nur Admin, nur das 'current'-Dokument
+      allow write: if isAdmin() && doc == 'current';
+    }
+
+
+    // ===================================================================
+    // SETTINGS
+    // ===================================================================
+    match /settings/{doc} {
+      allow read: if true;
+
+      allow write: if isAdmin() && (
+        // Aktive Saison setzen
+        (doc == 'activeSeason' &&
+         request.resource.data.keys().hasAll(['year']) &&
+         request.resource.data.year is int &&
+         request.resource.data.year >= 2020 && request.resource.data.year <= 2099
+        ) ||
+        // Standard-Spielstatus (merge: true, deshalb optionale Feldprüfung)
+        (doc == 'defaultMatchStatus' &&
+         (!('singlesAdminDefault' in request.resource.data) ||
+          request.resource.data.singlesAdminDefault in ['confirmed', 'unconfirmed']) &&
+         (!('singlesUserDefault' in request.resource.data) ||
+          request.resource.data.singlesUserDefault in ['confirmed', 'unconfirmed', 'rejected']) &&
+         (!('doublesAdminDefault' in request.resource.data) ||
+          request.resource.data.doublesAdminDefault in ['confirmed', 'unconfirmed']) &&
+         (!('doublesUserDefault' in request.resource.data) ||
+          request.resource.data.doublesUserDefault in ['confirmed', 'unconfirmed', 'rejected'])
+        ) ||
+        // Anzeige-Einstellungen für unbestätigte Spiele
+        (doc == 'matchesDisplay' &&
+         request.resource.data.showUnconfirmedSingles is bool &&
+         request.resource.data.showUnconfirmedDoubles is bool
+        ) ||
+        // Einzel-Validierungsmodus (allow/warn/block/admin_only)
+        (doc == 'singlesValidation' &&
+         request.resource.data.keys().hasAll(['mode', 'updatedAt', 'updatedBy']) &&
+         isValidValidationMode(request.resource.data.mode) &&
+         request.resource.data.updatedAt is timestamp &&
+         request.resource.data.updatedBy is string
+        ) ||
+        // Doppel-Validierungsmodus (allow/warn/block/admin_only)
+        (doc == 'doublesValidation' &&
+         request.resource.data.keys().hasAll(['mode', 'updatedAt', 'updatedBy']) &&
+         isValidValidationMode(request.resource.data.mode) &&
+         request.resource.data.updatedAt is timestamp &&
+         request.resource.data.updatedBy is string
+        ) ||
+        // K.O.-Phase Aktivierung/Deaktivierung
+        (doc == 'knockout' &&
+         request.resource.data.active is bool
+        ) ||
+        // K.O.-Phase Viertelfinal-Paarungen
+        (doc == 'knockoutConfig' &&
+         request.resource.data.updatedAt is timestamp
+        )
+      );
+    }
+
+
+    // ===================================================================
+    // ANNOUNCEMENTS
+    // ===================================================================
+    match /announcements/{doc} {
+      allow read: if true;
+
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasAll(['text', 'active', 'createdAt', 'updatedAt']) &&
+        request.resource.data.text is string && request.resource.data.text.size() > 0 &&
+        request.resource.data.active == true &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
+
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active', 'updatedAt']) &&
+        request.resource.data.active is bool &&
+        request.resource.data.updatedAt is timestamp;
+
+      allow delete: if isAdmin();
+    }
+
+
+    // Fallback: alle anderen Collections ablehnen
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

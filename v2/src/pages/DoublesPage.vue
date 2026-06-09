@@ -1,11 +1,13 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useAppStore } from '@/stores/app.js'
 import { useFirebaseListeners } from '@/composables/useFirebaseListeners.js'
 import MatchEntryForm from '@/components/MatchEntryForm.vue'
+import PyramidHistoryChart from '@/components/PyramidHistoryChart.vue'
 
 useFirebaseListeners()
 const store = useAppStore()
+const showHistory = ref(false)
 
 const levels = computed(() => store.pyramid.levels || [])
 
@@ -34,6 +36,14 @@ function poolColorClasses(playerId) {
         <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">Doppel-Pyramide</h2>
 
         <div v-if="levels.length > 0" class="flex items-center gap-2">
+          <button
+            @click="showHistory = true"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+            </svg>
+            <span class="font-medium">Verlauf</span>
+          </button>
           <button
             class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors"
             :class="store.doublesPoolVisualization
@@ -107,4 +117,6 @@ function poolColorClasses(playerId) {
 
     </div>
   </div>
+
+  <PyramidHistoryChart v-model="showHistory" />
 </template>

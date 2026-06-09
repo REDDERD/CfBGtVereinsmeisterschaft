@@ -17,4 +17,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
+  cacheDir: 'node_modules/.vite',
 })

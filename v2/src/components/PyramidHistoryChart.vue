@@ -233,7 +233,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Chart + chips column -->
-      <div v-else class="flex-1 min-h-0 flex p-4 gap-3">
+      <div v-else class="flex-1 min-h-0 flex">
 
         <!-- Canvas -->
         <div class="flex-1 relative min-w-0">
@@ -241,7 +241,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Player chips anchored to their current Y-axis position -->
-        <div class="relative flex-shrink-0 w-32">
+        <div class="relative flex-shrink-0 w-16">
           <button
             v-for="cp in chipPositions" :key="cp.id"
             @click="togglePlayer(cp)"

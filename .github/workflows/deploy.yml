@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'js/**'
       - 'v2/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
@@ -40,6 +43,9 @@ jobs:
       - name: Prepare deployment directory
         run: |
           mkdir -p _site/v2
+          cp index.html _site/
+          cp -r assets _site/
+          cp -r js _site/
           cp -r v2/dist/. _site/v2/
 
       - name: Upload Pages artifact

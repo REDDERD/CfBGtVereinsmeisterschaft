@@ -16,6 +16,7 @@ const store = useAppStore()
 const canvasRef = ref(null)
 let chartInstance = null
 const hiddenPlayers = ref(new Set())
+const chipPositions = ref([])
 
 const doublesPlayers = computed(() => {
   const flat = (store.pyramid.levels || []).flat()
@@ -90,8 +91,24 @@ function chipStyle(i, total) {
   }
 }
 
+// Called by Chart.js afterRender plugin — positions chips at current-rank Y pixels.
+function updateChipPositions() {
+  if (!chartInstance?.scales?.y) return
+  const history = buildHistory()
+  if (!history.length) return
+  const last = history[history.length - 1]
+  chipPositions.value = doublesPlayers.value
+    .map((p, i) => {
+      const rank = last.positions.indexOf(p.id) + 1
+      if (rank === 0) return null
+      return { id: p.id, name: p.name, i, y: chartInstance.scales.y.getPixelForValue(rank) }
+    })
+    .filter(Boolean)
+}
+
 function initChart() {
   if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+  chipPositions.value = []
   if (!canvasRef.value) return
 
   const history = buildHistory()
@@ -156,6 +173,8 @@ function initChart() {
         },
       },
     },
+    // Local plugin: recalculate chip positions after every render (including resize).
+    plugins: [{ id: 'chipSync', afterRender: () => updateChipPositions() }],
   })
 }
 
@@ -175,11 +194,12 @@ function togglePlayer(player) {
 
 watch(() => props.modelValue, async open => {
   if (open) {
-    hiddenPlayers.value = new Set(doublesPlayers.value.slice(5).map(p => p.id))
+    hiddenPlayers.value = new Set()
     await nextTick()
     initChart()
   } else {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+    chipPositions.value = []
   }
 })
 
@@ -207,25 +227,35 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <!-- Player chips -->
-      <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 flex flex-wrap gap-1.5">
-        <button v-for="(p, i) in doublesPlayers" :key="p.id"
-          @click="togglePlayer(p)"
-          :style="chipStyle(i, doublesPlayers.length)"
-          class="px-2 py-0.5 rounded-full text-xs font-medium border-2 transition-opacity"
-          :class="hiddenPlayers.has(p.id) ? 'opacity-30' : 'opacity-100'">
-          {{ p.name }}
-        </button>
-      </div>
-
       <!-- No data -->
       <div v-if="!hasData" class="flex-1 flex items-center justify-center">
         <p class="text-gray-400 dark:text-gray-500 text-sm">Noch keine bestätigten Spielergebnisse vorhanden.</p>
       </div>
 
-      <!-- Chart -->
-      <div v-else class="flex-1 min-h-0 relative p-4">
-        <canvas ref="canvasRef" style="position: absolute; inset: 1rem;" />
+      <!-- Chart + chips column -->
+      <div v-else class="flex-1 min-h-0 flex p-4 gap-3">
+
+        <!-- Canvas -->
+        <div class="flex-1 relative min-w-0">
+          <canvas ref="canvasRef" class="absolute inset-0" />
+        </div>
+
+        <!-- Player chips anchored to their current Y-axis position -->
+        <div class="relative flex-shrink-0 w-32">
+          <button
+            v-for="cp in chipPositions" :key="cp.id"
+            @click="togglePlayer(cp)"
+            :style="{
+              ...chipStyle(cp.i, doublesPlayers.length),
+              top: cp.y + 'px',
+              transform: 'translateY(-50%)',
+            }"
+            class="absolute inset-x-0 px-2 py-0.5 rounded-full text-xs font-medium border-2 transition-opacity truncate text-center"
+            :class="hiddenPlayers.has(cp.id) ? 'opacity-30' : 'opacity-100'">
+            {{ cp.name }}
+          </button>
+        </div>
+
       </div>
 
     </div>

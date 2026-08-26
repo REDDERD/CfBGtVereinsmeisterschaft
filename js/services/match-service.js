@@ -386,7 +386,27 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
       return;
     }
 
-    const oldStatus = matchDoc.data().status;
+    const matchData = matchDoc.data();
+    const oldStatus = matchData.status;
+
+    if (newStatus === "confirmed" && (oldStatus || "confirmed") === "unconfirmed") {
+      const categoryMatches = matchType === "doubles" ? state.doublesMatches : state.singlesMatches;
+      const currentSeconds = matchData.date?.seconds || 0;
+      const hasOlderUnconfirmed = categoryMatches.some((m) =>
+        m.id !== matchId &&
+        (m.status || "confirmed") === "unconfirmed" &&
+        (m.date?.seconds || 0) < currentSeconds
+      );
+      if (hasOlderUnconfirmed) {
+        const confirmed = await Modal.warn({
+          title: "Älteres offenes Spiel vorhanden",
+          message: `Es gibt ein älteres offenes ${matchType === "doubles" ? "Doppel" : "Einzel"}-Spiel. Bitte bestätige dieses zuerst. Möchtest du trotzdem fortfahren?`,
+          confirmText: "Trotzdem bestätigen",
+          cancelText: "Abbrechen",
+        });
+        if (!confirmed) return;
+      }
+    }
 
     await seasonCollection(collection).doc(matchId).update({
       status: newStatus,

@@ -8,10 +8,14 @@ function MatchCard(match, context = 'home') {
   const status = match.status || 'confirmed';
 
   let dateStr = '';
-  if (match.date) {
-    dateStr = new Date(match.date.seconds ? match.date.seconds * 1000 : match.date.toDate()).toLocaleDateString('de-DE');
-  } else if (match.createdAt) {
-    dateStr = new Date(match.createdAt.seconds * 1000).toLocaleDateString('de-DE');
+  const matchDate = match.date
+    ? new Date(match.date.seconds ? match.date.seconds * 1000 : match.date.toDate())
+    : (match.createdAt ? new Date(match.createdAt.seconds * 1000) : null);
+  if (matchDate) {
+    dateStr = matchDate.toLocaleDateString('de-DE');
+    if (context === 'admin') {
+      dateStr += ` ${matchDate.toLocaleTimeString('de-DE')}`;
+    }
   }
 
   let player1Name, player2Name, scoreText, player1Sets, player2Sets;

@@ -1,5 +1,6 @@
 // js/utils/pyramid-history.js
-// Reconstructs doubles pyramid position history by replaying confirmed matches
+// Reconstructs doubles pyramid position history by replaying confirmed matches.
+// Produces exactly one entry per day (end-of-day state).
 
 function buildPyramidHistory() {
   const doublesPlayers = state.players
@@ -20,29 +21,33 @@ function buildPyramidHistory() {
 
   if (confirmedMatches.length === 0) return [];
 
-  const firstMatchDate = confirmedMatches[0].date?.toDate
-    ? confirmedMatches[0].date.toDate()
-    : new Date((confirmedMatches[0].date?.seconds || 0) * 1000);
-
-  const history = [{ date: firstMatchDate, positions: [...flatPositions] }];
-
+  const byDay = new Map();
   confirmedMatches.forEach(match => {
-    let t1Sets = 0, t2Sets = 0;
-    match.sets.forEach(s => { (s.t1 ?? s.p1) > (s.t2 ?? s.p2) ? t1Sets++ : t2Sets++; });
-    const winnerId = t1Sets > t2Sets ? match.team1.player1Id : match.team2.player1Id;
-    const loserId  = t1Sets > t2Sets ? match.team2.player1Id : match.team1.player1Id;
+    const d = match.date?.toDate ? match.date.toDate() : new Date((match.date?.seconds || 0) * 1000);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key).push(match);
+  });
 
-    const winnerPos = flatPositions.indexOf(winnerId);
-    const loserPos  = flatPositions.indexOf(loserId);
-    if (winnerPos === -1 || loserPos === -1) return;
+  const history = [];
+  byDay.forEach((dayMatches, key) => {
+    dayMatches.forEach(match => {
+      let t1Sets = 0, t2Sets = 0;
+      match.sets.forEach(s => { (s.t1 ?? s.p1) > (s.t2 ?? s.p2) ? t1Sets++ : t2Sets++; });
+      const winnerId = t1Sets > t2Sets ? match.team1.player1Id : match.team2.player1Id;
+      const loserId  = t1Sets > t2Sets ? match.team2.player1Id : match.team1.player1Id;
 
-    if (winnerPos > loserPos) {
-      flatPositions.splice(winnerPos, 1);
-      flatPositions.splice(loserPos, 0, winnerId);
-    }
+      const winnerPos = flatPositions.indexOf(winnerId);
+      const loserPos  = flatPositions.indexOf(loserId);
+      if (winnerPos === -1 || loserPos === -1) return;
 
-    const date = match.date?.toDate ? match.date.toDate() : new Date((match.date?.seconds || 0) * 1000);
-    history.push({ date, positions: [...flatPositions] });
+      if (winnerPos > loserPos) {
+        flatPositions.splice(winnerPos, 1);
+        flatPositions.splice(loserPos, 0, winnerId);
+      }
+    });
+
+    history.push({ date: new Date(key), positions: [...flatPositions] });
   });
 
   return history;

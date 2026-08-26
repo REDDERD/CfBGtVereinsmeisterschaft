@@ -106,7 +106,34 @@ function initPyramidHistoryChart() {
         },
       },
     },
+    // Anchors the floating name chips to their current-rank Y pixel after every render.
+    plugins: [{ id: 'pyramidChipSync', afterRender: () => updatePyramidHistoryChips() }],
   });
+}
+
+function updatePyramidHistoryChips() {
+  const container = document.getElementById('pyramidHistoryChips');
+  if (!container || !pyramidChartInstance?.scales?.y) return;
+
+  const history = buildPyramidHistory();
+  if (!history.length) return;
+  const last = history[history.length - 1];
+
+  const doublesPlayers = getDoublesPlayersSortedByPyramid();
+  const total = doublesPlayers.length;
+
+  container.innerHTML = doublesPlayers.map((p, i) => {
+    const rank = last.positions.indexOf(p.id) + 1;
+    if (rank === 0) return '';
+    const y = pyramidChartInstance.scales.y.getPixelForValue(rank);
+    const c = getPyramidPlayerColor(i, total);
+    const hidden = pyramidHistoryHiddenPlayers.has(p.id);
+    return `<button
+      id="pht_${p.id}"
+      onclick="togglePyramidHistoryPlayer('${p.id}')"
+      class="absolute inset-x-0 px-2 py-0.5 rounded-full text-xs font-medium border-2 transition-opacity truncate text-center"
+      style="top:${y}px; transform:translateY(-50%); background:${c.chipBg}; border-color:${c.chipBorder}; color:${c.chipText}; opacity:${hidden ? '0.3' : '1'}">${p.name}</button>`;
+  }).join('');
 }
 
 function togglePyramidHistoryPlayer(playerId) {
@@ -115,9 +142,6 @@ function togglePyramidHistoryPlayer(playerId) {
   } else {
     pyramidHistoryHiddenPlayers.add(playerId);
   }
-
-  const btn = document.getElementById(`pht_${playerId}`);
-  if (btn) btn.style.opacity = pyramidHistoryHiddenPlayers.has(playerId) ? '0.3' : '1';
 
   if (!pyramidChartInstance) return;
 

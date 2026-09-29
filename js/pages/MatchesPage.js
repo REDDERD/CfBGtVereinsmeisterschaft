@@ -16,17 +16,6 @@ function MatchesPage() {
     allMatches.push(...singlesMatches);
   }
 
-  if (state.matchTypeFilters.showSingles) {
-    const knockoutMatches = state.knockoutMatches
-      .filter((match) => {
-        if (match.status === 'confirmed' || !match.status) return true;
-        if (match.status === 'unconfirmed') return displaySettings.showUnconfirmedSingles;
-        return false;
-      })
-      .map((match) => ({ ...match, type: "knockout" }));
-    allMatches.push(...knockoutMatches);
-  }
-
   if (state.matchTypeFilters.showDoubles) {
     const doublesMatches = state.doublesMatches
       .filter((match) => {
@@ -42,7 +31,7 @@ function MatchesPage() {
   const filteredMatches = allMatches.filter((match) => {
     if (!searchQuery) return true;
 
-    if (match.type === "singles" || match.type === "knockout") {
+    if (match.type === "singles") {
       const p1Name = getPlayerName(match.player1Id).toLowerCase();
       const p2Name = getPlayerName(match.player2Id).toLowerCase();
       return p1Name.includes(searchQuery.toLowerCase()) || p2Name.includes(searchQuery.toLowerCase());

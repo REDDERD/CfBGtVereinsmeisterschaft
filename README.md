@@ -115,7 +115,7 @@ Im Doppel sind die Herausforderungen im Prinzip lediglich eine terminliche Erinn
 Sind erstmal Herausforderungen eingetragen, so kann man diese als erledigt markieren (falls das Spiel bereits eingetragen ist, die Herausforderung aber systemisch noch steht) oder das Ergebnis direkt eintragen und damit auch die Herausforderung erledigen. 
 
 ## Spiele
-Hier können alle vergangenen Spiele in Einzel & Doppel eingesehen werden. Ausgenommen sind die K.O.-Phasen-Spiele im Einzel, diese müssen über die Einzel-Seite direkt eingesehen werden. Es kann nach den Namen einzelner Spieler gefiltert werden.
+Hier können alle vergangenen Spiele in Einzel & Doppel eingesehen werden, inklusive der Spiele aus den K.O.-Phasen. Diese sind mit der jeweiligen Runde gekennzeichnet (VF, HF, Pl.3, Finale). Der K.O.-Baum selbst ist weiterhin über die Einzel- bzw. Doppel-Seite einsehbar. Es kann nach den Namen einzelner Spieler gefiltert werden.
 In den Einstellungen kann durch den Admin festgelegt werden, ob hier auch unbestätige Spiele angezeigt werden sollen. Abgelehnte Spiele werden hier nie angezeigt.
 
 

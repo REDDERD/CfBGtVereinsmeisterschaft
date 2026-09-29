@@ -2,6 +2,18 @@
 
 function DoublesPage() {
   const levels = state.pyramid.levels || [];
+  const koActive = state.doublesKnockoutPhaseActive;
+
+  if (koActive && state.doublesView === "knockout") {
+    return `
+    <div class="space-y-4 sm:space-y-6">
+      <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+        <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Doppel-Turnier</h2>
+        ${DoublesPhaseToggle()}
+        ${DoublesKnockoutBracketView()}
+      </div>
+    </div>`;
+  }
 
   return `
     <div class="space-y-4 sm:space-y-6">
@@ -37,9 +49,18 @@ function DoublesPage() {
           }
         </div>
 
+        ${DoublesPhaseToggle()}
+
         <div class="mb-4 sm:mb-6">
           ${
-            state.pyramidLoading
+            koActive && state.frozenPyramid
+              ? `
+            <div class="mb-3 p-2.5 bg-blue-50 border border-blue-300 rounded-lg">
+              <p class="text-xs sm:text-sm text-blue-800">Stand zum Zeitpunkt des K.O.-Phasen-Starts.</p>
+            </div>
+            ${FrozenPyramidView(state.frozenPyramid)}
+          `
+              : state.pyramidLoading
               ? `
             <div class="text-center py-8 bg-gray-50 rounded-lg">
               <div class="flex flex-col items-center justify-center">
@@ -153,12 +174,32 @@ function DoublesPage() {
             : ""
         }
 
-        ${state.user && !isReadOnly() && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : !state.user && !isReadOnly() && levels.length > 0 && !state.pyramidLoading ? `
+        ${koActive ? "" : state.user && !isReadOnly() && levels.length > 0 && !state.pyramidLoading ? DoublesMatchEntry() : !state.user && !isReadOnly() && levels.length > 0 && !state.pyramidLoading ? `
           <div class="mt-4 p-2 bg-blue-100 border border-blue-400 rounded text-xs sm:text-sm text-blue-800 flex items-center gap-2">
             ${icons.info} <span>Um Ergebnisse einzutragen, bitte einloggen.</span>
           </div>
         ` : ""}
       </div>
 
+    </div>`;
+}
+
+/**
+ * Umschalter zwischen Pyramiden- und K.O.-Phase (nur wenn K.O.-Phase aktiv ist).
+ */
+function DoublesPhaseToggle() {
+  if (!state.doublesKnockoutPhaseActive) return "";
+
+  const activeClass = "bg-indigo-600 text-white";
+  const inactiveClass = "bg-gray-200 text-gray-600 hover:bg-gray-300";
+
+  return `
+    <div class="mb-4 flex gap-2">
+      <button onclick="showFrozenPyramidPhase()" class="flex-1 px-3 sm:px-6 py-2.5 rounded-lg font-semibold transition-all text-sm sm:text-base ${state.doublesView === "pyramid" ? activeClass : inactiveClass}">
+        Pyramide
+      </button>
+      <button onclick="setDoublesView('knockout')" class="flex-1 px-3 sm:px-6 py-2.5 rounded-lg font-semibold transition-all text-sm sm:text-base ${state.doublesView === "knockout" ? activeClass : inactiveClass}">
+        K.O.-Phase
+      </button>
     </div>`;
 }

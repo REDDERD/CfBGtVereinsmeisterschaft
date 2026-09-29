@@ -49,7 +49,16 @@ function AdminExportTab() {
             >
             <span class="text-gray-700">Doppel-Rangfolge</span>
           </label>
-          
+
+          <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
+            <input
+              type="checkbox"
+              id="export-doubles-knockout"
+              class="export-option w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+            >
+            <span class="text-gray-700">Doppel K.O.-Phase</span>
+          </label>
+
           <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 p-2 rounded">
             <input 
               type="checkbox" 
@@ -119,6 +128,8 @@ function performExport() {
       document.getElementById("export-singles-knockout")?.checked || false,
     doublesPyramid:
       document.getElementById("export-doubles-pyramid")?.checked || false,
+    doublesKnockout:
+      document.getElementById("export-doubles-knockout")?.checked || false,
     singlesMatches:
       document.getElementById("export-singles-matches")?.checked || false,
     doublesMatches:
@@ -157,6 +168,14 @@ function performExport() {
     // Doppel-Pyramide
     if (exportOptions.doublesPyramid) {
       const sheetsData = buildDoublesPyramidSheetData();
+      Object.entries(sheetsData).forEach(([name, data]) => {
+        addSheetFromData(workbook, data, name);
+      });
+    }
+
+    // Doppel K.O.-Phase
+    if (exportOptions.doublesKnockout) {
+      const sheetsData = buildDoublesKnockoutSheetData();
       Object.entries(sheetsData).forEach(([name, data]) => {
         addSheetFromData(workbook, data, name);
       });

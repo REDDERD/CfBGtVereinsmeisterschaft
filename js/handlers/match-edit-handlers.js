@@ -318,8 +318,8 @@ async function saveDoublesMatchEdit(matchId) {
   const oldWinner = oldT1Sets > oldT2Sets ? "t1" : "t2";
   const newWinner = newT1Sets > newT2Sets ? "t1" : "t2";
 
-  // Warnung bei Gewinnerwechsel
-  if (oldWinner !== newWinner) {
+  // Warnung bei Gewinnerwechsel (K.O.-Spiele beeinflussen die Pyramide nicht)
+  if (oldWinner !== newWinner && !match.round) {
     const confirmed = await Modal.warn({
       title: "Warnung: Gewinner hat sich geändert",
       message:

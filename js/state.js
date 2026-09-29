@@ -41,6 +41,14 @@ const state = {
   frozenStandings: null,
   singlesView: "group",
   knockoutEntryMatch: null,
+  // Doppel-K.O.-Phase (analog zum Einzel)
+  doublesKnockoutPhaseActive: false,
+  doublesKnockoutMatches: [],
+  doublesKnockoutConfig: {}, // { mode: 'quarter'|'semi', qf_1_t1_pos, qf_1_t1_partner, ... }
+  frozenPyramid: null, // Eingefrorene Rangfolge (flache Liste von playerIds)
+  doublesView: "pyramid",
+  doublesKnockoutEntryMatch: null,
+  doublesKnockoutEntry: {},
   matchesView: "singles",
   challengesView: "singles",
   statisticsView: "singles",

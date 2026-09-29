@@ -414,8 +414,10 @@ async function updateMatchStatus(matchId, matchType, newStatus) {
     });
 
     // Wenn ein Doppelspiel bestätigt wird → Pyramide aktualisieren
+    // (K.O.-Spiele haben ein round-Feld und beeinflussen die Pyramide nicht)
     if (
       matchType === "doubles" &&
+      !matchData.round &&
       newStatus === "confirmed" &&
       oldStatus !== "confirmed"
     ) {

@@ -208,6 +208,7 @@ service cloud.firestore {
       allow create: if isAuthenticated() && (
         // --- Normales Doppelspiel ---
         (!('walkover' in request.resource.data) &&
+         !('matchNum' in request.resource.data) &&
          request.resource.data.team1 is map && request.resource.data.team2 is map &&
          request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
          request.resource.data.team1.player2Id is string && request.resource.data.team1.player2Id.size() > 0 &&
@@ -226,12 +227,34 @@ service cloud.firestore {
         ) ||
         // --- Kampfloser Doppel-Sieg (walkover, nur team1/team2.player1Id gesetzt) ---
         (request.resource.data.walkover == true &&
+         !('matchNum' in request.resource.data) &&
          request.resource.data.team1 is map && request.resource.data.team2 is map &&
          request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
          request.resource.data.team2.player1Id is string && request.resource.data.team2.player1Id.size() > 0 &&
          request.resource.data.team1.player1Id != request.resource.data.team2.player1Id &&
          isWalkoverDoublesSets(request.resource.data.sets) &&
          request.resource.data.status == 'confirmed' &&
+         request.resource.data.date is timestamp
+        ) ||
+        // --- Doppel-Knockout-Spiel (nur Admin, hat matchNum-Feld) ---
+        (isAdmin() &&
+         'matchNum' in request.resource.data &&
+         request.resource.data.team1 is map && request.resource.data.team2 is map &&
+         request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
+         request.resource.data.team1.player2Id is string && request.resource.data.team1.player2Id.size() > 0 &&
+         request.resource.data.team2.player1Id is string && request.resource.data.team2.player1Id.size() > 0 &&
+         request.resource.data.team2.player2Id is string && request.resource.data.team2.player2Id.size() > 0 &&
+         // Alle 4 Spieler-IDs müssen verschieden sein
+         request.resource.data.team1.player1Id != request.resource.data.team1.player2Id &&
+         request.resource.data.team1.player1Id != request.resource.data.team2.player1Id &&
+         request.resource.data.team1.player1Id != request.resource.data.team2.player2Id &&
+         request.resource.data.team1.player2Id != request.resource.data.team2.player1Id &&
+         request.resource.data.team1.player2Id != request.resource.data.team2.player2Id &&
+         request.resource.data.team2.player1Id != request.resource.data.team2.player2Id &&
+         request.resource.data.round is string && request.resource.data.round.size() > 0 &&
+         request.resource.data.matchNum is int &&
+         isValidDoublesSets(request.resource.data.sets) &&
+         isValidMatchStatus(request.resource.data.status) &&
          request.resource.data.date is timestamp
         )
       );
@@ -328,6 +351,15 @@ service cloud.firestore {
         ) ||
         // K.O.-Phase Viertelfinal-Paarungen
         (doc == 'knockoutConfig' &&
+         request.resource.data.updatedAt is timestamp
+        ) ||
+        // Doppel-K.O.-Phase Aktivierung/Deaktivierung
+        (doc == 'doublesKnockout' &&
+         request.resource.data.active is bool
+        ) ||
+        // Doppel-K.O.-Phase Paarungen
+        (doc == 'doublesKnockoutConfig' &&
+         request.resource.data.mode in ['quarter', 'semi'] &&
          request.resource.data.updatedAt is timestamp
         )
       );

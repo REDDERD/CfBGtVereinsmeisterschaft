@@ -12,6 +12,7 @@ function AdminDoublesRankingTab() {
         <h3 class="text-xl font-bold text-gray-800 mb-3">Doppel-Rangfolge bearbeiten</h3>
       </div>
 
+      ${state.doublesKnockoutPhaseActive ? "" : `
       <div class="bg-gray-50 rounded-lg p-3 sm:p-4 mb-6">
         <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-3">Kampfloses Spiel eintragen</h3>
         <p class="text-xs text-gray-500 mb-3">Nur die ersten Spieler jedes Teams angeben. Die Pyramide wird automatisch aktualisiert.</p>
@@ -36,6 +37,7 @@ function AdminDoublesRankingTab() {
           <span class="text-xs text-gray-400">Ergebnis wird als 21:0, 21:0 gespeichert</span>
         </div>
       </div>
+      `}
 
       ${
         flatPositions.length === 0
@@ -91,6 +93,97 @@ function AdminDoublesRankingTab() {
         `
       }
 
+      ${AdminDoublesKnockoutConfig()}
     </div>
     `;
+}
+
+// ========== K.O.-Phase konfigurieren ==========
+
+function AdminDoublesKnockoutConfig() {
+  const active = state.doublesKnockoutPhaseActive;
+  const config = state.doublesKnockoutConfig || {};
+  const mode = getDoublesKnockoutStartRound();
+  const prefix = mode === "semi" ? "sf" : "qf";
+  const slotCount = getDoublesKnockoutSlotCount();
+
+  const ranking = getDoublesRankingList();
+  const doublesPlayers = state.players.filter((p) => p.doublesPool);
+
+  // Positionen der Top 8 aus der (ggf. eingefrorenen) Pyramiden-Rangfolge
+  const positions = [1, 2, 3, 4, 5, 6, 7, 8].map((place) => ({
+    value: `p${place}`,
+    label: ranking[place - 1]
+      ? `Rang ${place} – ${getPlayerName(ranking[place - 1])}`
+      : `Rang ${place}`,
+  }));
+
+  const teamSelects = (matchNum, slot, label) => {
+    const posKey = `${prefix}_${matchNum}_${slot}_pos`;
+    const partnerKey = `${prefix}_${matchNum}_${slot}_partner`;
+    return `
+      <div class="mb-2 last:mb-0">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">${label}</label>
+        <select id="d${posKey}" class="w-full px-3 py-2 border rounded-lg text-sm mb-1.5" ${active ? "disabled" : ""}>
+          <option value="">Position wählen</option>
+          ${positions.map((p) => `<option value="${p.value}" ${config[posKey] === p.value ? "selected" : ""}>${p.label}</option>`).join("")}
+        </select>
+        <select id="d${partnerKey}" class="w-full px-3 py-2 border rounded-lg text-sm">
+          <option value="">Partner wählen</option>
+          ${doublesPlayers.map((p) => `<option value="${p.id}" ${config[partnerKey] === p.id ? "selected" : ""}>${p.name}</option>`).join("")}
+        </select>
+      </div>`;
+  };
+
+  return `
+    <div class="bg-gray-50 rounded-lg p-3 sm:p-6 mb-4 sm:mb-6">
+      <h3 class="text-base sm:text-xl font-bold text-gray-800 mb-3">K.O.-Phase konfigurieren</h3>
+
+      ${
+        !active
+          ? `
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-300 rounded-lg">
+          <p class="text-sm text-blue-800 mb-3">Konfiguriere die Paarungen nach Pyramiden-Platzierung (Top 8). Beim Start wird die Rangfolge eingefroren.</p>
+          <button onclick="activateDoublesKnockoutPhase()" class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">K.O.-Phase starten</button>
+        </div>
+      `
+          : `
+        <div class="mb-4 p-4 bg-green-50 border border-green-300 rounded-lg">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <p class="text-sm text-green-800">✅ Doppel-K.O.-Phase ist aktiv.</p>
+            <button onclick="deactivateDoublesKnockoutPhase()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-semibold">K.O.-Phase deaktivieren</button>
+          </div>
+        </div>
+      `
+      }
+
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Spielmodus</label>
+        <select onchange="setDoublesKnockoutMode(this.value)" class="w-full sm:w-auto px-3 py-2 border rounded-lg text-sm" ${active ? "disabled" : ""}>
+          <option value="quarter" ${mode === "quarter" ? "selected" : ""}>8 Teams – ab Viertelfinale (jeder der Top 8 mit eigenem Partner)</option>
+          <option value="semi" ${mode === "semi" ? "selected" : ""}>4 Teams – ab Halbfinale (je 2 Top-8-Spieler bilden ein Team)</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">
+          Spieler 1 jedes Teams wird über die Pyramiden-Position bestimmt, der Partner wird als konkreter Spieler hinterlegt
+          und kann auch nach dem Start noch angepasst werden (z.&nbsp;B. nach einer Auslosung).
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        ${Array.from({ length: slotCount }, (_, idx) => idx + 1)
+          .map(
+            (i) => `
+          <div class="bg-white p-4 rounded-lg border">
+            <div class="font-medium mb-2">${mode === "semi" ? "Halbfinale" : "Viertelfinale"} ${i}</div>
+            ${teamSelects(i, "t1", "Team 1")}
+            <div class="text-center text-xs text-gray-400 my-1">vs</div>
+            ${teamSelects(i, "t2", "Team 2")}
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+
+      <button onclick="saveDoublesKnockoutConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Paarungen speichern</button>
+    </div>`;
 }

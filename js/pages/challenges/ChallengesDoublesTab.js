@@ -10,7 +10,20 @@ function ChallengesDoublesTab() {
   return `
     <div class="space-y-4 sm:space-y-6">
       ${
-        state.user && !isReadOnly()
+        state.doublesKnockoutPhaseActive
+          ? `
+        <div class="p-2.5 bg-blue-50 border border-blue-300 rounded-lg">
+          <p class="flex items-center gap-2 text-xs sm:text-sm text-blue-800">
+            ${icons.info}
+            <span>Die Pyramidenphase ist beendet.</span>
+          </p>
+        </div>
+      `
+          : ""
+      }
+
+      ${
+        state.user && !isReadOnly() && !state.doublesKnockoutPhaseActive
           ? `
         <div class="bg-gray-50 rounded-lg p-3 sm:p-6">
           <h3 class="text-base sm:text-xl font-bold text-gray-800 mb-3">Neue Herausforderung</h3>
@@ -75,9 +88,11 @@ function ChallengesDoublesTab() {
                       state.user && !isReadOnly()
                         ? `
                       <div class="flex gap-2">
+                        ${state.doublesKnockoutPhaseActive ? "" : `
                         <button onclick="enterResultFromChallenge('${challenge.id}')" class="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm font-medium">
                           Ergebnis
                         </button>
+                        `}
                         <button onclick="markChallengeCompleted('${challenge.id}')" class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs sm:text-sm font-medium">
                           Erledigt
                         </button>

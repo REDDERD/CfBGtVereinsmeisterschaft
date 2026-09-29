@@ -87,6 +87,27 @@ function initFirebaseListeners() {
       }
     });
 
+  // Doubles Knockout Settings (global)
+  db.collection("settings")
+    .doc("doublesKnockout")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        state.doublesKnockoutPhaseActive = doc.data().active || false;
+        state.frozenPyramid = doc.data().frozenPyramid || null;
+        render();
+      }
+    });
+
+  // Doubles Knockout Config (global)
+  db.collection("settings")
+    .doc("doublesKnockoutConfig")
+    .onSnapshot((doc) => {
+      if (doc.exists) {
+        state.doublesKnockoutConfig = doc.data();
+        render();
+      }
+    });
+
   // Match Status Settings (global)
   db.collection("settings")
     .doc("defaultMatchStatus")
@@ -167,6 +188,7 @@ function initSeasonListeners() {
   state.singlesMatches = [];
   state.doublesMatches = [];
   state.knockoutMatches = [];
+  state.doublesKnockoutMatches = [];
   state.pyramid = { levels: [] };
   state.pyramidInitialized = false;
   state.matchesLoading = true;
@@ -223,6 +245,12 @@ function initSeasonListeners() {
           id: doc.id,
           ...doc.data(),
         }));
+
+        // Doppel-K.O.-Spiele tragen ein round-Feld, Pyramiden-Spiele nicht
+        state.doublesKnockoutMatches = state.doublesMatches.filter(
+          (match) => match.round,
+        );
+
         render();
       })
   );

@@ -113,6 +113,41 @@ function buildSinglesMatchesSheetData() {
   return { 'Einzel-Spiele': matches };
 }
 
+// ========== Sheet Builder: Doppel K.O.-Phase ==========
+
+function buildDoublesKnockoutSheetData() {
+  const roundNames = {
+    'final': 'Finale', 'semi': 'Halbfinale', 'quarter': 'Viertelfinale',
+    'round16': 'Achtelfinale', 'thirdPlace': 'Platz 3'
+  };
+
+  const matches = state.doublesKnockoutMatches.map(match => {
+    const t1 = `${getPlayerName(match.team1.player1Id)} / ${getPlayerName(match.team1.player2Id)}`;
+    const t2 = `${getPlayerName(match.team2.player1Id)} / ${getPlayerName(match.team2.player2Id)}`;
+    const scoreText = match.sets ? match.sets.map(s => `${s.t1}:${s.t2}`).join(', ') : 'Ausstehend';
+    let t1Sets = 0, t2Sets = 0;
+    if (match.sets) {
+      match.sets.forEach(set => {
+        if (set.t1 > set.t2) t1Sets++;
+        else t2Sets++;
+      });
+    }
+    const dateStr = match.date ? new Date(match.date.seconds * 1000).toLocaleDateString('de-DE') : '';
+
+    return {
+      Runde: roundNames[match.round] || match.round || '',
+      'Team 1': t1,
+      'Team 2': t2,
+      'Sätze Team 1': t1Sets,
+      'Sätze Team 2': t2Sets,
+      Ergebnis: scoreText,
+      Datum: dateStr,
+    };
+  });
+
+  return { 'Doppel KO-Phase': matches };
+}
+
 // ========== Sheet Builder: Doppel-Spiele ==========
 
 function buildDoublesMatchesSheetData() {
@@ -129,7 +164,14 @@ function buildDoublesMatchesSheetData() {
     }
     const dateStr = match.date ? new Date(match.date.seconds * 1000).toLocaleDateString('de-DE') : '';
 
+    const roundNames = {
+      'final': 'Finale', 'semi': 'Halbfinale', 'quarter': 'Viertelfinale',
+      'round16': 'Achtelfinale', 'thirdPlace': 'Platz 3'
+    };
+
     return {
+      Typ: match.round ? 'KO' : 'Pyramide',
+      Runde: match.round ? (roundNames[match.round] || match.round) : '',
       'Team 1': t1,
       'Team 2': t2,
       'Sätze Team 1': t1Sets,
@@ -152,6 +194,7 @@ function buildSettingsSheetData() {
     { Einstellung: 'Doppel Admin-Standard', Wert: settings.doublesAdminDefault || 'confirmed' },
     { Einstellung: 'Doppel User-Standard', Wert: settings.doublesUserDefault || 'unconfirmed' },
     { Einstellung: 'K.O.-Phase aktiv', Wert: state.knockoutPhaseActive ? 'Ja' : 'Nein' },
+    { Einstellung: 'Doppel-K.O.-Phase aktiv', Wert: state.doublesKnockoutPhaseActive ? 'Ja' : 'Nein' },
     { Einstellung: 'Anzahl Spieler', Wert: state.players.length },
   ];
 

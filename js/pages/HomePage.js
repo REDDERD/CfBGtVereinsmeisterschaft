@@ -99,7 +99,7 @@ function HomePage() {
                       <div class="font-bold text-gray-800 text-sm sm:text-base truncate">${getPlayerName(challenge.challengerId)} vs ${getPlayerName(challenge.challengedId)}</div>
                       <div class="text-xs ${isOverdue ? "text-red-600 font-semibold" : "text-gray-600"}">${dateStr} ${isOverdue ? "ÜBERFÄLLIG" : "Heute"}</div>
                     </div>
-                    ${state.user && !isReadOnly() && !state.knockoutPhaseActive ? "<button onclick='enterResultFromChallenge(\"" + challenge.id + "\")' class='px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm flex-shrink-0'>Ergebnis</button>" : "" }
+                    ${state.user && !isReadOnly() && !state.knockoutPhaseActive && !state.doublesKnockoutPhaseActive ? "<button onclick='enterResultFromChallenge(\"" + challenge.id + "\")' class='px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-xs sm:text-sm flex-shrink-0'>Ergebnis</button>" : "" }
                   </div>
                 </div>`;
             }).join("")}

@@ -18,6 +18,11 @@ function navigateTo(page) {
     state.singlesView = "knockout";
   }
 
+  // Beim Navigieren zur Doppel-Seite: Wenn K.O.-Phase aktiv ist, zeige K.O.-Phase
+  if (page === "doubles" && state.doublesKnockoutPhaseActive) {
+    state.doublesView = "knockout";
+  }
+
   // Im Archiv-Modus: Hash aktualisieren
   if (state.archiveMode) {
     updateArchiveHash(page);

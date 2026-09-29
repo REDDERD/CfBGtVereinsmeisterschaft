@@ -207,6 +207,46 @@ function updateKnockoutMatchEntry(field, value) {
   }
 }
 
+function updateDoublesKnockoutMatchEntry(field, value) {
+  if (!state.doublesKnockoutEntry) {
+    state.doublesKnockoutEntry = {};
+  }
+
+  state.doublesKnockoutEntry[field] = value;
+
+  const s1t1 = parseInt(state.doublesKnockoutEntry.dkoSet1T1);
+  const s1t2 = parseInt(state.doublesKnockoutEntry.dkoSet1T2);
+  const s2t1 = parseInt(state.doublesKnockoutEntry.dkoSet2T1);
+  const s2t2 = parseInt(state.doublesKnockoutEntry.dkoSet2T2);
+
+  if (!isNaN(s1t1) && !isNaN(s1t2) && !isNaN(s2t1) && !isNaN(s2t2)) {
+    const set1Winner = s1t1 > s1t2 ? "t1" : "t2";
+    const set2Winner = s2t1 > s2t2 ? "t1" : "t2";
+    state.doublesKnockoutEntry.set3Disabled = set1Winner === set2Winner;
+  } else {
+    state.doublesKnockoutEntry.set3Disabled = true;
+  }
+
+  // Kein Re-Render, nur den Disabled-Zustand von Satz 3 anpassen
+  const set3T1Input = document.getElementById("dkoSet3T1");
+  const set3T2Input = document.getElementById("dkoSet3T2");
+  if (set3T1Input && set3T2Input) {
+    if (state.doublesKnockoutEntry.set3Disabled) {
+      set3T1Input.disabled = true;
+      set3T2Input.disabled = true;
+      set3T1Input.value = "";
+      set3T2Input.value = "";
+      set3T1Input.classList.add("bg-gray-200");
+      set3T2Input.classList.add("bg-gray-200");
+    } else {
+      set3T1Input.disabled = false;
+      set3T2Input.disabled = false;
+      set3T1Input.classList.remove("bg-gray-200");
+      set3T2Input.classList.remove("bg-gray-200");
+    }
+  }
+}
+
 function resetMatchEntry() {
   state.matchEntry = {
     singlesP1: "",

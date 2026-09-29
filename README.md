@@ -35,6 +35,16 @@ Es ist möglich, die K.O.-Phase wieder zu deaktivieren, allerdings gehen dadurch
 Hier kann die Reihenfolge der Pyramide manuell beeinflusst werden. Da nachträgliche Änderungen an Spielen die Auswirkungen auf die Pyramide sehr kompliziert wären, wird die Pyramide nur beeinflusst, wenn ein Spiel initial eingetragen (oder bestätigt) wird. Spätere Änderungen am Ergebnis (so sie nötig sein sollten) müssen manuell vom Admin in die Reihenfolge eingebracht werden. Durch die Buttons "rauf" und "runter" (Pfeil-Buttons) können einzelne Spieler in der Pyramide direkt nach oben oder unten verschoben werden.  
 Es ist ebenfalls möglich, einzelne Spieler komplett aus der Pyramide zu löschen. Hier sollte zuvor der Doppel-Pool des Spielers entfernt werden, da er sonst möglicherweise wieder zur Pyramide hinzugefügt wird.
 
+#### K.O.-Phase im Doppel
+Analog zum Einzel kann auch im Doppel von der Pyramidenphase in eine K.O.-Phase gewechselt werden. Berücksichtigt werden dabei die **Top 8** der Pyramide. Da noch nicht feststeht, in welcher Form gespielt wird, lassen sich zwei Spielmodi einstellen:
+- **8 Teams – ab Viertelfinale**: Jeder der Top 8 bildet mit einem eigenen (z.B. zugelosten) Partner ein Team. Es wird mit Viertelfinale, Halbfinale, Spiel um Platz 3 und Finale gespielt.
+- **4 Teams – ab Halbfinale**: Je zwei Top-8-Spieler bilden zusammen ein Team. Es wird mit Halbfinale, Spiel um Platz 3 und Finale gespielt.
+
+Für jedes Team wird "Spieler 1" über die **Pyramiden-Position** festgelegt (Rang 1 bis Rang 8) – genau wie im Einzel die Gruppenplatzierung. Der **Partner** wird als konkreter Spieler hinterlegt und kann auch nach dem Start der K.O.-Phase noch geändert werden, damit eine Auslosung erst kurz vor den Spielen eingetragen werden kann.
+
+Über "K.O.-Phase starten" wird die aktuelle Pyramiden-Rangfolge eingefroren; sie ist ab dann die Grundlage für die Auflösung der Positionen. Während der K.O.-Phase können keine neuen Pyramiden-Spiele (auch keine kampflosen) und keine Doppel-Herausforderungen mehr eingetragen werden. Ergebnisse der K.O.-Phase verändern die Pyramide **nicht**.  
+Die K.O.-Phase kann wieder deaktiviert werden – dabei gehen alle K.O.-Spiele verloren, die Pyramide bleibt erhalten. Vorher am besten exportieren.
+
 ### Spiele verwalten
 Hier können alle eingetragenen Spiele eingesehen werden. Diese haben jeweils einen von 3 Status (Unbestätigt, Bestätigt, Abgelehnt). Admins können über die Buttons rechts den Status jedes Spiels verändern. Nur bestätigte Spiele gehen in die Wertung ein. Ein bestätigtes Spiel kann auch wieder zurückgenommen werden. Beim Einzel wird dieses dann aus der Wertung entfernt. Beim Doppel ist das nicht möglich, sodass der Admin die Reihenfolge manuell ändern muss.  
 Admins können hier ebenfalls Ergebnisse anpassen oder Spiele löschen. Es ist ebenfalls möglich, den Sieger eines Spiels zu ändern (über die Punktzahl). Beim Einzel stellt dies in der Gruppenphase kein Problem dar. Beim Doppel hingegen werden Änderungen an der Pyramide nachträglich nicht mehr vorgenommen, dies muss manuell durch einen Admin passieren. ([Admin-Funktionen](#admin-funktionen)).  
@@ -91,6 +101,8 @@ Hier kann die Pyramide eingesehen und neue Spiele eingetragen werden. Damit neue
 Beim Eintragen von Ergebnissen werden die Pool-Zuordnungen geprüft. (Beispiel: Wenn man selbst in Pool A ist, kann man nur mit einem Spieler spielen, der in Pool B ist. Für den Gegner genauso.) Eine Doppelpaarung muss immer aus einem Spieler aus Pool A und einem Spieler aus Pool B bestehen. Im Gegensatz zum Einzel können im Doppel beliebig viele Spiele gespielt werden, die Rangefolge in der Pyramide verändert sich dynamisch.  
 Beim Eintragen ist wichtig, dass ein Ergebniss in der Pyramide immer nur für die ersten beiden Spieler des Doppels gewertet wird. Die Spieler 2 jedes Teams sind immer nur Mitspieler und deren Rangfolge in der Pyramide wird durch das Ergebnis nicht beeinflusst.  
 Man kann beliebige Spieler in der Pyramide zum Spiel herausfordern, die über einem stehen. Wenn der Spieler, der weiter unten in der Pyramide steht, das Spiel gewinnt, so nimmt er die Position des unterlegenen Spielers ein und alle anderen in der Rangfolge werden um eine Position nach hinten versetzt. Wie hoch das Ergebnis ausgeht, ist im Doppel egal.
+
+Sobald die K.O.-Phase gestartet wurde (siehe [Doppel verwalten](#doppel-verwalten)), kann über die Buttons oben zwischen der eingefrorenen Pyramide und dem K.O.-Baum umgeschaltet werden. Im K.O.-Baum wird jeweils direkt am entsprechenden Spiel auf "Ergebnis eintragen" gedrückt. Ergebnisse der K.O.-Phase können nur von Admins eingetragen werden und wirken sich nicht auf die Pyramide aus.
 
 
 ## Herausforderungen

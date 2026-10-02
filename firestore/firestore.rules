@@ -75,6 +75,17 @@ service cloud.firestore {
              sets[1].t1 == 21 && sets[1].t2 == 0;
     }
 
+    // Kampflos-Sätze im Doppel-K.O.: 21:0, 21:0 für Team 1 ODER Team 2.
+    // Anders als in der Pyramide ist die Team-Reihenfolge durch das Bracket
+    // vorgegeben und darf nicht zum Gewinner hin getauscht werden.
+    function isKnockoutWalkoverDoublesSets(sets) {
+      return sets is list && sets.size() == 2 &&
+             ((sets[0].t1 == 21 && sets[0].t2 == 0 &&
+               sets[1].t1 == 21 && sets[1].t2 == 0) ||
+              (sets[0].t1 == 0 && sets[0].t2 == 21 &&
+               sets[1].t1 == 0 && sets[1].t2 == 21));
+    }
+
 
     // ===================================================================
     // FELD-VALIDIERUNGS-HILFSFUNKTIONEN
@@ -236,8 +247,23 @@ service cloud.firestore {
          request.resource.data.status == 'confirmed' &&
          request.resource.data.date is timestamp
         ) ||
+        // --- Kampfloses Doppel-Knockout-Spiel (nur Admin; Partner optional) ---
+        (isAdmin() &&
+         request.resource.data.walkover == true &&
+         'matchNum' in request.resource.data &&
+         request.resource.data.team1 is map && request.resource.data.team2 is map &&
+         request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
+         request.resource.data.team2.player1Id is string && request.resource.data.team2.player1Id.size() > 0 &&
+         request.resource.data.team1.player1Id != request.resource.data.team2.player1Id &&
+         request.resource.data.round is string && request.resource.data.round.size() > 0 &&
+         request.resource.data.matchNum is int &&
+         isKnockoutWalkoverDoublesSets(request.resource.data.sets) &&
+         request.resource.data.status == 'confirmed' &&
+         request.resource.data.date is timestamp
+        ) ||
         // --- Doppel-Knockout-Spiel (nur Admin, hat matchNum-Feld) ---
         (isAdmin() &&
+         !('walkover' in request.resource.data) &&
          'matchNum' in request.resource.data &&
          request.resource.data.team1 is map && request.resource.data.team2 is map &&
          request.resource.data.team1.player1Id is string && request.resource.data.team1.player1Id.size() > 0 &&
@@ -360,6 +386,7 @@ service cloud.firestore {
         // Doppel-K.O.-Phase Paarungen
         (doc == 'doublesKnockoutConfig' &&
          request.resource.data.mode in ['quarter', 'semi'] &&
+         request.resource.data.partnerMode in ['fixed', 'perMatch'] &&
          request.resource.data.updatedAt is timestamp
         )
       );

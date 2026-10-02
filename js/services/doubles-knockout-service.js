@@ -2,11 +2,20 @@
 // Doppel-K.O.-Phase Verwaltung (Aktivierung, Spiele, Konfiguration)
 // Analog zu knockout-service.js (Einzel), nur mit Teams statt Einzelspielern.
 //
-// Zwei Modi (die Entscheidung über den Spielmodus steht noch aus):
-//   'quarter' → 8 Teams: jeder der Top 8 spielt mit einem (zugelosten) Partner
+// Die Entscheidung über den Spielmodus steht noch aus, deshalb zwei unabhängige Achsen:
+//
+// mode (Bracket-Größe):
+//   'quarter' → 8 Teams: jeder der Top 8 spielt mit einem Partner
 //               Runden: quarter (4) → semi (2) → final / thirdPlace
 //   'semi'    → 4 Teams: je 2 Top-8-Spieler bilden ein Team
 //               Runden: semi (2) → final / thirdPlace
+//
+// partnerMode (Partner-Bindung):
+//   'fixed'    → Partner gelten für die gesamte K.O.-Phase und werden im Admin
+//                vorab je Team konfiguriert.
+//   'perMatch' → Partner werden je Spiel neu gesetzt und erst beim Eintragen des
+//                Ergebnisses angegeben. Weiter kommt nur Spieler 1 (der gesetzte
+//                Spieler aus der Pyramide).
 
 const DOUBLES_KNOCKOUT_ROUND_NAMES = {
   quarter: "Viertelfinale",
@@ -31,6 +40,16 @@ function showFrozenPyramidPhase() {
 
 function getDoublesKnockoutStartRound() {
   return state.doublesKnockoutConfig?.mode === "semi" ? "semi" : "quarter";
+}
+
+function getDoublesKnockoutPartnerMode() {
+  return state.doublesKnockoutConfig?.partnerMode === "perMatch"
+    ? "perMatch"
+    : "fixed";
+}
+
+function isDoublesKnockoutPartnerPerMatch() {
+  return getDoublesKnockoutPartnerMode() === "perMatch";
 }
 
 function getDoublesKnockoutSlotCount() {
@@ -64,10 +83,23 @@ function getDoublesKnockoutConfigTeam(matchNum, slot) {
   const player1Id = getDoublesPositionPlayerId(
     config[`${prefix}_${matchNum}_${slot}_pos`],
   );
-  const player2Id = config[`${prefix}_${matchNum}_${slot}_partner`] || null;
+  // Bei Partnern je Spiel wird der konfigurierte Partner ignoriert
+  const player2Id = isDoublesKnockoutPartnerPerMatch()
+    ? null
+    : config[`${prefix}_${matchNum}_${slot}_partner`] || null;
 
   if (!player1Id && !player2Id) return null;
   return { player1Id: player1Id || null, player2Id };
+}
+
+/**
+ * Bei Partnern je Spiel kommt nur Spieler 1 weiter – der Partner der nächsten
+ * Runde wird erst beim Eintragen des Ergebnisses festgelegt.
+ */
+function stripDoublesKnockoutPartner(team) {
+  if (!team) return null;
+  if (!isDoublesKnockoutPartnerPerMatch()) return team;
+  return { player1Id: team.player1Id || null, player2Id: null };
 }
 
 // ========== Spiele & Bracket-Logik ==========
@@ -121,8 +153,12 @@ function getDoublesKnockoutTeams(round, matchNum) {
 
   if (round === "semi") {
     return {
-      team1: getDoublesKnockoutWinnerTeam("quarter", matchNum === 1 ? 1 : 3),
-      team2: getDoublesKnockoutWinnerTeam("quarter", matchNum === 1 ? 2 : 4),
+      team1: stripDoublesKnockoutPartner(
+        getDoublesKnockoutWinnerTeam("quarter", matchNum === 1 ? 1 : 3),
+      ),
+      team2: stripDoublesKnockoutPartner(
+        getDoublesKnockoutWinnerTeam("quarter", matchNum === 1 ? 2 : 4),
+      ),
       team1Fallback: `Gew. VF ${matchNum === 1 ? 1 : 3}`,
       team2Fallback: `Gew. VF ${matchNum === 1 ? 2 : 4}`,
     };
@@ -130,8 +166,8 @@ function getDoublesKnockoutTeams(round, matchNum) {
 
   if (round === "thirdPlace") {
     return {
-      team1: getDoublesKnockoutLoserTeam("semi", 1),
-      team2: getDoublesKnockoutLoserTeam("semi", 2),
+      team1: stripDoublesKnockoutPartner(getDoublesKnockoutLoserTeam("semi", 1)),
+      team2: stripDoublesKnockoutPartner(getDoublesKnockoutLoserTeam("semi", 2)),
       team1Fallback: "Verl. HF 1",
       team2Fallback: "Verl. HF 2",
     };
@@ -139,8 +175,12 @@ function getDoublesKnockoutTeams(round, matchNum) {
 
   if (round === "final") {
     return {
-      team1: getDoublesKnockoutWinnerTeam("semi", 1),
-      team2: getDoublesKnockoutWinnerTeam("semi", 2),
+      team1: stripDoublesKnockoutPartner(
+        getDoublesKnockoutWinnerTeam("semi", 1),
+      ),
+      team2: stripDoublesKnockoutPartner(
+        getDoublesKnockoutWinnerTeam("semi", 2),
+      ),
       team1Fallback: "Gew. HF 1",
       team2Fallback: "Gew. HF 2",
     };
@@ -161,8 +201,39 @@ function getDoublesTeamLabel(team, fallback) {
   return `${name1} / ${name2}`;
 }
 
+/**
+ * Label für ein bereits gespieltes Spiel: zeigt genau die eingetragenen Spieler.
+ * Bei kampflosen Spielen kann der Partner fehlen.
+ */
+function getDoublesPlayedTeamLabel(team) {
+  if (!team || !team.player1Id) return "—";
+  const name1 = getPlayerName(team.player1Id);
+  return team.player2Id ? `${name1} / ${getPlayerName(team.player2Id)}` : name1;
+}
+
 function isDoublesTeamComplete(team) {
   return !!(team && team.player1Id && team.player2Id);
+}
+
+/**
+ * Kann für dieses Team ein Ergebnis eingetragen werden?
+ * Bei Partnern je Spiel genügt der gesetzte Spieler 1.
+ */
+function isDoublesKnockoutTeamReady(team) {
+  if (!team || !team.player1Id) return false;
+  if (isDoublesKnockoutPartnerPerMatch()) return true;
+  return !!team.player2Id;
+}
+
+/**
+ * Spieler, die als Partner in einem K.O.-Spiel auswählbar sind:
+ * alle Doppel-Spieler außer den beiden gesetzten Spielern.
+ */
+function getDoublesKnockoutPartnerOptions(team1, team2) {
+  const seeds = [team1?.player1Id, team2?.player1Id].filter(Boolean);
+  return state.players.filter(
+    (p) => p.doublesPool && !seeds.includes(p.id),
+  );
 }
 
 // ========== Ergebnis-Eintragung ==========
@@ -179,37 +250,51 @@ function closeDoublesKnockoutMatchEntry() {
   render();
 }
 
-async function saveDoublesKnockoutMatch() {
-  const round = document.getElementById("dkoRound").value;
-  const matchNum = parseInt(document.getElementById("dkoMatchNum").value);
-
-  const team1 = {
-    player1Id: document.getElementById("dkoT1P1Id").value,
-    player2Id: document.getElementById("dkoT1P2Id").value,
+/**
+ * Liest die vier Spieler aus dem Eingabe-Modal.
+ * Spieler 1 steckt in einem Hidden-Input, der Partner je nach Partner-Modus
+ * in einem Hidden-Input (feste Partner) oder einem Select (Partner je Spiel).
+ */
+function _readDoublesKnockoutTeams() {
+  const read = (id) => document.getElementById(id)?.value || null;
+  return {
+    team1: { player1Id: read("dkoT1P1Id"), player2Id: read("dkoT1P2Id") },
+    team2: { player1Id: read("dkoT2P1Id"), player2Id: read("dkoT2P2Id") },
   };
-  const team2 = {
-    player1Id: document.getElementById("dkoT2P1Id").value,
-    player2Id: document.getElementById("dkoT2P2Id").value,
-  };
+}
 
-  if (
-    !team1.player1Id ||
-    !team1.player2Id ||
-    !team2.player1Id ||
-    !team2.player2Id
-  ) {
+function _validateDoublesKnockoutTeams(team1, team2, { requirePartners }) {
+  if (!team1.player1Id || !team2.player1Id) {
     Toast.error("Teams sind noch nicht vollständig");
-    return;
+    return false;
   }
 
-  const allPlayers = [
+  if (requirePartners && (!team1.player2Id || !team2.player2Id)) {
+    Toast.error("Bitte für beide Teams einen Partner auswählen");
+    return false;
+  }
+
+  const players = [
     team1.player1Id,
     team1.player2Id,
     team2.player1Id,
     team2.player2Id,
-  ];
-  if (new Set(allPlayers).size !== 4) {
+  ].filter(Boolean);
+  if (new Set(players).size !== players.length) {
     Toast.error("Ein Spieler kann nicht in beiden Teams spielen");
+    return false;
+  }
+
+  return true;
+}
+
+async function saveDoublesKnockoutMatch() {
+  const round = document.getElementById("dkoRound").value;
+  const matchNum = parseInt(document.getElementById("dkoMatchNum").value);
+
+  const { team1, team2 } = _readDoublesKnockoutTeams();
+
+  if (!_validateDoublesKnockoutTeams(team1, team2, { requirePartners: true })) {
     return;
   }
 
@@ -271,6 +356,77 @@ async function saveDoublesKnockoutMatch() {
     state.doublesKnockoutEntryMatch = null;
     state.doublesKnockoutEntry = {};
     Toast.success("K.O.-Spiel erfolgreich eingetragen!");
+    render();
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    Toast.error("Fehler beim Speichern: " + error.message);
+  }
+}
+
+/**
+ * Trägt ein K.O.-Spiel kampflos ein (21:0, 21:0 für das gewinnende Team).
+ * Partner sind hier optional – wenn nicht angetreten wurde, ist er oft unbekannt.
+ */
+async function saveDoublesKnockoutWalkover(winnerSlot) {
+  const round = document.getElementById("dkoRound").value;
+  const matchNum = parseInt(document.getElementById("dkoMatchNum").value);
+
+  const { team1, team2 } = _readDoublesKnockoutTeams();
+
+  if (!_validateDoublesKnockoutTeams(team1, team2, { requirePartners: false })) {
+    return;
+  }
+
+  const winnerTeam = winnerSlot === "t2" ? team2 : team1;
+
+  const confirmed = await Modal.confirm({
+    title: "Kampflos eintragen?",
+    message: `Das Spiel wird kampflos für ${getDoublesPlayedTeamLabel(winnerTeam)} gewertet (21:0, 21:0).`,
+    confirmText: "Kampflos eintragen",
+    cancelText: "Abbrechen",
+    type: "warning",
+  });
+
+  if (!confirmed) return;
+
+  const sets =
+    winnerSlot === "t2"
+      ? [
+          { t1: 0, t2: 21 },
+          { t1: 0, t2: 21 },
+        ]
+      : [
+          { t1: 21, t2: 0 },
+          { t1: 21, t2: 0 },
+        ];
+
+  try {
+    const existingMatch = getDoublesKnockoutMatch(round, matchNum);
+
+    if (existingMatch) {
+      await seasonCollection("doublesMatches").doc(existingMatch.id).update({
+        team1,
+        team2,
+        sets,
+        walkover: true,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } else {
+      await seasonCollection("doublesMatches").add({
+        round,
+        matchNum,
+        team1,
+        team2,
+        sets,
+        status: "confirmed",
+        walkover: true,
+        date: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    state.doublesKnockoutEntryMatch = null;
+    state.doublesKnockoutEntry = {};
+    Toast.success("Kampfloses K.O.-Spiel eingetragen!");
     render();
   } catch (error) {
     console.error("Fehler beim Speichern:", error);
@@ -361,28 +517,41 @@ async function deactivateDoublesKnockoutPhase() {
 // ========== Konfiguration ==========
 
 /**
- * Wechselt den Bracket-Modus lokal (erst "Paarungen speichern" schreibt ihn weg).
+ * Wechselt Bracket-Größe und Partner-Bindung lokal
+ * (erst "Paarungen speichern" schreibt beides weg).
+ * Erwartet den zusammengesetzten Dropdown-Wert "<mode>:<partnerMode>".
  */
-function setDoublesKnockoutMode(mode) {
+function setDoublesKnockoutMode(value) {
+  const [mode, partnerMode] = String(value).split(":");
   state.doublesKnockoutConfig = {
     ...(state.doublesKnockoutConfig || {}),
     mode: mode === "semi" ? "semi" : "quarter",
+    partnerMode: partnerMode === "perMatch" ? "perMatch" : "fixed",
   };
   render();
 }
 
 async function saveDoublesKnockoutConfig() {
+  const previous = state.doublesKnockoutConfig || {};
   const prefix = getDoublesKnockoutStartRound() === "semi" ? "sf" : "qf";
-  const config = { mode: getDoublesKnockoutStartRound() };
+  const config = {
+    mode: getDoublesKnockoutStartRound(),
+    partnerMode: getDoublesKnockoutPartnerMode(),
+  };
 
   for (let i = 1; i <= getDoublesKnockoutSlotCount(); i++) {
     ["t1", "t2"].forEach((slot) => {
-      const pos = document.getElementById(`d${prefix}_${i}_${slot}_pos`)?.value;
-      const partner = document.getElementById(
-        `d${prefix}_${i}_${slot}_partner`,
-      )?.value;
-      if (pos) config[`${prefix}_${i}_${slot}_pos`] = pos;
-      if (partner) config[`${prefix}_${i}_${slot}_partner`] = partner;
+      const posKey = `${prefix}_${i}_${slot}_pos`;
+      const partnerKey = `${prefix}_${i}_${slot}_partner`;
+
+      const pos = document.getElementById(`d${posKey}`)?.value;
+      if (pos) config[posKey] = pos;
+
+      // Bei Partnern je Spiel gibt es kein Partner-Feld im Formular – dann den
+      // bereits gespeicherten Wert erhalten, damit ein Moduswechsel ihn nicht verliert.
+      const partnerSelect = document.getElementById(`d${partnerKey}`);
+      const partner = partnerSelect ? partnerSelect.value : previous[partnerKey];
+      if (partner) config[partnerKey] = partner;
     });
   }
 

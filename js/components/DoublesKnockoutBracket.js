@@ -10,7 +10,8 @@ function DoublesKnockoutBracketView() {
     const { team1, team2, team1Fallback, team2Fallback } =
       getDoublesKnockoutTeams(round, matchNum);
     const isPlayed = match && match.sets;
-    const canPlay = isDoublesTeamComplete(team1) && isDoublesTeamComplete(team2);
+    const canPlay =
+      isDoublesKnockoutTeamReady(team1) && isDoublesKnockoutTeamReady(team2);
 
     let winnerIsTeam1 = null;
     if (isPlayed) {
@@ -39,15 +40,18 @@ function DoublesKnockoutBracketView() {
 
     // Bei gespielten Spielen die tatsächlich eingetragenen Teams anzeigen
     const label1 = isPlayed
-      ? getDoublesTeamLabel(match.team1, team1Fallback)
+      ? getDoublesPlayedTeamLabel(match.team1)
       : getDoublesTeamLabel(team1, team1Fallback);
     const label2 = isPlayed
-      ? getDoublesTeamLabel(match.team2, team2Fallback)
+      ? getDoublesPlayedTeamLabel(match.team2)
       : getDoublesTeamLabel(team2, team2Fallback);
 
     return `
       <div class="bg-white p-3 sm:p-4 rounded-lg border-2 border-${borderColor}-400">
-        <div class="text-xs sm:text-sm font-medium text-gray-700 mb-2">${title}</div>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="text-xs sm:text-sm font-medium text-gray-700">${title}</div>
+          ${isPlayed && match.walkover ? '<span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-gray-100 text-gray-500 border border-gray-300">Kampflos</span>' : ""}
+        </div>
         <div class="space-y-1.5">
           ${teamRow(label1, true)}
           <div class="text-center text-xs text-gray-400">vs</div>
@@ -108,11 +112,31 @@ function DoublesKnockoutMatchEntryModal() {
 
   const team1Label = getDoublesTeamLabel(team1, team1Fallback);
   const team2Label = getDoublesTeamLabel(team2, team2Fallback);
+  const perMatch = isDoublesKnockoutPartnerPerMatch();
 
   const title =
     round === "thirdPlace" || round === "final"
       ? DOUBLES_KNOCKOUT_ROUND_NAMES[round]
       : `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${matchNum}`;
+
+  // Bei Partnern je Spiel steckt der Partner in einem Select (gleiche ID wie
+  // das Hidden-Input im Modus "feste Partner", damit das Speichern identisch bleibt)
+  const partnerOptions = perMatch
+    ? getDoublesKnockoutPartnerOptions(team1, team2)
+    : [];
+
+  const teamBlock = (team, slot, fallback) => {
+    const seedName = team?.player1Id ? getPlayerName(team.player1Id) : fallback;
+    return `
+      <div>
+        <div class="text-xs font-semibold text-gray-500 mb-1">${slot === "t1" ? "Team 1" : "Team 2"}</div>
+        <div class="font-bold text-base sm:text-lg mb-1.5">${seedName}</div>
+        <select id="dko${slot === "t1" ? "T1" : "T2"}P2Id" class="w-full px-3 py-2.5 border rounded-lg bg-white text-sm">
+          <option value="">Partner wählen...</option>
+          ${partnerOptions.map((p) => `<option value="${p.id}">${p.name} (Pool ${p.doublesPool})</option>`).join("")}
+        </select>
+      </div>`;
+  };
 
   return `
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
@@ -122,16 +146,35 @@ function DoublesKnockoutMatchEntryModal() {
           <button onclick="closeDoublesKnockoutMatchEntry()" class="p-2 hover:bg-gray-100 rounded-full">${icons.x}</button>
         </div>
         <div class="mb-4 p-3 bg-indigo-50 rounded-lg">
-          <div class="text-center">
-            <div class="font-bold text-base sm:text-lg">${team1Label}</div>
-            <div class="text-gray-500 text-sm my-1">vs</div>
-            <div class="font-bold text-base sm:text-lg">${team2Label}</div>
-          </div>
+          ${
+            perMatch
+              ? `
+            <p class="text-xs text-gray-600 mb-3">In diesem Modus werden die Partner je Spiel neu gesetzt. Weiter kommt nur der gesetzte Spieler.</p>
+            <div class="space-y-3">
+              ${teamBlock(team1, "t1", team1Fallback)}
+              <div class="text-center text-gray-500 text-sm">vs</div>
+              ${teamBlock(team2, "t2", team2Fallback)}
+            </div>
+          `
+              : `
+            <div class="text-center">
+              <div class="font-bold text-base sm:text-lg">${team1Label}</div>
+              <div class="text-gray-500 text-sm my-1">vs</div>
+              <div class="font-bold text-base sm:text-lg">${team2Label}</div>
+            </div>
+          `
+          }
         </div>
         <input type="hidden" id="dkoT1P1Id" value="${team1?.player1Id || ""}">
-        <input type="hidden" id="dkoT1P2Id" value="${team1?.player2Id || ""}">
         <input type="hidden" id="dkoT2P1Id" value="${team2?.player1Id || ""}">
+        ${
+          perMatch
+            ? ""
+            : `
+        <input type="hidden" id="dkoT1P2Id" value="${team1?.player2Id || ""}">
         <input type="hidden" id="dkoT2P2Id" value="${team2?.player2Id || ""}">
+        `
+        }
         <input type="hidden" id="dkoRound" value="${round}">
         <input type="hidden" id="dkoMatchNum" value="${matchNum}">
         <div class="space-y-3 mb-5">
@@ -158,6 +201,19 @@ function DoublesKnockoutMatchEntryModal() {
         <div class="flex gap-3">
           <button onclick="closeDoublesKnockoutMatchEntry()" class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Abbrechen</button>
           <button onclick="saveDoublesKnockoutMatch()" class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Speichern</button>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-gray-200">
+          <div class="text-xs font-semibold text-gray-600 mb-2">Kampfloses Spiel</div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button onclick="saveDoublesKnockoutWalkover('t1')" class="flex-1 min-w-0 px-3 py-2.5 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm font-medium">
+              <span class="block truncate">Sieg: ${team1Label}</span>
+            </button>
+            <button onclick="saveDoublesKnockoutWalkover('t2')" class="flex-1 min-w-0 px-3 py-2.5 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm font-medium">
+              <span class="block truncate">Sieg: ${team2Label}</span>
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-1.5">Ergebnis wird als 21:0, 21:0 gespeichert. Partner ist dabei optional.</p>
         </div>
       </div>
     </div>`;

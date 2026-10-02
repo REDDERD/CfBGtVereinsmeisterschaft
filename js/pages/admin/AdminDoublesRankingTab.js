@@ -104,6 +104,8 @@ function AdminDoublesKnockoutConfig() {
   const active = state.doublesKnockoutPhaseActive;
   const config = state.doublesKnockoutConfig || {};
   const mode = getDoublesKnockoutStartRound();
+  const partnerMode = getDoublesKnockoutPartnerMode();
+  const perMatch = partnerMode === "perMatch";
   const prefix = mode === "semi" ? "sf" : "qf";
   const slotCount = getDoublesKnockoutSlotCount();
 
@@ -124,14 +126,20 @@ function AdminDoublesKnockoutConfig() {
     return `
       <div class="mb-2 last:mb-0">
         <label class="block text-xs font-semibold text-gray-600 mb-1">${label}</label>
-        <select id="d${posKey}" class="w-full px-3 py-2 border rounded-lg text-sm mb-1.5" ${active ? "disabled" : ""}>
+        <select id="d${posKey}" class="w-full px-3 py-2 border rounded-lg text-sm ${perMatch ? "" : "mb-1.5"}" ${active ? "disabled" : ""}>
           <option value="">Position wählen</option>
           ${positions.map((p) => `<option value="${p.value}" ${config[posKey] === p.value ? "selected" : ""}>${p.label}</option>`).join("")}
         </select>
+        ${
+          perMatch
+            ? ""
+            : `
         <select id="d${partnerKey}" class="w-full px-3 py-2 border rounded-lg text-sm">
           <option value="">Partner wählen</option>
           ${doublesPlayers.map((p) => `<option value="${p.id}" ${config[partnerKey] === p.id ? "selected" : ""}>${p.name}</option>`).join("")}
         </select>
+        `
+        }
       </div>`;
   };
 
@@ -159,13 +167,23 @@ function AdminDoublesKnockoutConfig() {
 
       <div class="mb-4">
         <label class="block text-xs font-semibold text-gray-600 mb-1">Spielmodus</label>
-        <select onchange="setDoublesKnockoutMode(this.value)" class="w-full sm:w-auto px-3 py-2 border rounded-lg text-sm" ${active ? "disabled" : ""}>
-          <option value="quarter" ${mode === "quarter" ? "selected" : ""}>8 Teams – ab Viertelfinale (jeder der Top 8 mit eigenem Partner)</option>
-          <option value="semi" ${mode === "semi" ? "selected" : ""}>4 Teams – ab Halbfinale (je 2 Top-8-Spieler bilden ein Team)</option>
+        <select onchange="setDoublesKnockoutMode(this.value)" class="w-full px-3 py-2 border rounded-lg text-sm" ${active ? "disabled" : ""}>
+          ${[
+            { mode: "quarter", partnerMode: "fixed", label: "8 Teams – ab Viertelfinale, feste Partner für die ganze K.O.-Phase" },
+            { mode: "quarter", partnerMode: "perMatch", label: "8 Teams – ab Viertelfinale, Partner je Spiel neu" },
+            { mode: "semi", partnerMode: "fixed", label: "4 Teams – ab Halbfinale, feste Partner für die ganze K.O.-Phase" },
+            { mode: "semi", partnerMode: "perMatch", label: "4 Teams – ab Halbfinale, Partner je Spiel neu" },
+          ]
+            .map((o) => `<option value="${o.mode}:${o.partnerMode}" ${mode === o.mode && partnerMode === o.partnerMode ? "selected" : ""}>${o.label}</option>`)
+            .join("")}
         </select>
         <p class="text-xs text-gray-500 mt-1">
-          Spieler 1 jedes Teams wird über die Pyramiden-Position bestimmt, der Partner wird als konkreter Spieler hinterlegt
-          und kann auch nach dem Start noch angepasst werden (z.&nbsp;B. nach einer Auslosung).
+          Spieler 1 jedes Teams wird immer über die Pyramiden-Position bestimmt (Top 8).
+          ${
+            perMatch
+              ? "Die Partner werden erst beim Eintragen des Ergebnisses angegeben und gelten nur für dieses Spiel. In die nächste Runde kommt jeweils nur Spieler 1."
+              : "Der Partner wird hier als konkreter Spieler hinterlegt, gilt für die gesamte K.O.-Phase und kann auch nach dem Start noch angepasst werden (z.&nbsp;B. nach einer Auslosung)."
+          }
         </p>
       </div>
 
@@ -184,6 +202,6 @@ function AdminDoublesKnockoutConfig() {
           .join("")}
       </div>
 
-      <button onclick="saveDoublesKnockoutConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Paarungen speichern</button>
+      <button onclick="saveDoublesKnockoutConfig()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">${perMatch ? "Modus & Positionen speichern" : "Paarungen speichern"}</button>
     </div>`;
 }

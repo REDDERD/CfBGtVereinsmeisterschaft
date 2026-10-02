@@ -79,7 +79,7 @@ async function seed() {
     knockout: { active: false, frozenStandings: null },
     knockoutConfig: {},
     doublesKnockout: { active: false, frozenPyramid: null },
-    doublesKnockoutConfig: { mode: "quarter" },
+    doublesKnockoutConfig: { mode: "quarter", partnerMode: "fixed" },
   };
 
   for (const [docId, data] of Object.entries(settings)) {

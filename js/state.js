@@ -48,6 +48,7 @@ const state = {
   frozenPyramid: null, // Eingefrorene Rangfolge (flache Liste von playerIds)
   doublesView: "pyramid",
   doublesKnockoutEntryMatch: null,
+  usageStats: { rangeDays: 30, loading: false, days: null }, // Admin-Tab "Statistik"
   doublesKnockoutPartnerDialog: null, // { round, matchNum, slot, mode: 'choose'|'manual' }
   doublesKnockoutEntry: {},
   matchesView: "singles",

@@ -19,6 +19,7 @@ function AdminPage() {
     { id: "season", label: "Saison" },
     { id: "settings", label: "Einstell." },
     { id: "export", label: "Export" },
+    { id: "stats", label: "Statistik" },
   ];
 
   return `
@@ -51,6 +52,7 @@ function AdminPage() {
         ${state.adminTab === "season" ? AdminSeasonTab() : ""}
         ${state.adminTab === "settings" ? AdminSettingsTab() : ""}
         ${state.adminTab === "export" ? AdminExportTab() : ""}
+        ${state.adminTab === "stats" ? AdminStatsTab() : ""}
       </div>
     </div>`;
 }

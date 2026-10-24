@@ -27,6 +27,9 @@ function initFirebaseListeners() {
       state.isAdmin = false;
     }
 
+    // Nutzungsstatistik erst starten, wenn der Admin-Status feststeht
+    startUsageStats();
+
     render();
   });
 

@@ -63,7 +63,13 @@ function render() {
       ${content}
     </div>
   `;
-  
+
+  // Nutzungsstatistik: Seitenwechsel zählen, ggf. Statistik-Diagramm neu zeichnen
+  trackCurrentPageView();
+  if (state.currentPage === "admin" && state.adminTab === "stats") {
+    initUsageStatsChart();
+  }
+
   // Stelle den Fokus und die Cursor-Position wieder her
   if (activeElementId) {
     const element = document.getElementById(activeElementId);

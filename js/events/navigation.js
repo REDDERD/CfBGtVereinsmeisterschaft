@@ -64,7 +64,12 @@ function setAdminTab(tab) {
     state.matchApprovalFilters.showRejected = false;
     state.adminMatchesSearchQuery = "";
   }
-  
+
+  if (tab === 'stats') {
+    loadUsageStats();
+    return;
+  }
+
   render();
 }
 

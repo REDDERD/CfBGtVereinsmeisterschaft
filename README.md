@@ -93,6 +93,12 @@ Hier kann je Spielmodus eingestellt werden, ob unbestätige Spiele Nutzern angez
 ### Export
 Hier können alle gespeicherten Daten der App exportiert werden. Durch das setzen der Haken kann entschieden werden, welche Daten in die Excel-Datei exportiert werden.
 
+### Statistik
+Hier ist eine einfache Nutzungsstatistik der App zu sehen (Zeitraum 7, 30 oder 90 Tage): App-Starts pro Tag als Diagramm sowie die Aufrufe je Seite.
+- **App-Starts**: einmal pro Laden der App. **Seitenaufrufe**: jeder Wechsel auf eine Seite.
+- Aufrufe von eingeloggten Admins werden getrennt gezählt (Spalte "Admins"), damit die eigene Pflege die Zahlen nicht verfälscht.
+- Gespeichert werden ausschließlich Summen je Tag und Seite (Firestore-Sammlung `stats`, ein Dokument pro Tag). Es gibt keine Cookies, keinen Eintrag im Browser-Speicher, keine Nutzer-IDs und keine Zeitpunkte einzelner Aufrufe. Eindeutige Besucher lassen sich deshalb bewusst nicht ermitteln.
+
 ## Einzel
 Hier können die Gruppentabellen eingesehen und neue Spiele eingetragen werden. Damit neue Spiele eingetragen werden können, muss man als Admin eingeloggt sein. (Siehe [Anmelde-Notwendigkeit](#notwendigkeit))  
 Beim Eintragen werden die Gruppenzuordnungen geprüft. (Beispiel: Wenn man selbst in Gruppe 1 ist, kann man auch nur Ergebnisse gegen Spieler eintragen, die ebenfalls in Gruppe 1 sind.) Es sind pro Paarung 2 Spiele (Hin- und Rückspiel) für die Gruppenphase geplant. Nach dem zweiten Spiel wird gewarnt, wenn man ein drittes Spiel eintragen will. Die Spiele für Hin- und Rückrunde können unter [Herausforderungen](#herausforderungen) eingesehen werden.  

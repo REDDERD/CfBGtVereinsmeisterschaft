@@ -89,7 +89,7 @@ function getDoublesKnockoutDrawnPartner(round, matchNum, slot) {
 }
 
 /**
- * Team aus gesetztem Spieler und dem für dieses Spiel ausgelosten Partner.
+ * Team aus gesetztem Spieler und dem für dieses Spiel zugeordneten Partner.
  */
 function _buildDoublesKnockoutTeam(player1Id, round, matchNum, slot) {
   if (!player1Id) return null;
@@ -266,7 +266,7 @@ function getDoublesKnockoutPartnerOptions(team1, team2, seedId) {
 
 /**
  * Partner, die in den anderen Spielen derselben Runde bereits gespielt haben
- * oder ausgelost wurden – sie werden bei der Auslosung nicht erneut gezogen.
+ * oder zugeordnet wurden – sie werden bei der Auslosung nicht erneut gezogen.
  */
 function _getDoublesKnockoutRoundPartnerIds(round, matchNum) {
   const ids = [];
@@ -286,79 +286,135 @@ function _getDoublesKnockoutRoundPartnerIds(round, matchNum) {
   return ids.filter(Boolean);
 }
 
-async function drawDoublesKnockoutPartners(round, matchNum) {
+/**
+ * Mögliche Partner für den gesetzten Spieler in (round, matchNum, slot):
+ * regelkonform, nicht einer der beiden gesetzten Spieler und nicht der Partner
+ * des anderen Teams. Bei der Auslosung (forDraw) zusätzlich ohne Partner aus
+ * anderen Spielen derselben Runde – beim Eintragen entscheidet der Admin.
+ */
+function getDoublesKnockoutPartnerCandidates(round, matchNum, slot, { forDraw = false } = {}) {
   const { team1, team2 } = getDoublesKnockoutTeams(round, matchNum);
-  if (!team1?.player1Id || !team2?.player1Id) {
-    Toast.error("Die Teams stehen noch nicht fest");
+  const team = slot === "t1" ? team1 : team2;
+  const otherPartnerId = getDoublesKnockoutDrawnPartner(
+    round,
+    matchNum,
+    slot === "t1" ? "t2" : "t1",
+  );
+  const excluded = [
+    otherPartnerId,
+    ...(forDraw ? _getDoublesKnockoutRoundPartnerIds(round, matchNum) : []),
+  ].filter(Boolean);
+
+  return getDoublesKnockoutPartnerOptions(team1, team2, team?.player1Id).filter(
+    (p) => !excluded.includes(p.id),
+  );
+}
+
+async function saveDoublesKnockoutPartner(round, matchNum, slot, partnerId) {
+  await db
+    .collection("settings")
+    .doc("doublesKnockoutConfig")
+    .set(
+      {
+        draws: { [`${round}_${matchNum}`]: { [slot]: partnerId } },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+}
+
+// ----- Dialog "Partner zuordnen" (Auslosen oder Eintragen) -----
+
+function openDoublesKnockoutPartnerDialog(round, matchNum, slot) {
+  state.doublesKnockoutPartnerDialog = { round, matchNum, slot, mode: "choose" };
+  render();
+}
+
+function closeDoublesKnockoutPartnerDialog() {
+  state.doublesKnockoutPartnerDialog = null;
+  render();
+}
+
+function setDoublesKnockoutPartnerDialogMode(mode) {
+  if (!state.doublesKnockoutPartnerDialog) return;
+  state.doublesKnockoutPartnerDialog.mode = mode === "manual" ? "manual" : "choose";
+  render();
+}
+
+async function saveDoublesKnockoutManualPartner() {
+  const dialog = state.doublesKnockoutPartnerDialog;
+  if (!dialog) return;
+  const partnerId = document.getElementById("dkoManualPartner")?.value;
+  if (!partnerId) {
+    Toast.error("Bitte einen Partner auswählen");
     return;
   }
+
+  const seedId = getDoublesKnockoutTeams(dialog.round, dialog.matchNum)[
+    dialog.slot === "t1" ? "team1" : "team2"
+  ]?.player1Id;
+  const violation = getDoublesKnockoutPartnerViolation(seedId, partnerId);
+  if (violation) {
+    Toast.error(violation, 5000);
+    return;
+  }
+
+  try {
+    await saveDoublesKnockoutPartner(dialog.round, dialog.matchNum, dialog.slot, partnerId);
+    state.doublesKnockoutPartnerDialog = null;
+    Toast.success(`${getPlayerName(seedId)} spielt mit ${getPlayerName(partnerId)}`);
+    render();
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    Toast.error("Fehler beim Speichern: " + error.message);
+  }
+}
+
+/**
+ * Lost den Partner aus und zeigt das Ergebnis als Slotmaschine.
+ * Gespeichert wird erst, wenn die Walze stehen bleibt.
+ */
+function startDoublesKnockoutPartnerDraw() {
+  const dialog = state.doublesKnockoutPartnerDialog;
+  if (!dialog) return;
+  const { round, matchNum, slot } = dialog;
+
   if (getDoublesKnockoutMatch(round, matchNum)?.sets) {
     Toast.error("Für dieses Spiel ist bereits ein Ergebnis eingetragen");
     return;
   }
 
-  const key = `${round}_${matchNum}`;
-  if (state.doublesKnockoutConfig?.draws?.[key]) {
-    const confirmed = await Modal.confirm({
-      title: "Neu auslosen?",
-      message: `Für ${getDoublesKnockoutMatchLabel(round, matchNum)} wurden bereits Partner ausgelost. Soll neu ausgelost werden?`,
-      confirmText: "Neu auslosen",
-      cancelText: "Abbrechen",
-      type: "warning",
-    });
-    if (!confirmed) return;
+  const seedId = getDoublesKnockoutTeams(round, matchNum)[
+    slot === "t1" ? "team1" : "team2"
+  ]?.player1Id;
+  if (!seedId) {
+    Toast.error("Der Spieler steht noch nicht fest");
+    return;
   }
 
-  const excluded = [
-    team1.player1Id,
-    team2.player1Id,
-    ..._getDoublesKnockoutRoundPartnerIds(round, matchNum),
-  ];
-  const candidates = (seedId) =>
-    getDoublesKnockoutPartnerOptions(team1, team2, seedId)
-      .map((p) => p.id)
-      .filter((id) => !excluded.includes(id));
-
-  // Alle gültigen Kombinationen bilden, damit Team 1 nicht den einzigen
-  // möglichen Partner von Team 2 "wegzieht"
-  const pairs = [];
-  const candidates2 = candidates(team2.player1Id);
-  candidates(team1.player1Id).forEach((a) =>
-    candidates2.forEach((b) => {
-      if (a !== b) pairs.push([a, b]);
-    }),
-  );
-
-  if (pairs.length === 0) {
+  const candidates = getDoublesKnockoutPartnerCandidates(round, matchNum, slot, {
+    forDraw: true,
+  });
+  if (candidates.length === 0) {
     Toast.error(
-      "Es gibt nicht genug auslosbare Partner. Die Auslosungsregeln können unter Admin → Doppel verwalten gelockert werden.",
+      "Es gibt keinen auslosbaren Partner. Die Auslosungsregeln können unter Admin → Doppel verwalten gelockert werden.",
       5000,
     );
     return;
   }
 
-  const [partner1, partner2] = pairs[Math.floor(Math.random() * pairs.length)];
+  const winner = candidates[Math.floor(Math.random() * candidates.length)];
 
-  try {
-    await db
-      .collection("settings")
-      .doc("doublesKnockoutConfig")
-      .set(
-        {
-          draws: { [key]: { t1: partner1, t2: partner2 } },
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
+  state.doublesKnockoutPartnerDialog = null;
+  render();
 
-    Toast.success(
-      `Ausgelost: ${getPlayerName(team1.player1Id)} / ${getPlayerName(partner1)} und ${getPlayerName(team2.player1Id)} / ${getPlayerName(partner2)}`,
-      5000,
-    );
-  } catch (error) {
-    console.error("Fehler beim Auslosen:", error);
-    Toast.error("Fehler beim Auslosen: " + error.message);
-  }
+  spinPartnerSlotMachine({
+    title: `Partner für ${getPlayerName(seedId)}`,
+    subtitle: getDoublesKnockoutMatchLabel(round, matchNum),
+    names: candidates.map((p) => p.name),
+    winnerName: winner.name,
+    onLanded: () => saveDoublesKnockoutPartner(round, matchNum, slot, winner.id),
+  });
 }
 
 /**

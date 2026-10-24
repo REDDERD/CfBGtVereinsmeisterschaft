@@ -12,13 +12,36 @@ function DoublesKnockoutBracketView() {
     const canPlay =
       isDoublesKnockoutTeamReady(team1) && isDoublesKnockoutTeamReady(team2);
     const isAdminEditable = !isPlayed && state.isAdmin && !isReadOnly();
-    const isDrawn = !!(team1?.player2Id || team2?.player2Id);
 
     let winnerIsTeam1 = null;
     if (isPlayed) {
       const { t1, t2 } = getDoublesKnockoutSetsWon(match);
       winnerIsTeam1 = t1 > t2;
     }
+
+    // Noch nicht gespielt: gesetzter Spieler + Partner bzw. Button zum Zuordnen
+    const openTeamContent = (team, fallback, slot) => {
+      if (!team?.player1Id) return `<span class="truncate">${fallback}</span>`;
+      const seedName = getPlayerName(team.player1Id);
+      const dialogCall = `openDoublesKnockoutPartnerDialog('${round}', ${matchNum}, '${slot}')`;
+
+      let partner;
+      if (team.player2Id) {
+        const partnerName = getPlayerName(team.player2Id);
+        partner = `
+          <span class="truncate" title="${partnerName}">${partnerName}</span>
+          ${isAdminEditable ? `<button onclick="${dialogCall}" class="flex-shrink-0 p-1 -my-1 text-indigo-600 hover:bg-indigo-50 rounded" title="Partner ändern" aria-label="Partner von ${seedName} ändern">${icons.edit.replace("size-5", "size-4")}</button>` : ""}`;
+      } else if (isAdminEditable) {
+        partner = `<button onclick="${dialogCall}" class="flex-shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-600 text-white hover:bg-indigo-700">Partner zuordnen</button>`;
+      } else {
+        partner = `<span class="text-gray-400 truncate">Partner offen</span>`;
+      }
+
+      return `
+        <span class="truncate flex-shrink min-w-0" title="${seedName}">${seedName}</span>
+        <span class="text-gray-400 flex-shrink-0">/</span>
+        ${partner}`;
+    };
 
     const teamRow = (label, isTeam1) => {
       const setScores = isPlayed
@@ -32,20 +55,23 @@ function DoublesKnockoutBracketView() {
         : "";
       const isWinner = isPlayed && winnerIsTeam1 === isTeam1;
 
+      if (!isPlayed) {
+        return `
+      <div class="px-2.5 py-2 bg-gray-50 rounded text-sm flex items-center gap-1.5 min-w-0">
+        ${isTeam1 ? openTeamContent(team1, team1Fallback, "t1") : openTeamContent(team2, team2Fallback, "t2")}
+      </div>`;
+      }
+
       return `
       <div class="px-2.5 py-2 ${isWinner ? "bg-green-100 font-bold" : "bg-gray-50"} rounded text-sm flex justify-between items-center gap-2">
         <span class="truncate flex-1" title="${label}">${label}</span>
-        ${isPlayed ? `<div class="flex gap-0.5 flex-shrink-0">${setScores}</div>` : ""}
+        <div class="flex gap-0.5 flex-shrink-0">${setScores}</div>
       </div>`;
     };
 
     // Bei gespielten Spielen die tatsächlich eingetragenen Teams anzeigen
-    const label1 = isPlayed
-      ? getDoublesPlayedTeamLabel(match.team1)
-      : getDoublesTeamLabel(team1, team1Fallback);
-    const label2 = isPlayed
-      ? getDoublesPlayedTeamLabel(match.team2)
-      : getDoublesTeamLabel(team2, team2Fallback);
+    const label1 = isPlayed ? getDoublesPlayedTeamLabel(match.team1) : "";
+    const label2 = isPlayed ? getDoublesPlayedTeamLabel(match.team2) : "";
 
     return `
       <div class="bg-white p-3 sm:p-4 rounded-lg border-2 border-${borderColor}-400">
@@ -60,11 +86,6 @@ function DoublesKnockoutBracketView() {
         </div>
         ${
           isAdminEditable && canPlay
-            ? `<button onclick="drawDoublesKnockoutPartners('${round}', ${matchNum})" class="mt-2 w-full px-3 py-2 text-sm ${isDrawn ? "bg-white text-indigo-700 border border-indigo-300 hover:bg-indigo-50" : "bg-indigo-600 text-white hover:bg-indigo-700"} rounded-lg">${isDrawn ? "Neu auslosen" : "Partner auslosen"}</button>`
-            : ""
-        }
-        ${
-          isAdminEditable && canPlay
             ? `<button onclick="openDoublesKnockoutMatchEntry('${round}', ${matchNum})" class="mt-2 w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Ergebnis eintragen</button>`
             : isAdminEditable
               ? '<div class="mt-2 text-center text-xs text-gray-400">Teams stehen noch nicht fest</div>'
@@ -76,6 +97,7 @@ function DoublesKnockoutBracketView() {
   return `
     <div class="space-y-4">
       ${state.doublesKnockoutEntryMatch ? DoublesKnockoutMatchEntryModal() : ""}
+      ${state.doublesKnockoutPartnerDialog ? DoublesKnockoutPartnerDialog() : ""}
       <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 sm:p-6 rounded-lg border-2 border-yellow-400">
         <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">K.O.-Phase Doppel</h3>
 
@@ -118,7 +140,7 @@ function DoublesKnockoutMatchEntryModal() {
         ? `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${DOUBLES_KNOCKOUT_QUARTER_LETTERS[matchNum]}`
         : `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${matchNum}`;
 
-  // Der Partner steckt in einem Select. Ein ausgeloster Partner ist
+  // Der Partner steckt in einem Select. Ein zugeordneter Partner ist
   // vorausgewählt und bleibt immer wählbar.
   const teamBlock = (team, slot, fallback) => {
     const seedName = team?.player1Id ? getPlayerName(team.player1Id) : fallback;
@@ -138,15 +160,15 @@ function DoublesKnockoutMatchEntryModal() {
         <div class="font-bold text-base sm:text-lg mb-1.5">${seedName}</div>
         <select id="dko${slot === "t1" ? "T1" : "T2"}P2Id" class="w-full px-3 py-2.5 border rounded-lg bg-white text-sm">
           <option value="">Partner wählen...</option>
-          ${options.map((p) => `<option value="${p.id}" ${p.id === drawnId ? "selected" : ""}>${p.name} (Pool ${p.doublesPool})${p.id === drawnId ? " – ausgelost" : ""}</option>`).join("")}
+          ${options.map((p) => `<option value="${p.id}" ${p.id === drawnId ? "selected" : ""}>${p.name} (Pool ${p.doublesPool})${p.id === drawnId ? " – zugeordnet" : ""}</option>`).join("")}
         </select>
       </div>`;
   };
 
   const partnerHint =
     team1?.player2Id || team2?.player2Id
-      ? "Die ausgelosten Partner sind vorausgewählt. Weiter kommt nur der gesetzte Spieler."
-      : "Für dieses Spiel wurden noch keine Partner ausgelost. Weiter kommt nur der gesetzte Spieler.";
+      ? "Die zugeordneten Partner sind vorausgewählt. Weiter kommt nur der gesetzte Spieler."
+      : "Für dieses Spiel wurden noch keine Partner zugeordnet. Weiter kommt nur der gesetzte Spieler.";
 
   return `
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
@@ -205,6 +227,68 @@ function DoublesKnockoutMatchEntryModal() {
           </div>
           <p class="text-xs text-gray-400 mt-1.5">Ergebnis wird als 21:0, 21:0 gespeichert. Partner ist dabei optional.</p>
         </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * Dialog "Partner zuordnen": Auslosen (Slotmaschine) oder direkt eintragen.
+ */
+function DoublesKnockoutPartnerDialog() {
+  const { round, matchNum, slot, mode } = state.doublesKnockoutPartnerDialog;
+  const teams = getDoublesKnockoutTeams(round, matchNum);
+  const team = slot === "t1" ? teams.team1 : teams.team2;
+  const seedName = team?.player1Id ? getPlayerName(team.player1Id) : "?";
+  const currentId = team?.player2Id || null;
+
+  const drawCount = getDoublesKnockoutPartnerCandidates(round, matchNum, slot, {
+    forDraw: true,
+  }).length;
+
+  const body =
+    mode === "manual"
+      ? (() => {
+          const options = getDoublesKnockoutPartnerCandidates(round, matchNum, slot);
+          return `
+        <label for="dkoManualPartner" class="block text-sm font-medium text-gray-700 mb-1.5">Partner</label>
+        <select id="dkoManualPartner" class="w-full px-3 py-2.5 border rounded-lg bg-white text-sm mb-1.5">
+          <option value="">Partner wählen...</option>
+          ${options.map((p) => `<option value="${p.id}" ${p.id === currentId ? "selected" : ""}>${p.name} (Pool ${p.doublesPool})</option>`).join("")}
+        </select>
+        <p class="text-xs text-gray-500 mb-5">Zur Auswahl stehen alle Spieler, die nach den aktiven Auslosungsregeln erlaubt sind – z. B. für eine analoge Auslosung.</p>
+        <div class="flex gap-3">
+          <button onclick="setDoublesKnockoutPartnerDialogMode('choose')" class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Zurück</button>
+          <button onclick="saveDoublesKnockoutManualPartner()" class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">Speichern</button>
+        </div>`;
+        })()
+      : `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="startDoublesKnockoutPartnerDraw()" ${drawCount === 0 ? "disabled" : ""}
+            class="flex flex-col items-center gap-1 px-4 py-5 rounded-xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-100 hover:from-amber-100 hover:to-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span class="text-3xl" aria-hidden="true">🎰</span>
+            <span class="font-bold text-gray-800">${currentId ? "Neu auslosen" : "Auslosen"}</span>
+            <span class="text-xs text-gray-600">${drawCount === 0 ? "Keine auslosbaren Partner" : `${drawCount} mögliche Partner`}</span>
+          </button>
+          <button onclick="setDoublesKnockoutPartnerDialogMode('manual')"
+            class="flex flex-col items-center gap-1 px-4 py-5 rounded-xl border-2 border-indigo-300 bg-indigo-50 hover:bg-indigo-100">
+            <span class="text-3xl" aria-hidden="true">✍️</span>
+            <span class="font-bold text-gray-800">Eintragen</span>
+            <span class="text-xs text-gray-600">Partner direkt auswählen</span>
+          </button>
+        </div>`;
+
+  return `
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div class="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-md p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-start mb-4 gap-3">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold text-gray-500">${getDoublesKnockoutMatchLabel(round, matchNum)}</div>
+            <h3 class="text-lg sm:text-xl font-bold text-gray-800 truncate">Partner für ${seedName}</h3>
+            ${currentId ? `<div class="text-sm text-gray-600 mt-0.5">Aktuell: <span class="font-semibold">${getPlayerName(currentId)}</span></div>` : ""}
+          </div>
+          <button onclick="closeDoublesKnockoutPartnerDialog()" class="p-2 hover:bg-gray-100 rounded-full flex-shrink-0" aria-label="Schließen">${icons.x}</button>
+        </div>
+        ${body}
       </div>
     </div>`;
 }

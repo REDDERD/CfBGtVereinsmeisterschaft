@@ -42,7 +42,11 @@ Analog zum Einzel kann auch im Doppel von der Pyramidenphase in eine K.O.-Phase 
 - Halbfinale: Gewinner A vs Gewinner D und Gewinner B vs Gewinner C
 - danach das Finale (kein Spiel um Platz 3)
 
-Zu jedem Spieler wird **je Spiel ein Partner zugelost**. Sobald beide Teams eines Spiels feststehen, erscheint im K.O.-Baum der Button "Partner auslosen" (danach "Neu auslosen", solange noch kein Ergebnis eingetragen ist). Beim Eintragen des Ergebnisses sind die ausgelosten Partner vorausgewählt und können bei Bedarf noch geändert werden. In die nächste Runde kommt nur der gesetzte Spieler (Spieler 1) – dort wird wieder neu ausgelost. Das passt zur Pyramiden-Logik, in der ebenfalls nur Spieler 1 gewertet wird.
+Zu jedem Spieler wird **je Spiel ein Partner zugeordnet**. Sobald ein Spieler im K.O.-Baum feststeht, erscheint neben seinem Namen der Button "Partner zuordnen". Darüber kann gewählt werden:
+- **Auslosen**: Eine Slotmaschine lässt alle möglichen Partner mehrfach durchlaufen, wird langsamer und bleibt beim ausgelosten Partner stehen – mit Konfetti. Gespeichert wird, sobald die Walze steht.
+- **Eintragen**: Der Partner wird direkt ausgewählt, z. B. wenn analog gelost wurde.
+
+Solange noch kein Ergebnis eingetragen ist, kann der Partner über den Stift-Button neben seinem Namen geändert werden (neu auslosen oder anderen Partner eintragen). Beim Eintragen des Ergebnisses sind die zugeordneten Partner vorausgewählt und können ebenfalls noch geändert werden. In die nächste Runde kommt nur der gesetzte Spieler (Spieler 1) – dort wird wieder neu ausgelost. Das passt zur Pyramiden-Logik, in der ebenfalls nur Spieler 1 gewertet wird.
 
 Für die Auslosung und die Partner-Auswahl beim Eintragen gelten zwei Regeln, die unter "Auslosungsregeln" einzeln abgeschaltet werden können – auch während der laufenden K.O.-Phase (Änderungen werden sofort gespeichert):
 - **Pool-Regel**: Der Partner muss aus dem anderen Pool kommen (A + B), wie in der Pyramidenphase.
@@ -111,7 +115,7 @@ Beim Eintragen ist wichtig, dass ein Ergebniss in der Pyramide immer nur für di
 Man kann beliebige Spieler in der Pyramide zum Spiel herausfordern, die über einem stehen. Wenn der Spieler, der weiter unten in der Pyramide steht, das Spiel gewinnt, so nimmt er die Position des unterlegenen Spielers ein und alle anderen in der Rangfolge werden um eine Position nach hinten versetzt. Wie hoch das Ergebnis ausgeht, ist im Doppel egal.
 
 Sobald die K.O.-Phase gestartet wurde (siehe [Doppel verwalten](#doppel-verwalten)), kann über die Buttons oben zwischen der eingefrorenen Pyramide und dem K.O.-Baum umgeschaltet werden. Im K.O.-Baum wird jeweils direkt am entsprechenden Spiel auf "Ergebnis eintragen" gedrückt. Ergebnisse der K.O.-Phase können nur von Admins eingetragen werden und wirken sich nicht auf die Pyramide aus.  
-Vor dem Spiel werden über "Partner auslosen" die Partner beider Teams zugelost. Im Eintrage-Fenster sind sie vorausgewählt und können bei Bedarf noch geändert werden, danach wird das Ergebnis eingetragen.  
+Vor dem Spiel werden über "Partner zuordnen" die Partner beider Teams ausgelost oder eingetragen. Im Eintrage-Fenster sind sie vorausgewählt und können bei Bedarf noch geändert werden, danach wird das Ergebnis eingetragen.  
 Im selben Fenster kann ein Spiel unten auch **kampflos** gewertet werden – je ein Button pro Team, das Ergebnis wird als 21:0, 21:0 gespeichert. Der Partner ist dabei optional, weil er bei einem Nichtantreten oft gar nicht feststeht. Kampflose Spiele sind im K.O.-Baum und in der Spiele-Liste mit "Kampflos" gekennzeichnet.
 
 

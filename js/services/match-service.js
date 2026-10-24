@@ -48,83 +48,10 @@ async function addSinglesMatch() {
     return;
   }
 
-  const player1 = state.players.find((player) => player.id === p1);
-  const player2 = state.players.find((player) => player.id === p2);
-
-  if (!player1 || !player2) {
-    Toast.error("Spieler nicht gefunden");
-    return;
-  }
-
-  // Validierung: Spieler müssen in derselben Gruppe sein
-  if (player1.singlesGroup !== player2.singlesGroup) {
-    const confirmed = await Modal.warn({
-      title: "Spieler in unterschiedlichen Gruppen",
-      message: `${player1.name} ist in Gruppe ${player1.singlesGroup} und ${player2.name} ist in Gruppe ${player2.singlesGroup}. Gruppenspiele sollten nur innerhalb derselben Gruppe stattfinden. Möchtest du das Spiel trotzdem eintragen?`,
-      confirmText: "Ja, eintragen",
-      cancelText: "Abbrechen",
-    });
-
-    if (!confirmed) {
-      return;
-    }
-  }
-
-  // Validierung: Prüfe, ob diese Paarung bereits 2x gespielt wurde
-  const existingMatches = state.singlesMatches.filter(
-    (match) =>
-      ((match.player1Id === p1 && match.player2Id === p2) ||
-        (match.player1Id === p2 && match.player2Id === p1)) &&
-      match.status != "rejected",
-  );
-
-  if (existingMatches.length >= 2) {
-    if (state.singlesValidationMode === "warn") {
-      const confirmed = await Modal.warn({
-        title: "Paarung bereits 2x gespielt",
-        message: `${player1.name} und ${player2.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Da es nur Hin- und Rückrunde gibt, macht es wenig Sinn, mehr als 2 Spiele pro Paarung einzutragen. Möchtest du das Spiel trotzdem eintragen?`,
-        confirmText: "Ja, eintragen",
-        cancelText: "Abbrechen",
-      });
-
-      if (!confirmed) {
-        return;
-      }
-    } else if (state.singlesValidationMode === "block") {
-      Toast.error("Bereits Hin- und Rückrunde gespielt.");
-      return;
-    } else if (state.singlesValidationMode === "admin_only") {
-      if (!state.isAdmin) {
-        Toast.error("Bereits Hin- und Rückrunde gespielt.");
-        return;
-      }
-      const confirmed = await Modal.warn({
-        title: "Paarung bereits 2x gespielt (Admin)",
-        message: `${player1.name} und ${player2.name} haben bereits ${existingMatches.length} Spiele gegeneinander absolviert. Da es nur Hin- und Rückrunde gibt, macht es wenig Sinn, mehr als 2 Spiele pro Paarung einzutragen. Als Admin kannst du das Spiel trotzdem eintragen. Möchtest du fortfahren?`,
-        confirmText: "Ja, eintragen",
-        cancelText: "Abbrechen",
-      });
-
-      if (!confirmed) {
-        return;
-      }
-    }
-  }
-
-  // Bestimme den Status basierend auf den Einstellungen
-  const matchStatus = _getDefaultMatchStatus("singles");
-
-  // Bestimme die Runde basierend auf der Spielergruppe
-  const round = player1.singlesGroup === 1 ? "group1" : "group2";
-
-  await seasonCollection("singlesMatches").add({
-    player1Id: p1,
-    player2Id: p2,
-    sets,
-    round,
-    status: matchStatus,
-    date: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+  // Gruppenprüfung, Paarungslimit, Status und Runde übernimmt die Function
+  // (functions/src/matches/submitSinglesMatch.ts)
+  const result = await _submitSinglesMatch(p1, p2, sets);
+  if (!result) return;
 
   // Reset form
   document.getElementById("singlesP1").value = "";
@@ -591,6 +518,31 @@ function updateWalkoverSinglesLoser(winnerId) {
   loserSelect.innerHTML = '<option value="">Spieler wählen...</option>' +
     sameGroup.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
   loserSelect.disabled = false;
+}
+
+// ========== Einzel über Firebase Function eintragen ==========
+
+let _singlesSubmitInFlight = false;
+
+/**
+ * Trägt ein Einzel-Gruppenspiel über die Function submitSinglesMatch ein.
+ * Genutzt von addSinglesMatch und submitChallengeMatch.
+ * @returns {Promise<Object|null>} Antwort der Function oder null (Abbruch/Fehler)
+ */
+async function _submitSinglesMatch(player1Id, player2Id, sets) {
+  // Doppelklicks während des (ggf. langsamen) Function-Aufrufs ignorieren
+  if (_singlesSubmitInFlight) return null;
+  _singlesSubmitInFlight = true;
+
+  try {
+    return await callFunction("submitSinglesMatch", { player1Id, player2Id, sets });
+  } catch (error) {
+    console.error("Fehler beim Eintragen des Einzels:", error);
+    Toast.error(error.message || "Fehler beim Eintragen des Spiels");
+    return null;
+  } finally {
+    _singlesSubmitInFlight = false;
+  }
 }
 
 // ========== Hilfsfunktion: Standard-Status ermitteln ==========

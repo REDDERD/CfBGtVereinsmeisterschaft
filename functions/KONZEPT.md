@@ -209,31 +209,26 @@ Mit `challengeId` schließt `submitDoublesMatch` die Herausforderung in derselbe
 | 1 | Grundgerüst: `config`, `lib/`, `domain/` | ✔ |
 | 2 | P1: `matches/`, `challenges/`, Pyramiden-Repository und Trigger | ✔ |
 | 3 | P2/P3 als typisierte Stubs | ✔ |
-| 4 | **Client anbinden** (je Feature) | offen |
+| 4 | **Client anbinden** (je Feature) | `submitSinglesMatch` ✔ (Gruppenspiel + Einzel-Herausforderung), Rest offen |
 | 5 | **Rules verschärfen** | offen |
-| 6 | **`firebase.json`**: Functions-Emulator auf Port 5001 eintragen | offen |
+| 6 | **`firebase.json`**: Functions-Emulator auf Port 5001 eintragen | ✔ |
+
+`src/index.ts` exportiert nur die Functions, die der Client bereits nutzt (derzeit nur `submitSinglesMatch`). Die übrigen Exporte sind dort auskommentiert und werden erst mit ihrer Client-Anbindung freigeschaltet. Das gilt besonders für den Trigger `onSeasonPlayerWritten`, der sonst sofort nach dem Deploy parallel zu `loadPyramid()` die Pyramide verändern würde.
 | 7 | P2 umsetzen: `knockout/`, `adminPyramid.ts` | offen |
 | 8 | P3 umsetzen: `seasons/`, optional `users/claims.ts` | offen |
 
 ### Schritt 4: Client anbinden
-1. In `index.html` `firebase-functions-compat.js` (10.7.1) einbinden.
-2. In `js/config/firebase.js`: `const functions = firebase.app().functions("europe-west3")`. Im Emulator-Modus zusätzlich `functions.useEmulator("localhost", 5001)`.
-3. Hilfsfunktion `callFunction(name, data)` mit Bestätigungs-Flow:
-   ```js
-   async function callFunction(name, data) {
-     const call = functions.httpsCallable(name);
-     let result = (await call(data)).data;
-     if (result.status === "needs-confirmation") {
-       for (const w of result.warnings) {
-         if (!(await Modal.warn({ title: w.title, message: w.message }))) return null;
-       }
-       result = (await call({ ...data, acknowledgeWarnings: true })).data;
-     }
-     return result;
-   }
-   ```
-4. In den Services die direkten Writes durch `callFunction(...)` ersetzen. Formular- und DOM-Logik bleibt, Fehler zeigt `Toast.error(error.message)`.
-5. `loadPyramid()` nur noch lesend.
+Die Grundlage steht bereits:
+- `index.html` lädt `firebase-functions-compat.js` (10.7.1).
+- `js/config/firebase.js` stellt `functions` bereit (Region `europe-west3`, lokal mit dem Emulator auf Port 5001).
+- `js/services/functions-service.js` enthält `callFunction(name, data)` mit dem Bestätigungs-Flow (`needs-confirmation` → `Modal.warn` → erneuter Aufruf mit `acknowledgeWarnings: true`). Bei Abbruch gibt die Funktion `null` zurück.
+
+Für jede weitere Function:
+1. In den Services den direkten Write durch `callFunction(...)` ersetzen. Formular- und DOM-Logik bleibt, Fehler zeigt `Toast.error(error.message)`. Clientseitige Regelprüfungen, die jetzt der Server übernimmt, entfallen. Vorbild ist `_submitSinglesMatch` in `js/services/match-service.js`.
+2. Den Export in `src/index.ts` freischalten.
+3. Mit der Pyramiden-Anbindung `loadPyramid()` nur noch lesend machen und `onSeasonPlayerWritten` exportieren.
+
+**Lokal testen:** `firebase emulators:start` startet jetzt auch den Functions-Emulator (vorher `npm --prefix functions run build`). Bricht das Laden mit „Timeout after 10000“ ab, hilft `FUNCTIONS_DISCOVERY_TIMEOUT=60` als Umgebungsvariable (PowerShell: `$env:FUNCTIONS_DISCOVERY_TIMEOUT = "60"`).
 
 ### Schritt 5: Rules verschärfen (erst nach Schritt 4)
 Für `singlesMatches`, `doublesMatches`, `challenges`, `pyramid` und für `settings/{activeSeason, knockout, knockoutConfig, doublesKnockout, doublesKnockoutConfig}` gilt dann `allow write: if false` (das Admin SDK umgeht die Rules), außerdem für `seasons` beim Anlegen. Die Lese-Regeln bleiben unverändert.
@@ -249,6 +244,11 @@ Für `singlesMatches`, `doublesMatches`, `challenges`, `pyramid` und für `setti
   - Herausforderungsregeln: identisch in 7.714 Kombinationen (Pyramiden mit 1 bis 28 Spielern)
   - Doppel-K.O. (Teams, aktive Spieler, Partner-Regeln, Kandidaten): identisch in 86.400 Prüfungen über 300 zufällige Bracket-Verläufe
   - Smoke-Tests für Sätze, Pyramide, Validierungsmodi, Status-Defaults und Tabelle
+- `submitSinglesMatch` wurde Ende-zu-Ende im Emulator getestet (Demo-Projekt, Aufrufe über das echte Callable-Protokoll mit Auth-Token), 16 Prüfungen:
+  - Login-Pflicht und ungültige Eingaben
+  - Status und Runde nach Einstellung und Rolle
+  - Gruppen-Hinweis und Paarungslimit in den Modi `warn`, `block` und `admin_only`
+  - abgelehnte Spiele zählen nicht zum Paarungslimit
 
 **Nach Schritt 4 und 5** (`firebase emulators:start` plus `scripts/clone-prod-to-emulator.js`):
 - Als QR-Nutzer mit `doublesUserDefault = confirmed` ein Doppel eintragen → die Pyramide wird aktualisiert.

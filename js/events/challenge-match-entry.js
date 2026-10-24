@@ -172,21 +172,13 @@ async function submitChallengeMatch(player1Id, player2Id) {
     return;
   }
 
-  try {
-    await seasonCollection("singlesMatches").add({
-      player1Id: player1Id,
-      player2Id: player2Id,
-      sets,
-      date: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+  // Speichern über die Function submitSinglesMatch (setzt jetzt auch Status und Runde)
+  const result = await _submitSinglesMatch(player1Id, player2Id, sets);
+  if (!result) return;
 
-    state.challengeMatchEntry = null;
-    
-    Modal.close();
-    Toast.success("Spiel erfolgreich eingetragen!");
-    render();
-  } catch (error) {
-    console.error("Error submitting challenge match:", error);
-    Toast.error("Fehler beim Eintragen des Spiels");
-  }
+  state.challengeMatchEntry = null;
+
+  Modal.close();
+  Toast.success("Spiel erfolgreich eingetragen!");
+  render();
 }

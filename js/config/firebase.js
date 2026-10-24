@@ -15,11 +15,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
+// Region muss zu functions/src/config.ts (REGION) passen
+const functions = firebase.app().functions("europe-west3");
 
 // Emulator-Modus: wird automatisch aktiviert wenn die App lokal läuft
 if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
   db.useEmulator("localhost", 8080);
   auth.useEmulator("http://localhost:9099");
+  functions.useEmulator("localhost", 5001);
   console.log("🔧 Firebase Emulator aktiv (lokale Testumgebung)");
 }
 

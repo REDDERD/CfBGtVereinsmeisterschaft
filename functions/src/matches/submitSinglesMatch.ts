@@ -48,6 +48,8 @@ export const submitSinglesMatch = onCall(async (request) => {
   // Wie bisher: Runde aus der Gruppe von Spieler 1
   const round = player1.singlesGroup === 1 ? "group1" : "group2";
 
+  
+
   const ref = await seasonCol(year, COLLECTIONS.singlesMatches).add({
     player1Id,
     player2Id,

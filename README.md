@@ -36,22 +36,21 @@ Hier kann die Reihenfolge der Pyramide manuell beeinflusst werden. Da nachträgl
 Es ist ebenfalls möglich, einzelne Spieler komplett aus der Pyramide zu löschen. Hier sollte zuvor der Doppel-Pool des Spielers entfernt werden, da er sonst möglicherweise wieder zur Pyramide hinzugefügt wird.
 
 #### K.O.-Phase im Doppel
-Analog zum Einzel kann auch im Doppel von der Pyramidenphase in eine K.O.-Phase gewechselt werden. Berücksichtigt werden dabei die **Top 8** der Pyramide. Da noch nicht feststeht, in welcher Form gespielt wird, lässt sich der Spielmodus über ein Dropdown einstellen. Es werden zwei Fragen gleichzeitig beantwortet:
+Analog zum Einzel kann auch im Doppel von der Pyramidenphase in eine K.O.-Phase gewechselt werden. Die **Top 8** der Pyramide qualifizieren sich und spielen nach fester Setzliste:
+- Viertelfinale: **Viertelfinale A** 1 vs 8, **Viertelfinale B** 2 vs 7, **Viertelfinale C** 3 vs 6, **Viertelfinale D** 4 vs 5
+- Halbfinale: Gewinner A vs Gewinner D und Gewinner B vs Gewinner C
+- danach das Finale (kein Spiel um Platz 3)
 
-**Wie viele Teams?**
-- **8 Teams – ab Viertelfinale**: Jeder der Top 8 bildet mit einem eigenen Partner ein Team. Es wird mit Viertelfinale, Halbfinale, Spiel um Platz 3 und Finale gespielt.
-- **4 Teams – ab Halbfinale**: Je zwei Top-8-Spieler bilden zusammen ein Team. Es wird mit Halbfinale, Spiel um Platz 3 und Finale gespielt.
+Zu jedem Spieler wird **je Spiel ein Partner zugelost**. Sobald beide Teams eines Spiels feststehen, erscheint im K.O.-Baum der Button "Partner auslosen" (danach "Neu auslosen", solange noch kein Ergebnis eingetragen ist). Beim Eintragen des Ergebnisses sind die ausgelosten Partner vorausgewählt und können bei Bedarf noch geändert werden. In die nächste Runde kommt nur der gesetzte Spieler (Spieler 1) – dort wird wieder neu ausgelost. Das passt zur Pyramiden-Logik, in der ebenfalls nur Spieler 1 gewertet wird.
 
-**Wie lange gilt eine Doppelpaarung?**
-- **Feste Partner für die ganze K.O.-Phase**: Der Partner wird im Admin-Bereich je Team hinterlegt und bleibt bis zum Finale derselbe. Er kann auch nach dem Start der K.O.-Phase noch geändert werden, damit eine Auslosung erst kurz vor den Spielen eingetragen werden kann.
-- **Partner je Spiel neu**: Im Admin-Bereich werden nur die Positionen festgelegt. Der Partner wird erst beim Eintragen des Ergebnisses ausgewählt und gilt nur für dieses eine Spiel. In die nächste Runde kommt entsprechend nur Spieler 1 – dort wird wieder ein neuer Partner angegeben.
+Für die Auslosung und die Partner-Auswahl beim Eintragen gelten zwei Regeln, die unter "Auslosungsregeln" einzeln abgeschaltet werden können – auch während der laufenden K.O.-Phase (Änderungen werden sofort gespeichert):
+- **Pool-Regel**: Der Partner muss aus dem anderen Pool kommen (A + B), wie in der Pyramidenphase.
+- **K.O.-Spieler gesperrt**: Die 8 Spieler der K.O.-Phase können erst als Partner zugelost werden, wenn sie in der K.O.-Phase ausgeschieden sind.
 
-In beiden Fällen wird "Spieler 1" jedes Teams über die **Pyramiden-Position** festgelegt (Rang 1 bis Rang 8) – genau wie im Einzel die Gruppenplatzierung. Das passt zur Pyramiden-Logik, in der ebenfalls nur Spieler 1 gewertet wird.
+Zusätzlich wird ein Partner nicht doppelt in derselben Runde gezogen. Gibt es nicht genug passende Spieler, erscheint ein Hinweis – dann ggf. eine Regel abschalten.
 
-Über "K.O.-Phase starten" wird die aktuelle Pyramiden-Rangfolge eingefroren; sie ist ab dann die Grundlage für die Auflösung der Positionen. Während der K.O.-Phase können keine neuen Pyramiden-Spiele (auch keine kampflosen) und keine Doppel-Herausforderungen mehr eingetragen werden. Ergebnisse der K.O.-Phase verändern die Pyramide **nicht**.  
-Die K.O.-Phase kann wieder deaktiviert werden – dabei gehen alle K.O.-Spiele verloren, die Pyramide bleibt erhalten. Vorher am besten exportieren.
-
-**Hinweis**: Die Pool-Regel (ein Spieler aus Pool A, einer aus Pool B) wird in der K.O.-Phase nicht geprüft – weder bei festen Partnern noch bei Partnern je Spiel. Die Zusammenstellung liegt damit komplett beim Admin.
+Über "K.O.-Phase starten" wird die aktuelle Pyramiden-Rangfolge eingefroren; sie ist ab dann die Grundlage für die Setzliste. Während der K.O.-Phase können keine neuen Pyramiden-Spiele (auch keine kampflosen) und keine Doppel-Herausforderungen mehr eingetragen werden. Ergebnisse der K.O.-Phase verändern die Pyramide **nicht**.  
+Die K.O.-Phase kann wieder deaktiviert werden – dabei gehen alle K.O.-Spiele und Auslosungen verloren, die Pyramide bleibt erhalten. Vorher am besten exportieren.
 
 ### Spiele verwalten
 Hier können alle eingetragenen Spiele eingesehen werden. Diese haben jeweils einen von 3 Status (Unbestätigt, Bestätigt, Abgelehnt). Admins können über die Buttons rechts den Status jedes Spiels verändern. Nur bestätigte Spiele gehen in die Wertung ein. Ein bestätigtes Spiel kann auch wieder zurückgenommen werden. Beim Einzel wird dieses dann aus der Wertung entfernt. Beim Doppel ist das nicht möglich, sodass der Admin die Reihenfolge manuell ändern muss.  
@@ -111,7 +110,7 @@ Beim Eintragen ist wichtig, dass ein Ergebniss in der Pyramide immer nur für di
 Man kann beliebige Spieler in der Pyramide zum Spiel herausfordern, die über einem stehen. Wenn der Spieler, der weiter unten in der Pyramide steht, das Spiel gewinnt, so nimmt er die Position des unterlegenen Spielers ein und alle anderen in der Rangfolge werden um eine Position nach hinten versetzt. Wie hoch das Ergebnis ausgeht, ist im Doppel egal.
 
 Sobald die K.O.-Phase gestartet wurde (siehe [Doppel verwalten](#doppel-verwalten)), kann über die Buttons oben zwischen der eingefrorenen Pyramide und dem K.O.-Baum umgeschaltet werden. Im K.O.-Baum wird jeweils direkt am entsprechenden Spiel auf "Ergebnis eintragen" gedrückt. Ergebnisse der K.O.-Phase können nur von Admins eingetragen werden und wirken sich nicht auf die Pyramide aus.  
-Ist der Modus "Partner je Spiel neu" eingestellt, werden im Eintrage-Fenster zuerst die beiden Partner ausgewählt und danach das Ergebnis eingetragen.  
+Vor dem Spiel werden über "Partner auslosen" die Partner beider Teams zugelost. Im Eintrage-Fenster sind sie vorausgewählt und können bei Bedarf noch geändert werden, danach wird das Ergebnis eingetragen.  
 Im selben Fenster kann ein Spiel unten auch **kampflos** gewertet werden – je ein Button pro Team, das Ergebnis wird als 21:0, 21:0 gespeichert. Der Partner ist dabei optional, weil er bei einem Nichtantreten oft gar nicht feststeht. Kampflose Spiele sind im K.O.-Baum und in der Spiele-Liste mit "Kampflos" gekennzeichnet.
 
 

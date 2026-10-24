@@ -3,15 +3,16 @@
 // Analog zu KnockoutBracket.js (Einzel), nur mit Teams statt Einzelspielern.
 
 function DoublesKnockoutBracketView() {
-  const startRound = getDoublesKnockoutStartRound();
-
-  const renderMatchCard = (round, matchNum, title, borderColor = "blue") => {
+  const renderMatchCard = (round, matchNum, borderColor = "blue") => {
+    const title = getDoublesKnockoutMatchLabel(round, matchNum);
     const match = getDoublesKnockoutMatch(round, matchNum);
     const { team1, team2, team1Fallback, team2Fallback } =
       getDoublesKnockoutTeams(round, matchNum);
     const isPlayed = match && match.sets;
     const canPlay =
       isDoublesKnockoutTeamReady(team1) && isDoublesKnockoutTeamReady(team2);
+    const isAdminEditable = !isPlayed && state.isAdmin && !isReadOnly();
+    const isDrawn = !!(team1?.player2Id || team2?.player2Id);
 
     let winnerIsTeam1 = null;
     if (isPlayed) {
@@ -58,9 +59,14 @@ function DoublesKnockoutBracketView() {
           ${teamRow(label2, false)}
         </div>
         ${
-          !isPlayed && state.isAdmin && !isReadOnly() && canPlay
+          isAdminEditable && canPlay
+            ? `<button onclick="drawDoublesKnockoutPartners('${round}', ${matchNum})" class="mt-2 w-full px-3 py-2 text-sm ${isDrawn ? "bg-white text-indigo-700 border border-indigo-300 hover:bg-indigo-50" : "bg-indigo-600 text-white hover:bg-indigo-700"} rounded-lg">${isDrawn ? "Neu auslosen" : "Partner auslosen"}</button>`
+            : ""
+        }
+        ${
+          isAdminEditable && canPlay
             ? `<button onclick="openDoublesKnockoutMatchEntry('${round}', ${matchNum})" class="mt-2 w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">Ergebnis eintragen</button>`
-            : !isPlayed && state.isAdmin && !isReadOnly()
+            : isAdminEditable
               ? '<div class="mt-2 text-center text-xs text-gray-400">Teams stehen noch nicht fest</div>'
               : ""
         }
@@ -73,33 +79,26 @@ function DoublesKnockoutBracketView() {
       <div class="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 sm:p-6 rounded-lg border-2 border-yellow-400">
         <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4">K.O.-Phase Doppel</h3>
 
-        ${
-          startRound === "quarter"
-            ? `
         <div class="mb-4">
           <h4 class="font-bold text-gray-700 mb-2 text-sm sm:text-base">Viertelfinale</h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-            ${renderMatchCard("quarter", 1, "VF 1")}
-            ${renderMatchCard("quarter", 2, "VF 2")}
-            ${renderMatchCard("quarter", 3, "VF 3")}
-            ${renderMatchCard("quarter", 4, "VF 4")}
+            ${renderMatchCard("quarter", 1)}
+            ${renderMatchCard("quarter", 2)}
+            ${renderMatchCard("quarter", 3)}
+            ${renderMatchCard("quarter", 4)}
           </div>
         </div>
-        `
-            : ""
-        }
 
         <div class="mb-4">
           <h4 class="font-bold text-gray-700 mb-2 text-sm sm:text-base">Halbfinale</h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-            ${renderMatchCard("semi", 1, "HF 1")}
-            ${renderMatchCard("semi", 2, "HF 2")}
+            ${renderMatchCard("semi", 1)}
+            ${renderMatchCard("semi", 2)}
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-          ${renderMatchCard("thirdPlace", 1, "Spiel um Platz 3", "amber")}
-          ${renderMatchCard("final", 1, "Finale", "yellow")}
+        <div class="sm:max-w-md sm:mx-auto">
+          ${renderMatchCard("final", 1, "yellow")}
         </div>
       </div>
     </div>`;
@@ -112,31 +111,42 @@ function DoublesKnockoutMatchEntryModal() {
 
   const team1Label = getDoublesTeamLabel(team1, team1Fallback);
   const team2Label = getDoublesTeamLabel(team2, team2Fallback);
-  const perMatch = isDoublesKnockoutPartnerPerMatch();
-
   const title =
-    round === "thirdPlace" || round === "final"
+    round === "final"
       ? DOUBLES_KNOCKOUT_ROUND_NAMES[round]
-      : `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${matchNum}`;
+      : round === "quarter"
+        ? `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${DOUBLES_KNOCKOUT_QUARTER_LETTERS[matchNum]}`
+        : `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${matchNum}`;
 
-  // Bei Partnern je Spiel steckt der Partner in einem Select (gleiche ID wie
-  // das Hidden-Input im Modus "feste Partner", damit das Speichern identisch bleibt)
-  const partnerOptions = perMatch
-    ? getDoublesKnockoutPartnerOptions(team1, team2)
-    : [];
-
+  // Der Partner steckt in einem Select. Ein ausgeloster Partner ist
+  // vorausgewählt und bleibt immer wählbar.
   const teamBlock = (team, slot, fallback) => {
     const seedName = team?.player1Id ? getPlayerName(team.player1Id) : fallback;
+    const drawnId = team?.player2Id || null;
+    const options = getDoublesKnockoutPartnerOptions(
+      team1,
+      team2,
+      team?.player1Id,
+    );
+    if (drawnId && !options.some((p) => p.id === drawnId)) {
+      const drawn = state.players.find((p) => p.id === drawnId);
+      if (drawn) options.unshift(drawn);
+    }
     return `
       <div>
         <div class="text-xs font-semibold text-gray-500 mb-1">${slot === "t1" ? "Team 1" : "Team 2"}</div>
         <div class="font-bold text-base sm:text-lg mb-1.5">${seedName}</div>
         <select id="dko${slot === "t1" ? "T1" : "T2"}P2Id" class="w-full px-3 py-2.5 border rounded-lg bg-white text-sm">
           <option value="">Partner wählen...</option>
-          ${partnerOptions.map((p) => `<option value="${p.id}">${p.name} (Pool ${p.doublesPool})</option>`).join("")}
+          ${options.map((p) => `<option value="${p.id}" ${p.id === drawnId ? "selected" : ""}>${p.name} (Pool ${p.doublesPool})${p.id === drawnId ? " – ausgelost" : ""}</option>`).join("")}
         </select>
       </div>`;
   };
+
+  const partnerHint =
+    team1?.player2Id || team2?.player2Id
+      ? "Die ausgelosten Partner sind vorausgewählt. Weiter kommt nur der gesetzte Spieler."
+      : "Für dieses Spiel wurden noch keine Partner ausgelost. Weiter kommt nur der gesetzte Spieler.";
 
   return `
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
@@ -146,35 +156,15 @@ function DoublesKnockoutMatchEntryModal() {
           <button onclick="closeDoublesKnockoutMatchEntry()" class="p-2 hover:bg-gray-100 rounded-full">${icons.x}</button>
         </div>
         <div class="mb-4 p-3 bg-indigo-50 rounded-lg">
-          ${
-            perMatch
-              ? `
-            <p class="text-xs text-gray-600 mb-3">In diesem Modus werden die Partner je Spiel neu gesetzt. Weiter kommt nur der gesetzte Spieler.</p>
-            <div class="space-y-3">
-              ${teamBlock(team1, "t1", team1Fallback)}
-              <div class="text-center text-gray-500 text-sm">vs</div>
-              ${teamBlock(team2, "t2", team2Fallback)}
-            </div>
-          `
-              : `
-            <div class="text-center">
-              <div class="font-bold text-base sm:text-lg">${team1Label}</div>
-              <div class="text-gray-500 text-sm my-1">vs</div>
-              <div class="font-bold text-base sm:text-lg">${team2Label}</div>
-            </div>
-          `
-          }
+          <p class="text-xs text-gray-600 mb-3">${partnerHint}</p>
+          <div class="space-y-3">
+            ${teamBlock(team1, "t1", team1Fallback)}
+            <div class="text-center text-gray-500 text-sm">vs</div>
+            ${teamBlock(team2, "t2", team2Fallback)}
+          </div>
         </div>
         <input type="hidden" id="dkoT1P1Id" value="${team1?.player1Id || ""}">
         <input type="hidden" id="dkoT2P1Id" value="${team2?.player1Id || ""}">
-        ${
-          perMatch
-            ? ""
-            : `
-        <input type="hidden" id="dkoT1P2Id" value="${team1?.player2Id || ""}">
-        <input type="hidden" id="dkoT2P2Id" value="${team2?.player2Id || ""}">
-        `
-        }
         <input type="hidden" id="dkoRound" value="${round}">
         <input type="hidden" id="dkoMatchNum" value="${matchNum}">
         <div class="space-y-3 mb-5">

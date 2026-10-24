@@ -383,10 +383,11 @@ service cloud.firestore {
         (doc == 'doublesKnockout' &&
          request.resource.data.active is bool
         ) ||
-        // Doppel-K.O.-Phase Paarungen
+        // Doppel-K.O.-Phase Auslosungen & Auslosungsregeln
         (doc == 'doublesKnockoutConfig' &&
-         request.resource.data.mode in ['quarter', 'semi'] &&
-         request.resource.data.partnerMode in ['fixed', 'perMatch'] &&
+         (!('draws' in request.resource.data) || request.resource.data.draws is map) &&
+         (!('drawPoolRule' in request.resource.data) || request.resource.data.drawPoolRule is bool) &&
+         (!('drawBlockActivePlayers' in request.resource.data) || request.resource.data.drawBlockActivePlayers is bool) &&
          request.resource.data.updatedAt is timestamp
         )
       );

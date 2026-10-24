@@ -44,7 +44,7 @@ const state = {
   // Doppel-K.O.-Phase (analog zum Einzel)
   doublesKnockoutPhaseActive: false,
   doublesKnockoutMatches: [],
-  doublesKnockoutConfig: {}, // { mode: 'quarter'|'semi', qf_1_t1_pos, qf_1_t1_partner, ... }
+  doublesKnockoutConfig: {}, // { draws: { quarter_1: { t1, t2 }, ... }, drawPoolRule, drawBlockActivePlayers }
   frozenPyramid: null, // Eingefrorene Rangfolge (flache Liste von playerIds)
   doublesView: "pyramid",
   doublesKnockoutEntryMatch: null,

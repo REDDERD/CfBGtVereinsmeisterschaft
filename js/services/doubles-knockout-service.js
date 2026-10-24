@@ -1,27 +1,36 @@
 // js/services/doubles-knockout-service.js
-// Doppel-K.O.-Phase Verwaltung (Aktivierung, Spiele, Konfiguration)
+// Doppel-K.O.-Phase Verwaltung (Aktivierung, Spiele, Auslosung)
 // Analog zu knockout-service.js (Einzel), nur mit Teams statt Einzelspielern.
 //
-// Die Entscheidung über den Spielmodus steht noch aus, deshalb zwei unabhängige Achsen:
+// Die Top 8 der Pyramide spielen nach fester Setzliste:
+//   VF A: 1 vs 8, VF B: 2 vs 7, VF C: 3 vs 6, VF D: 4 vs 5
+//   HF 1: Gew. A vs Gew. D, HF 2: Gew. B vs Gew. C → Finale
 //
-// mode (Bracket-Größe):
-//   'quarter' → 8 Teams: jeder der Top 8 spielt mit einem Partner
-//               Runden: quarter (4) → semi (2) → final / thirdPlace
-//   'semi'    → 4 Teams: je 2 Top-8-Spieler bilden ein Team
-//               Runden: semi (2) → final / thirdPlace
-//
-// partnerMode (Partner-Bindung):
-//   'fixed'    → Partner gelten für die gesamte K.O.-Phase und werden im Admin
-//                vorab je Team konfiguriert.
-//   'perMatch' → Partner werden je Spiel neu gesetzt und erst beim Eintragen des
-//                Ergebnisses angegeben. Weiter kommt nur Spieler 1 (der gesetzte
-//                Spieler aus der Pyramide).
+// Zu jedem gesetzten Spieler wird je Spiel ein Partner zugelost, weiter kommt
+// nur der gesetzte Spieler (Spieler 1). Regeln (beide im Admin abschaltbar):
+//   - Pool-Regel: Partner muss aus dem anderen Pool kommen (A + B)
+//   - Spieler der K.O.-Phase sind erst nach ihrem Ausscheiden auslosbar
 
 const DOUBLES_KNOCKOUT_ROUND_NAMES = {
   quarter: "Viertelfinale",
   semi: "Halbfinale",
-  thirdPlace: "Spiel um Platz 3",
   final: "Finale",
+};
+
+// Setzliste: Viertelfinale → Pyramiden-Plätze
+const DOUBLES_KNOCKOUT_QUARTER_SEEDS = {
+  1: [1, 8],
+  2: [2, 7],
+  3: [3, 6],
+  4: [4, 5],
+};
+
+const DOUBLES_KNOCKOUT_QUARTER_LETTERS = { 1: "A", 2: "B", 3: "C", 4: "D" };
+
+// Halbfinale → Viertelfinals, deren Gewinner aufeinandertreffen
+const DOUBLES_KNOCKOUT_SEMI_QUARTERS = {
+  1: [1, 4],
+  2: [2, 3],
 };
 
 // ========== View-Steuerung ==========
@@ -38,26 +47,8 @@ function showFrozenPyramidPhase() {
 
 // ========== Rangfolge & Konfiguration ==========
 
-function getDoublesKnockoutStartRound() {
-  return state.doublesKnockoutConfig?.mode === "semi" ? "semi" : "quarter";
-}
-
-function getDoublesKnockoutPartnerMode() {
-  return state.doublesKnockoutConfig?.partnerMode === "perMatch"
-    ? "perMatch"
-    : "fixed";
-}
-
-function isDoublesKnockoutPartnerPerMatch() {
-  return getDoublesKnockoutPartnerMode() === "perMatch";
-}
-
-function getDoublesKnockoutSlotCount() {
-  return getDoublesKnockoutStartRound() === "semi" ? 2 : 4;
-}
-
 /**
- * Rangfolge, gegen die die konfigurierten Positionen aufgelöst werden.
+ * Rangfolge, aus der die Setzliste aufgelöst wird.
  * Nach Start der K.O.-Phase die eingefrorene, davor die aktuelle Pyramide.
  */
 function getDoublesRankingList() {
@@ -67,39 +58,43 @@ function getDoublesRankingList() {
   return flattenPyramidLevels(state.pyramid.levels || []);
 }
 
-/**
- * Löst eine Positionsangabe ("p1" … "p8") gegen die Rangfolge auf.
- */
-function getDoublesPositionPlayerId(position) {
-  if (!position) return null;
-  const place = parseInt(position.replace("p", ""));
-  if (isNaN(place)) return null;
+function getDoublesSeedPlayerId(place) {
   return getDoublesRankingList()[place - 1] || null;
 }
 
-function getDoublesKnockoutConfigTeam(matchNum, slot) {
-  const config = state.doublesKnockoutConfig || {};
-  const prefix = getDoublesKnockoutStartRound() === "semi" ? "sf" : "qf";
-  const player1Id = getDoublesPositionPlayerId(
-    config[`${prefix}_${matchNum}_${slot}_pos`],
-  );
-  // Bei Partnern je Spiel wird der konfigurierte Partner ignoriert
-  const player2Id = isDoublesKnockoutPartnerPerMatch()
-    ? null
-    : config[`${prefix}_${matchNum}_${slot}_partner`] || null;
-
-  if (!player1Id && !player2Id) return null;
-  return { player1Id: player1Id || null, player2Id };
+/**
+ * Kurzbezeichnung eines Spiels, z. B. "Viertelfinale A", "HF 2", "Finale".
+ */
+function getDoublesKnockoutMatchLabel(round, matchNum) {
+  if (round === "quarter") return `Viertelfinale ${DOUBLES_KNOCKOUT_QUARTER_LETTERS[matchNum]}`;
+  if (round === "semi") return `Halbfinale ${matchNum}`;
+  return DOUBLES_KNOCKOUT_ROUND_NAMES[round] || round;
 }
 
 /**
- * Bei Partnern je Spiel kommt nur Spieler 1 weiter – der Partner der nächsten
- * Runde wird erst beim Eintragen des Ergebnisses festgelegt.
+ * Auslosungsregeln. Standard: beide aktiv.
  */
-function stripDoublesKnockoutPartner(team) {
-  if (!team) return null;
-  if (!isDoublesKnockoutPartnerPerMatch()) return team;
-  return { player1Id: team.player1Id || null, player2Id: null };
+function getDoublesKnockoutDrawRules() {
+  const config = state.doublesKnockoutConfig || {};
+  return {
+    poolRule: config.drawPoolRule !== false,
+    blockActivePlayers: config.drawBlockActivePlayers !== false,
+  };
+}
+
+function getDoublesKnockoutDrawnPartner(round, matchNum, slot) {
+  return state.doublesKnockoutConfig?.draws?.[`${round}_${matchNum}`]?.[slot] || null;
+}
+
+/**
+ * Team aus gesetztem Spieler und dem für dieses Spiel ausgelosten Partner.
+ */
+function _buildDoublesKnockoutTeam(player1Id, round, matchNum, slot) {
+  if (!player1Id) return null;
+  return {
+    player1Id,
+    player2Id: getDoublesKnockoutDrawnPartner(round, matchNum, slot),
+  };
 }
 
 // ========== Spiele & Bracket-Logik ==========
@@ -127,62 +122,43 @@ function getDoublesKnockoutWinnerTeam(round, matchNum) {
   return t1 > t2 ? match.team1 : match.team2;
 }
 
-function getDoublesKnockoutLoserTeam(round, matchNum) {
-  const match = getDoublesKnockoutMatch(round, matchNum);
-  if (!match || !match.sets) return null;
-  const { t1, t2 } = getDoublesKnockoutSetsWon(match);
-  return t1 > t2 ? match.team2 : match.team1;
-}
-
 /**
  * Ermittelt die beiden Teams eines Bracket-Spiels.
  * Rückgabe: { team1, team2, team1Fallback, team2Fallback }
- * team1/team2 sind null, solange das Team noch nicht feststeht.
+ * team1/team2 sind null, solange der gesetzte Spieler noch nicht feststeht.
+ * player2Id ist der ausgeloste Partner (oder null, solange nicht ausgelost).
  */
 function getDoublesKnockoutTeams(round, matchNum) {
-  const startRound = getDoublesKnockoutStartRound();
-
-  if (round === startRound) {
+  if (round === "quarter") {
+    const [place1, place2] = DOUBLES_KNOCKOUT_QUARTER_SEEDS[matchNum] || [];
     return {
-      team1: getDoublesKnockoutConfigTeam(matchNum, "t1"),
-      team2: getDoublesKnockoutConfigTeam(matchNum, "t2"),
-      team1Fallback: "Team 1",
-      team2Fallback: "Team 2",
+      team1: _buildDoublesKnockoutTeam(getDoublesSeedPlayerId(place1), round, matchNum, "t1"),
+      team2: _buildDoublesKnockoutTeam(getDoublesSeedPlayerId(place2), round, matchNum, "t2"),
+      team1Fallback: `Rang ${place1}`,
+      team2Fallback: `Rang ${place2}`,
     };
   }
 
-  if (round === "semi") {
-    return {
-      team1: stripDoublesKnockoutPartner(
-        getDoublesKnockoutWinnerTeam("quarter", matchNum === 1 ? 1 : 3),
-      ),
-      team2: stripDoublesKnockoutPartner(
-        getDoublesKnockoutWinnerTeam("quarter", matchNum === 1 ? 2 : 4),
-      ),
-      team1Fallback: `Gew. VF ${matchNum === 1 ? 1 : 3}`,
-      team2Fallback: `Gew. VF ${matchNum === 1 ? 2 : 4}`,
-    };
-  }
+  const [prev1, prev2] =
+    round === "semi" ? DOUBLES_KNOCKOUT_SEMI_QUARTERS[matchNum] || [] : [1, 2];
+  const prevRound = round === "semi" ? "quarter" : "semi";
 
-  if (round === "thirdPlace") {
+  if (round === "semi" || round === "final") {
     return {
-      team1: stripDoublesKnockoutPartner(getDoublesKnockoutLoserTeam("semi", 1)),
-      team2: stripDoublesKnockoutPartner(getDoublesKnockoutLoserTeam("semi", 2)),
-      team1Fallback: "Verl. HF 1",
-      team2Fallback: "Verl. HF 2",
-    };
-  }
-
-  if (round === "final") {
-    return {
-      team1: stripDoublesKnockoutPartner(
-        getDoublesKnockoutWinnerTeam("semi", 1),
+      team1: _buildDoublesKnockoutTeam(
+        getDoublesKnockoutWinnerTeam(prevRound, prev1)?.player1Id,
+        round,
+        matchNum,
+        "t1",
       ),
-      team2: stripDoublesKnockoutPartner(
-        getDoublesKnockoutWinnerTeam("semi", 2),
+      team2: _buildDoublesKnockoutTeam(
+        getDoublesKnockoutWinnerTeam(prevRound, prev2)?.player1Id,
+        round,
+        matchNum,
+        "t2",
       ),
-      team1Fallback: "Gew. HF 1",
-      team2Fallback: "Gew. HF 2",
+      team1Fallback: `Gewinner ${getDoublesKnockoutMatchLabel(prevRound, prev1)}`,
+      team2Fallback: `Gewinner ${getDoublesKnockoutMatchLabel(prevRound, prev2)}`,
     };
   }
 
@@ -211,29 +187,197 @@ function getDoublesPlayedTeamLabel(team) {
   return team.player2Id ? `${name1} / ${getPlayerName(team.player2Id)}` : name1;
 }
 
-function isDoublesTeamComplete(team) {
-  return !!(team && team.player1Id && team.player2Id);
-}
-
 /**
  * Kann für dieses Team ein Ergebnis eingetragen werden?
- * Bei Partnern je Spiel genügt der gesetzte Spieler 1.
+ * Es genügt der gesetzte Spieler – der Partner wird im Eingabe-Fenster bestätigt.
  */
 function isDoublesKnockoutTeamReady(team) {
-  if (!team || !team.player1Id) return false;
-  if (isDoublesKnockoutPartnerPerMatch()) return true;
-  return !!team.player2Id;
+  return !!(team && team.player1Id);
+}
+
+// ========== Auslosung ==========
+
+/**
+ * Spieler der K.O.-Phase (Top 8), die noch nicht ausgeschieden sind.
+ * Ausgeschieden ist, wer als Spieler 1 ein K.O.-Spiel verloren hat.
+ */
+function getActiveDoublesKnockoutPlayerIds() {
+  const eliminated = state.doublesKnockoutMatches
+    .filter((m) => m.sets)
+    .map((m) => {
+      const { t1, t2 } = getDoublesKnockoutSetsWon(m);
+      return (t1 > t2 ? m.team2 : m.team1)?.player1Id;
+    })
+    .filter(Boolean);
+  return getDoublesRankingList()
+    .slice(0, 8)
+    .filter((id) => !eliminated.includes(id));
 }
 
 /**
- * Spieler, die als Partner in einem K.O.-Spiel auswählbar sind:
- * alle Doppel-Spieler außer den beiden gesetzten Spielern.
+ * Prüft, ob partnerId nach den aktiven Auslosungsregeln Partner von seedId
+ * sein darf. Rückgabe: Begründung bei Verstoß, sonst null.
  */
-function getDoublesKnockoutPartnerOptions(team1, team2) {
+function getDoublesKnockoutPartnerViolation(seedId, partnerId) {
+  if (!seedId || !partnerId) return null;
+  const rules = getDoublesKnockoutDrawRules();
+  const seed = state.players.find((p) => p.id === seedId);
+  const partner = state.players.find((p) => p.id === partnerId);
+
+  if (
+    rules.poolRule &&
+    seed?.doublesPool &&
+    partner?.doublesPool === seed.doublesPool
+  ) {
+    return `${partner.name} ist wie ${seed.name} in Pool ${seed.doublesPool}. Jedes Team muss einen Spieler aus Pool A und einen aus Pool B haben.`;
+  }
+
+  if (
+    rules.blockActivePlayers &&
+    getActiveDoublesKnockoutPlayerIds().includes(partnerId)
+  ) {
+    return `${getPlayerName(partnerId)} ist noch in der K.O.-Phase und darf erst nach dem Ausscheiden als Partner zugelost werden.`;
+  }
+
+  return null;
+}
+
+/**
+ * Spieler, die als Partner von seedId in einem K.O.-Spiel auswählbar sind:
+ * alle Doppel-Spieler außer den beiden gesetzten Spielern, die nach den
+ * aktiven Auslosungsregeln erlaubt sind.
+ */
+function getDoublesKnockoutPartnerOptions(team1, team2, seedId) {
   const seeds = [team1?.player1Id, team2?.player1Id].filter(Boolean);
   return state.players.filter(
-    (p) => p.doublesPool && !seeds.includes(p.id),
+    (p) =>
+      p.doublesPool &&
+      !seeds.includes(p.id) &&
+      !getDoublesKnockoutPartnerViolation(seedId, p.id),
   );
+}
+
+/**
+ * Partner, die in den anderen Spielen derselben Runde bereits gespielt haben
+ * oder ausgelost wurden – sie werden bei der Auslosung nicht erneut gezogen.
+ */
+function _getDoublesKnockoutRoundPartnerIds(round, matchNum) {
+  const ids = [];
+  const matchCount = { quarter: 4, semi: 2 }[round] || 1;
+  for (let n = 1; n <= matchCount; n++) {
+    if (n === matchNum) continue;
+    const match = getDoublesKnockoutMatch(round, n);
+    if (match?.sets) {
+      ids.push(match.team1?.player2Id, match.team2?.player2Id);
+    } else {
+      ids.push(
+        getDoublesKnockoutDrawnPartner(round, n, "t1"),
+        getDoublesKnockoutDrawnPartner(round, n, "t2"),
+      );
+    }
+  }
+  return ids.filter(Boolean);
+}
+
+async function drawDoublesKnockoutPartners(round, matchNum) {
+  const { team1, team2 } = getDoublesKnockoutTeams(round, matchNum);
+  if (!team1?.player1Id || !team2?.player1Id) {
+    Toast.error("Die Teams stehen noch nicht fest");
+    return;
+  }
+  if (getDoublesKnockoutMatch(round, matchNum)?.sets) {
+    Toast.error("Für dieses Spiel ist bereits ein Ergebnis eingetragen");
+    return;
+  }
+
+  const key = `${round}_${matchNum}`;
+  if (state.doublesKnockoutConfig?.draws?.[key]) {
+    const confirmed = await Modal.confirm({
+      title: "Neu auslosen?",
+      message: `Für ${getDoublesKnockoutMatchLabel(round, matchNum)} wurden bereits Partner ausgelost. Soll neu ausgelost werden?`,
+      confirmText: "Neu auslosen",
+      cancelText: "Abbrechen",
+      type: "warning",
+    });
+    if (!confirmed) return;
+  }
+
+  const excluded = [
+    team1.player1Id,
+    team2.player1Id,
+    ..._getDoublesKnockoutRoundPartnerIds(round, matchNum),
+  ];
+  const candidates = (seedId) =>
+    getDoublesKnockoutPartnerOptions(team1, team2, seedId)
+      .map((p) => p.id)
+      .filter((id) => !excluded.includes(id));
+
+  // Alle gültigen Kombinationen bilden, damit Team 1 nicht den einzigen
+  // möglichen Partner von Team 2 "wegzieht"
+  const pairs = [];
+  const candidates2 = candidates(team2.player1Id);
+  candidates(team1.player1Id).forEach((a) =>
+    candidates2.forEach((b) => {
+      if (a !== b) pairs.push([a, b]);
+    }),
+  );
+
+  if (pairs.length === 0) {
+    Toast.error(
+      "Es gibt nicht genug auslosbare Partner. Die Auslosungsregeln können unter Admin → Doppel verwalten gelockert werden.",
+      5000,
+    );
+    return;
+  }
+
+  const [partner1, partner2] = pairs[Math.floor(Math.random() * pairs.length)];
+
+  try {
+    await db
+      .collection("settings")
+      .doc("doublesKnockoutConfig")
+      .set(
+        {
+          draws: { [key]: { t1: partner1, t2: partner2 } },
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+    Toast.success(
+      `Ausgelost: ${getPlayerName(team1.player1Id)} / ${getPlayerName(partner1)} und ${getPlayerName(team2.player1Id)} / ${getPlayerName(partner2)}`,
+      5000,
+    );
+  } catch (error) {
+    console.error("Fehler beim Auslosen:", error);
+    Toast.error("Fehler beim Auslosen: " + error.message);
+  }
+}
+
+/**
+ * Schaltet eine Auslosungsregel an/aus (sofort gespeichert).
+ * @param {'drawPoolRule'|'drawBlockActivePlayers'} rule
+ */
+async function setDoublesKnockoutDrawRule(rule, enabled) {
+  if (!["drawPoolRule", "drawBlockActivePlayers"].includes(rule)) return;
+
+  try {
+    await db
+      .collection("settings")
+      .doc("doublesKnockoutConfig")
+      .set(
+        {
+          [rule]: !!enabled,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    Toast.success(enabled ? "Regel aktiviert" : "Regel deaktiviert");
+  } catch (error) {
+    console.error("Fehler beim Speichern:", error);
+    Toast.error("Fehler beim Speichern: " + error.message);
+    render();
+  }
 }
 
 // ========== Ergebnis-Eintragung ==========
@@ -252,8 +396,7 @@ function closeDoublesKnockoutMatchEntry() {
 
 /**
  * Liest die vier Spieler aus dem Eingabe-Modal.
- * Spieler 1 steckt in einem Hidden-Input, der Partner je nach Partner-Modus
- * in einem Hidden-Input (feste Partner) oder einem Select (Partner je Spiel).
+ * Spieler 1 steckt in einem Hidden-Input, der Partner in einem Select.
  */
 function _readDoublesKnockoutTeams() {
   const read = (id) => document.getElementById(id)?.value || null;
@@ -283,6 +426,17 @@ function _validateDoublesKnockoutTeams(team1, team2, { requirePartners }) {
   if (new Set(players).size !== players.length) {
     Toast.error("Ein Spieler kann nicht in beiden Teams spielen");
     return false;
+  }
+
+  for (const team of [team1, team2]) {
+    const violation = getDoublesKnockoutPartnerViolation(
+      team.player1Id,
+      team.player2Id,
+    );
+    if (violation) {
+      Toast.error(violation, 5000);
+      return false;
+    }
   }
 
   return true;
@@ -438,11 +592,10 @@ async function saveDoublesKnockoutWalkover(winnerSlot) {
 
 async function activateDoublesKnockoutPhase() {
   const ranking = flattenPyramidLevels(state.pyramid.levels || []);
-  const needed = getDoublesKnockoutStartRound() === "semi" ? 4 : 8;
 
-  if (ranking.length < needed) {
+  if (ranking.length < 8) {
     Toast.error(
-      `Die Pyramide enthält nur ${ranking.length} Spieler, für diesen Modus werden mindestens ${needed} benötigt.`,
+      `Die Pyramide enthält nur ${ranking.length} Spieler, für die K.O.-Phase werden mindestens 8 benötigt.`,
     );
     return;
   }
@@ -450,7 +603,7 @@ async function activateDoublesKnockoutPhase() {
   const confirmed = await Modal.confirm({
     title: "Doppel-K.O.-Phase starten?",
     message:
-      "Möchtest du die K.O.-Phase im Doppel jetzt starten? Die aktuelle Pyramiden-Rangfolge wird eingefroren und ist die Grundlage für die Paarungen. Neue Pyramiden-Spiele sind danach nicht mehr möglich.",
+      "Möchtest du die K.O.-Phase im Doppel jetzt starten? Die aktuelle Pyramiden-Rangfolge wird eingefroren und ist die Grundlage für die Setzliste. Neue Pyramiden-Spiele sind danach nicht mehr möglich.",
     confirmText: "K.O.-Phase starten",
     cancelText: "Abbrechen",
     type: "warning",
@@ -483,7 +636,7 @@ async function deactivateDoublesKnockoutPhase() {
   const confirmed = await Modal.confirm({
     title: "Doppel-K.O.-Phase deaktivieren?",
     message:
-      "Möchtest du die K.O.-Phase im Doppel wirklich deaktivieren? Die Pyramide bleibt erhalten, aber alle Spiele der K.O.-Phase werden gelöscht.",
+      "Möchtest du die K.O.-Phase im Doppel wirklich deaktivieren? Die Pyramide bleibt erhalten, aber alle Spiele und Auslosungen der K.O.-Phase werden gelöscht.",
     confirmText: "Deaktivieren",
     cancelText: "Abbrechen",
     type: "danger",
@@ -506,69 +659,18 @@ async function deactivateDoublesKnockoutPhase() {
       await seasonCollection("doublesMatches").doc(match.id).delete();
     }
 
+    // Auslosungen gehören zur K.O.-Phase und werden mit ihr verworfen
+    if (state.doublesKnockoutConfig?.draws) {
+      await db.collection("settings").doc("doublesKnockoutConfig").update({
+        draws: firebase.firestore.FieldValue.delete(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
     Toast.success("Doppel-K.O.-Phase deaktiviert.");
     render();
   } catch (error) {
     console.error("Fehler beim Deaktivieren:", error);
     Toast.error("Fehler beim Deaktivieren: " + error.message);
-  }
-}
-
-// ========== Konfiguration ==========
-
-/**
- * Wechselt Bracket-Größe und Partner-Bindung lokal
- * (erst "Paarungen speichern" schreibt beides weg).
- * Erwartet den zusammengesetzten Dropdown-Wert "<mode>:<partnerMode>".
- */
-function setDoublesKnockoutMode(value) {
-  const [mode, partnerMode] = String(value).split(":");
-  state.doublesKnockoutConfig = {
-    ...(state.doublesKnockoutConfig || {}),
-    mode: mode === "semi" ? "semi" : "quarter",
-    partnerMode: partnerMode === "perMatch" ? "perMatch" : "fixed",
-  };
-  render();
-}
-
-async function saveDoublesKnockoutConfig() {
-  const previous = state.doublesKnockoutConfig || {};
-  const prefix = getDoublesKnockoutStartRound() === "semi" ? "sf" : "qf";
-  const config = {
-    mode: getDoublesKnockoutStartRound(),
-    partnerMode: getDoublesKnockoutPartnerMode(),
-  };
-
-  for (let i = 1; i <= getDoublesKnockoutSlotCount(); i++) {
-    ["t1", "t2"].forEach((slot) => {
-      const posKey = `${prefix}_${i}_${slot}_pos`;
-      const partnerKey = `${prefix}_${i}_${slot}_partner`;
-
-      const pos = document.getElementById(`d${posKey}`)?.value;
-      if (pos) config[posKey] = pos;
-
-      // Bei Partnern je Spiel gibt es kein Partner-Feld im Formular – dann den
-      // bereits gespeicherten Wert erhalten, damit ein Moduswechsel ihn nicht verliert.
-      const partnerSelect = document.getElementById(`d${partnerKey}`);
-      const partner = partnerSelect ? partnerSelect.value : previous[partnerKey];
-      if (partner) config[partnerKey] = partner;
-    });
-  }
-
-  state.doublesKnockoutConfig = config;
-
-  try {
-    await db
-      .collection("settings")
-      .doc("doublesKnockoutConfig")
-      .set({
-        ...config,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-
-    Toast.success("Doppel-Paarungen erfolgreich gespeichert!");
-  } catch (error) {
-    console.error("Fehler beim Speichern:", error);
-    Toast.error("Fehler beim Speichern: " + error.message);
   }
 }

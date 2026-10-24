@@ -25,6 +25,7 @@ Es gibt einen Standard-Nutzer, der zum Eintragen verwendet werden kann. Dieser k
 
 ### Spielerverwaltung
 Hier können Spieler zu den Vereinsmeisterschaften angemeldet und auch wieder gelöscht werden. Damit Spieler an einer Kategorie (Einzel oder Doppel) teilnehmen können, müssen sie zunächst angelegt werden. Anschließend kann über "Spieler bearbeiten" (Stift-Symbol) die Anmeldung zum Einzel und Doppel erfolgen. Dazu muss beim Einzel die Gruppe für die Gruppenphase gesetzt werden und beim Doppel muss eine Einordnung in die Pools A und B erfolgen. Die beiden Werte können unabhängig voneinander gesetzt werden, sodass man auch nur am Einzel oder nur am Doppel teilnehmen kann.  
+Über die Option "Für die Doppel-Finalrunde als Partner zulosbar" kann festgelegt werden, ob ein Spieler in der [K.O.-Phase im Doppel](#ko-phase-im-doppel) als Partner zugelost werden darf (z. B. abwählen, wenn jemand nicht mehr spielt). Standardmäßig ist jeder Spieler zugelassen. Nicht zugelassene Spieler sind in der Liste mit "nicht in Finalrunde" markiert.  
 Wird ein Spieler gelöscht (Papierkorb-Symbol) so wird dieser aus der Einzel-Gruppe direkt entfernt. Damit der Spieler aus der Doppel-Pyramide verschwindet, muss dies über [Doppel-Einstellungen](#doppel-verwalten) manuell erfolgen. Ebenso bleiben die bereits eingetragenen Spiele erhalten. Hier erscheint dann "Gelöschter Spieler" als Name. Solche Spiele können auch manuell gelöscht werden.
 
 ### Einzel verwalten
@@ -47,7 +48,7 @@ Für die Auslosung und die Partner-Auswahl beim Eintragen gelten zwei Regeln, di
 - **Pool-Regel**: Der Partner muss aus dem anderen Pool kommen (A + B), wie in der Pyramidenphase.
 - **K.O.-Spieler gesperrt**: Die 8 Spieler der K.O.-Phase können erst als Partner zugelost werden, wenn sie in der K.O.-Phase ausgeschieden sind.
 
-Zusätzlich wird ein Partner nicht doppelt in derselben Runde gezogen. Gibt es nicht genug passende Spieler, erscheint ein Hinweis – dann ggf. eine Regel abschalten.
+Spieler, die in der [Spielerverwaltung](#spielerverwaltung) nicht für die Finalrunde zugelassen sind, werden nie zugelost – unabhängig von diesen Regeln. Zusätzlich wird ein Partner nicht doppelt in derselben Runde gezogen. Gibt es nicht genug passende Spieler, erscheint ein Hinweis – dann ggf. eine Regel abschalten.
 
 Über "K.O.-Phase starten" wird die aktuelle Pyramiden-Rangfolge eingefroren; sie ist ab dann die Grundlage für die Setzliste. Während der K.O.-Phase können keine neuen Pyramiden-Spiele (auch keine kampflosen) und keine Doppel-Herausforderungen mehr eingetragen werden. Ergebnisse der K.O.-Phase verändern die Pyramide **nicht**.  
 Die K.O.-Phase kann wieder deaktiviert werden – dabei gehen alle K.O.-Spiele und Auslosungen verloren, die Pyramide bleibt erhalten. Vorher am besten exportieren.

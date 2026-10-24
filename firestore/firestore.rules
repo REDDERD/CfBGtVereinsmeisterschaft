@@ -152,10 +152,11 @@ service cloud.firestore {
         request.resource.data.createdAt is timestamp;
 
       allow update: if isAdmin() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'singlesGroup', 'doublesPool']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'singlesGroup', 'doublesPool', 'doublesKnockoutEligible']) &&
         request.resource.data.name is string && request.resource.data.name.size() > 0 &&
         isValidSinglesGroup(request.resource.data.singlesGroup) &&
-        isValidDoublesPool(request.resource.data.doublesPool);
+        isValidDoublesPool(request.resource.data.doublesPool) &&
+        (!('doublesKnockoutEligible' in request.resource.data) || request.resource.data.doublesKnockoutEligible is bool);
 
       allow delete: if isAdmin();
     }

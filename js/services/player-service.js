@@ -28,6 +28,14 @@ async function addPlayer() {
   Toast.success("Spieler erfolgreich hinzugefügt!");
 }
 
+/**
+ * Darf der Spieler in der Doppel-Finalrunde (K.O.-Phase) als Partner zugelost
+ * werden? Ohne gesetztes Feld gilt er als zugelassen.
+ */
+function isPlayerDoublesKnockoutEligible(player) {
+  return player?.doublesKnockoutEligible !== false;
+}
+
 function editPlayer(playerId) {
   state.editingPlayer = playerId;
   render();
@@ -43,8 +51,11 @@ async function savePlayer(playerId) {
   const singlesGroupSelect = document.getElementById(`editSingles_${playerId}`);
   const doublesPoolSelect = document.getElementById(`editDoubles_${playerId}`);
   
+  const knockoutEligibleInput = document.getElementById(`editKnockoutEligible_${playerId}`);
+
   const singlesGroup = singlesGroupSelect.value ? parseInt(singlesGroupSelect.value) : null;
   const doublesPool = doublesPoolSelect.value || null;
+  const doublesKnockoutEligible = knockoutEligibleInput ? knockoutEligibleInput.checked : true;
 
   if (!name) {
     Toast.error("Bitte Namen eingeben");
@@ -55,6 +66,7 @@ async function savePlayer(playerId) {
     name,
     singlesGroup,
     doublesPool,
+    doublesKnockoutEligible,
   });
 
   state.editingPlayer = null;

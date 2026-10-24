@@ -10,6 +10,8 @@
 // nur der gesetzte Spieler (Spieler 1). Regeln (beide im Admin abschaltbar):
 //   - Pool-Regel: Partner muss aus dem anderen Pool kommen (A + B)
 //   - Spieler der K.O.-Phase sind erst nach ihrem Ausscheiden auslosbar
+// Spieler, die in den Stammdaten nicht für die Finalrunde zugelassen sind,
+// werden nie zugelost.
 
 const DOUBLES_KNOCKOUT_ROUND_NAMES = {
   quarter: "Viertelfinale",
@@ -217,12 +219,17 @@ function getActiveDoublesKnockoutPlayerIds() {
 /**
  * Prüft, ob partnerId nach den aktiven Auslosungsregeln Partner von seedId
  * sein darf. Rückgabe: Begründung bei Verstoß, sonst null.
+ * Die Zulassung aus den Spieler-Stammdaten gilt immer (nicht abschaltbar).
  */
 function getDoublesKnockoutPartnerViolation(seedId, partnerId) {
   if (!seedId || !partnerId) return null;
   const rules = getDoublesKnockoutDrawRules();
   const seed = state.players.find((p) => p.id === seedId);
   const partner = state.players.find((p) => p.id === partnerId);
+
+  if (partner && !isPlayerDoublesKnockoutEligible(partner)) {
+    return `${partner.name} ist für die Finalrunde nicht zugelassen (Spieler-Stammdaten).`;
+  }
 
   if (
     rules.poolRule &&

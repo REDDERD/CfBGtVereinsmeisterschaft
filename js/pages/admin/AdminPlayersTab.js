@@ -32,6 +32,10 @@ function AdminPlayersTab() {
                   <option value="B" ${player.doublesPool === "B" ? "selected" : ""}>Pool B</option>
                 </select>
               </div>
+              <label class="flex items-center gap-2 px-1 py-1 cursor-pointer">
+                <input type="checkbox" id="editKnockoutEligible_${player.id}" ${isPlayerDoublesKnockoutEligible(player) ? "checked" : ""} class="h-4 w-4 text-indigo-600 rounded">
+                <span class="text-sm text-gray-700">Für die Doppel-Finalrunde als Partner zulosbar</span>
+              </label>
               <div class="flex gap-2">
                 <button onclick="savePlayer('${player.id}')" class="flex-1 px-3 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium">Speichern</button>
                 <button onclick="cancelEdit()" class="flex-1 px-3 py-2.5 bg-gray-400 text-white rounded-lg hover:bg-gray-500 text-sm font-medium">Abbrechen</button>
@@ -48,6 +52,7 @@ function AdminPlayersTab() {
                 ${player.singlesGroup && player.doublesPool ? " · " : ""}
                 ${player.doublesPool ? `Pool ${player.doublesPool}` : ""}
                 ${!player.singlesGroup && !player.doublesPool ? "—" : ""}
+                ${player.doublesPool && !isPlayerDoublesKnockoutEligible(player) ? ' · <span class="text-orange-600">nicht in Finalrunde</span>' : ""}
               </div>
             </div>
             <div class="flex gap-1 ml-2 flex-shrink-0">

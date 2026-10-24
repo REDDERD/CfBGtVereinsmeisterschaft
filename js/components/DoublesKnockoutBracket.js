@@ -119,7 +119,8 @@ function DoublesKnockoutBracketView() {
           </div>
         </div>
 
-        <div class="sm:max-w-md sm:mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+          ${renderMatchCard("thirdPlace", 1, "amber")}
           ${renderMatchCard("final", 1, "yellow")}
         </div>
       </div>
@@ -134,7 +135,7 @@ function DoublesKnockoutMatchEntryModal() {
   const team1Label = getDoublesTeamLabel(team1, team1Fallback);
   const team2Label = getDoublesTeamLabel(team2, team2Fallback);
   const title =
-    round === "final"
+    round === "final" || round === "thirdPlace"
       ? DOUBLES_KNOCKOUT_ROUND_NAMES[round]
       : round === "quarter"
         ? `${DOUBLES_KNOCKOUT_ROUND_NAMES[round]} ${DOUBLES_KNOCKOUT_QUARTER_LETTERS[matchNum]}`

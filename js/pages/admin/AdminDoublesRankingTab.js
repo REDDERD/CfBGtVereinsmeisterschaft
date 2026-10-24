@@ -147,7 +147,7 @@ function AdminDoublesKnockoutConfig() {
           .join("")}
       </div>
       <p class="text-xs text-gray-500 mb-4">
-        Halbfinale 1: Gewinner A vs Gewinner D · Halbfinale 2: Gewinner B vs Gewinner C · danach Finale.
+        Halbfinale 1: Gewinner A vs Gewinner D · Halbfinale 2: Gewinner B vs Gewinner C · danach Finale und Spiel um Platz 3 (Verlierer der Halbfinals).
         Zu jedem Spieler wird je Spiel ein Partner zugeordnet – ausgelost oder direkt eingetragen (Button „Partner zuordnen“ im K.O.-Baum). In die nächste Runde kommt nur der gesetzte Spieler.
       </p>
 

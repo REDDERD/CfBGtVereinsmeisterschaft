@@ -40,7 +40,7 @@ Es ist ebenfalls möglich, einzelne Spieler komplett aus der Pyramide zu lösche
 Analog zum Einzel kann auch im Doppel von der Pyramidenphase in eine K.O.-Phase gewechselt werden. Die **Top 8** der Pyramide qualifizieren sich und spielen nach fester Setzliste:
 - Viertelfinale: **Viertelfinale A** 1 vs 8, **Viertelfinale B** 2 vs 7, **Viertelfinale C** 3 vs 6, **Viertelfinale D** 4 vs 5
 - Halbfinale: Gewinner A vs Gewinner D und Gewinner B vs Gewinner C
-- danach das Finale (kein Spiel um Platz 3)
+- danach das Finale (Gewinner der Halbfinals) und das Spiel um Platz 3 (Verlierer der Halbfinals)
 
 Zu jedem Spieler wird **je Spiel ein Partner zugeordnet**. Sobald ein Spieler im K.O.-Baum feststeht, erscheint neben seinem Namen der Button "Partner zuordnen". Darüber kann gewählt werden:
 - **Auslosen**: Eine Slotmaschine lässt alle möglichen Partner mehrfach durchlaufen, wird langsamer und bleibt beim ausgelosten Partner stehen – mit Konfetti. Gespeichert wird, sobald die Walze steht.
@@ -50,7 +50,7 @@ Solange noch kein Ergebnis eingetragen ist, kann der Partner über den Stift-But
 
 Für die Auslosung und die Partner-Auswahl beim Eintragen gelten zwei Regeln, die unter "Auslosungsregeln" einzeln abgeschaltet werden können – auch während der laufenden K.O.-Phase (Änderungen werden sofort gespeichert):
 - **Pool-Regel**: Der Partner muss aus dem anderen Pool kommen (A + B), wie in der Pyramidenphase.
-- **K.O.-Spieler gesperrt**: Die 8 Spieler der K.O.-Phase können erst als Partner zugelost werden, wenn sie in der K.O.-Phase ausgeschieden sind.
+- **K.O.-Spieler gesperrt**: Die 8 Spieler der K.O.-Phase können erst als Partner zugelost werden, wenn sie in der K.O.-Phase ausgeschieden sind. Die Verlierer der Halbfinals gelten bis zu ihrem Spiel um Platz 3 noch als aktiv.
 
 Spieler, die in der [Spielerverwaltung](#spielerverwaltung) nicht für die Finalrunde zugelassen sind, werden nie zugelost – unabhängig von diesen Regeln. Zusätzlich wird ein Partner nicht doppelt in derselben Runde gezogen. Gibt es nicht genug passende Spieler, erscheint ein Hinweis – dann ggf. eine Regel abschalten.
 

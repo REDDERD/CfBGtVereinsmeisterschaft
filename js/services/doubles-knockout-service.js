@@ -4,7 +4,8 @@
 //
 // Die Top 8 der Pyramide spielen nach fester Setzliste:
 //   VF A: 1 vs 8, VF B: 2 vs 7, VF C: 3 vs 6, VF D: 4 vs 5
-//   HF 1: Gew. A vs Gew. D, HF 2: Gew. B vs Gew. C → Finale
+//   HF 1: Gew. A vs Gew. D, HF 2: Gew. B vs Gew. C
+//   Finale: Gew. HF 1 vs Gew. HF 2, Spiel um Platz 3: Verl. HF 1 vs Verl. HF 2
 //
 // Zu jedem gesetzten Spieler wird je Spiel ein Partner zugelost, weiter kommt
 // nur der gesetzte Spieler (Spieler 1). Regeln (beide im Admin abschaltbar):
@@ -16,7 +17,17 @@
 const DOUBLES_KNOCKOUT_ROUND_NAMES = {
   quarter: "Viertelfinale",
   semi: "Halbfinale",
+  thirdPlace: "Spiel um Platz 3",
   final: "Finale",
+};
+
+// Spiele, die parallel stattfinden können – ein Partner wird bei der
+// Auslosung nur einmal je Gruppe gezogen
+const DOUBLES_KNOCKOUT_STAGES = {
+  quarter: [["quarter", 1], ["quarter", 2], ["quarter", 3], ["quarter", 4]],
+  semi: [["semi", 1], ["semi", 2]],
+  final: [["final", 1], ["thirdPlace", 1]],
+  thirdPlace: [["final", 1], ["thirdPlace", 1]],
 };
 
 // Setzliste: Viertelfinale → Pyramiden-Plätze
@@ -124,6 +135,13 @@ function getDoublesKnockoutWinnerTeam(round, matchNum) {
   return t1 > t2 ? match.team1 : match.team2;
 }
 
+function getDoublesKnockoutLoserTeam(round, matchNum) {
+  const match = getDoublesKnockoutMatch(round, matchNum);
+  if (!match || !match.sets) return null;
+  const { t1, t2 } = getDoublesKnockoutSetsWon(match);
+  return t1 > t2 ? match.team2 : match.team1;
+}
+
 /**
  * Ermittelt die beiden Teams eines Bracket-Spiels.
  * Rückgabe: { team1, team2, team1Fallback, team2Fallback }
@@ -164,6 +182,25 @@ function getDoublesKnockoutTeams(round, matchNum) {
     };
   }
 
+  if (round === "thirdPlace") {
+    return {
+      team1: _buildDoublesKnockoutTeam(
+        getDoublesKnockoutLoserTeam("semi", 1)?.player1Id,
+        round,
+        matchNum,
+        "t1",
+      ),
+      team2: _buildDoublesKnockoutTeam(
+        getDoublesKnockoutLoserTeam("semi", 2)?.player1Id,
+        round,
+        matchNum,
+        "t2",
+      ),
+      team1Fallback: `Verlierer ${getDoublesKnockoutMatchLabel("semi", 1)}`,
+      team2Fallback: `Verlierer ${getDoublesKnockoutMatchLabel("semi", 2)}`,
+    };
+  }
+
   return {
     team1: null,
     team2: null,
@@ -201,14 +238,21 @@ function isDoublesKnockoutTeamReady(team) {
 
 /**
  * Spieler der K.O.-Phase (Top 8), die noch nicht ausgeschieden sind.
- * Ausgeschieden ist, wer als Spieler 1 ein K.O.-Spiel verloren hat.
+ * Ausgeschieden ist, wer kein Spiel mehr vor sich hat: Verlierer eines
+ * Viertelfinals sowie beide Spieler 1 eines gespielten Finales bzw. Spiels um
+ * Platz 3. Halbfinal-Verlierer bleiben bis zum Spiel um Platz 3 aktiv.
  */
 function getActiveDoublesKnockoutPlayerIds() {
   const eliminated = state.doublesKnockoutMatches
     .filter((m) => m.sets)
-    .map((m) => {
-      const { t1, t2 } = getDoublesKnockoutSetsWon(m);
-      return (t1 > t2 ? m.team2 : m.team1)?.player1Id;
+    .flatMap((m) => {
+      if (m.round === "quarter") {
+        return [getDoublesKnockoutLoserTeam(m.round, m.matchNum)?.player1Id];
+      }
+      if (m.round === "final" || m.round === "thirdPlace") {
+        return [m.team1?.player1Id, m.team2?.player1Id];
+      }
+      return [];
     })
     .filter(Boolean);
   return getDoublesRankingList()
@@ -267,22 +311,22 @@ function getDoublesKnockoutPartnerOptions(team1, team2, seedId) {
 /**
  * Partner, die in den anderen Spielen derselben Runde bereits gespielt haben
  * oder zugeordnet wurden – sie werden bei der Auslosung nicht erneut gezogen.
+ * Finale und Spiel um Platz 3 zählen dabei als eine Runde.
  */
 function _getDoublesKnockoutRoundPartnerIds(round, matchNum) {
   const ids = [];
-  const matchCount = { quarter: 4, semi: 2 }[round] || 1;
-  for (let n = 1; n <= matchCount; n++) {
-    if (n === matchNum) continue;
-    const match = getDoublesKnockoutMatch(round, n);
+  (DOUBLES_KNOCKOUT_STAGES[round] || []).forEach(([r, n]) => {
+    if (r === round && n === matchNum) return;
+    const match = getDoublesKnockoutMatch(r, n);
     if (match?.sets) {
       ids.push(match.team1?.player2Id, match.team2?.player2Id);
     } else {
       ids.push(
-        getDoublesKnockoutDrawnPartner(round, n, "t1"),
-        getDoublesKnockoutDrawnPartner(round, n, "t2"),
+        getDoublesKnockoutDrawnPartner(r, n, "t1"),
+        getDoublesKnockoutDrawnPartner(r, n, "t2"),
       );
     }
-  }
+  });
   return ids.filter(Boolean);
 }
 

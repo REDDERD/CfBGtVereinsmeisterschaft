@@ -233,6 +233,29 @@ function renderStatisticsDoubles() {
     .sort((a, b) => b.partnerCount - a.partnerCount)
     .slice(0, 3);
 
+  // Pyramiden-Statistiken (tagesgenau aus dem Verlauf rekonstruiert)
+  const pyramidStats = buildPyramidPositionStats()
+    .filter(s => playerById[s.id])
+    .map(s => ({ ...s, name: playerById[s.id].name }));
+  const topAvgPosition = [...pyramidStats]
+    .sort((a, b) => a.avgPosition - b.avgPosition)
+    .slice(0, 3);
+  const topDaysAtTop = pyramidStats
+    .filter(s => s.daysAtTop > 0)
+    .sort((a, b) => b.daysAtTop - a.daysAtTop)
+    .slice(0, 3);
+
+  // Aufstieg: Startposition (Saisonbeginn) vs. aktuelle Position in der Pyramide
+  const currentRanking = getDoublesRankingList();
+  const topClimbers = state.players
+    .filter(p => p.doublesPool && p.doublesStartingPosition)
+    .sort((a, b) => a.doublesStartingPosition - b.doublesStartingPosition)
+    .map((p, i) => ({ id: p.id, name: p.name, startPos: i + 1, currentPos: currentRanking.indexOf(p.id) + 1 }))
+    .filter(p => p.currentPos > 0 && p.startPos > p.currentPos)
+    .map(p => ({ ...p, climbed: p.startPos - p.currentPos }))
+    .sort((a, b) => b.climbed - a.climbed || a.currentPos - b.currentPos)
+    .slice(0, 3);
+
   return `
     <div class="space-y-5 sm:space-y-8">
       ${renderStatCategory("Meiste Siege (Spieler)", topMain, p => `${p.wins} Sieg${p.wins !== 1 ? 'e' : ''}`)}
@@ -244,6 +267,9 @@ function renderStatisticsDoubles() {
       ${renderStatCategory("Häufigstes Duo", topDuoByMatches, p => `${p.matches}Sp / ${p.wins}S`)}
       ${renderStatCategory("Meiste Mitspieler", topVersatile, p => `${p.partnerCount} Partner`)}
       ${renderStatCategory("Längste Siegesserie", topStreak, p => `${p.maxStreak} Siege${p.currentStreak > 0 ? ` (aktuell: ${p.currentStreak})` : ''}`)}
+      ${renderStatCategory("Beste Ø-Position (Pyramide)", topAvgPosition, p => `Ø ${p.avgPosition.toFixed(1).replace('.', ',')}`)}
+      ${renderStatCategory("Meiste Plätze aufgestiegen", topClimbers, p => `+${p.climbed} (${p.startPos} → ${p.currentPos})`)}
+      ${renderStatCategory("Am längsten auf Platz 1", topDaysAtTop, p => `${p.daysAtTop} Tag${p.daysAtTop !== 1 ? 'e' : ''}`)}
     </div>`;
 }
 

@@ -46,6 +46,7 @@ const state = {
   doublesKnockoutMatches: [],
   doublesKnockoutConfig: {}, // { draws: { quarter_1: { t1, t2 }, ... }, drawPoolRule, drawBlockActivePlayers }
   frozenPyramid: null, // Eingefrorene Rangfolge (flache Liste von playerIds)
+  doublesKnockoutActivatedAt: null, // Date, ab dem die Pyramide eingefroren ist
   doublesView: "pyramid",
   doublesKnockoutEntryMatch: null,
   usageStats: { rangeDays: 30, loading: false, days: null }, // Admin-Tab "Statistik"

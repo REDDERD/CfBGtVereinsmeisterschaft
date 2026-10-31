@@ -721,6 +721,7 @@ async function activateDoublesKnockoutPhase() {
   try {
     state.doublesKnockoutPhaseActive = true;
     state.frozenPyramid = ranking;
+    state.doublesKnockoutActivatedAt = new Date();
 
     await db.collection("settings").doc("doublesKnockout").set({
       active: true,
@@ -754,6 +755,7 @@ async function deactivateDoublesKnockoutPhase() {
   try {
     state.doublesKnockoutPhaseActive = false;
     state.frozenPyramid = null;
+    state.doublesKnockoutActivatedAt = null;
     state.doublesView = "pyramid";
 
     await db.collection("settings").doc("doublesKnockout").set({

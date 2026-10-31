@@ -52,3 +52,36 @@ function buildPyramidHistory() {
 
   return history;
 }
+
+// Tagesgenaue Pyramiden-Statistik je Spieler: Ø-Position und Tage auf Platz 1.
+// Zeitraum: erster Spieltag bis heute bzw. bis zum Start der Doppel-K.O.-Phase
+// (danach ist die Pyramide eingefroren).
+function buildPyramidPositionStats() {
+  const history = buildPyramidHistory();
+  if (history.length === 0) return [];
+
+  const toDayDate = d =>
+    new Date(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  const koStart = state.doublesKnockoutPhaseActive ? state.doublesKnockoutActivatedAt : null;
+  let endDay = toDayDate(koStart || new Date());
+  const lastSnapshotDay = history[history.length - 1].date;
+  if (endDay < lastSnapshotDay) endDay = lastSnapshotDay;
+
+  const stats = {};
+  history.forEach((snapshot, i) => {
+    const nextDay = i + 1 < history.length ? history[i + 1].date : new Date(endDay.getTime() + DAY_MS);
+    const days = Math.round((nextDay - snapshot.date) / DAY_MS);
+    if (days <= 0) return;
+
+    snapshot.positions.forEach((playerId, idx) => {
+      if (!stats[playerId]) stats[playerId] = { id: playerId, positionDays: 0, days: 0, daysAtTop: 0 };
+      stats[playerId].positionDays += (idx + 1) * days;
+      stats[playerId].days += days;
+      if (idx === 0) stats[playerId].daysAtTop += days;
+    });
+  });
+
+  return Object.values(stats).map(s => ({ ...s, avgPosition: s.positionDays / s.days }));
+}

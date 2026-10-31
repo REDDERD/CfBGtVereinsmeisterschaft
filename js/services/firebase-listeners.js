@@ -97,6 +97,7 @@ function initFirebaseListeners() {
       if (doc.exists) {
         state.doublesKnockoutPhaseActive = doc.data().active || false;
         state.frozenPyramid = doc.data().frozenPyramid || null;
+        state.doublesKnockoutActivatedAt = doc.data().activatedAt?.toDate?.() || null;
         render();
       }
     });

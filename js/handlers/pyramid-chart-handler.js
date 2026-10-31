@@ -66,9 +66,8 @@ function initPyramidHistoryChart() {
     };
   });
 
-  const isDark = document.documentElement.classList.contains('dark');
-  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-  const labelColor = isDark ? '#94a3b8' : '#6b7280';
+  const gridColor = 'rgba(0,0,0,0.06)';
+  const labelColor = '#6b7280';
 
   pyramidChartInstance = new Chart(canvas, {
     type: 'line',

@@ -1,9 +1,18 @@
 // js/events/navigation.js
 // Navigation und View-Steuerung
 
+// Herausforderungen sind nur sichtbar, solange noch etwas eingetragen werden kann:
+// nicht im Archiv und nicht, wenn Einzel- und Doppel-K.O.-Phase beide aktiv sind
+function isChallengesPageAvailable() {
+  return !state.archiveMode && !(state.knockoutPhaseActive && state.doublesKnockoutPhaseActive);
+}
+
 function navigateTo(page) {
-  // Im Archiv-Modus: Admin und Challenges blockieren
-  if (state.archiveMode && (page === 'admin' || page === 'challenges')) {
+  // Im Archiv-Modus: Admin blockieren
+  if (state.archiveMode && page === 'admin') {
+    return;
+  }
+  if (page === 'challenges' && !isChallengesPageAvailable()) {
     return;
   }
 
@@ -91,24 +100,4 @@ function setChallengesView(view) {
 function setStatisticsView(view) {
   state.statisticsView = view;
   render();
-}
-
-function toggleDarkMode() {
-  state.darkMode = !state.darkMode;
-  localStorage.setItem('darkMode', state.darkMode ? 'true' : 'false');
-  applyDarkMode();
-  render();
-}
-
-function applyDarkMode() {
-  if (state.darkMode) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-}
-
-function initDarkMode() {
-  state.darkMode = localStorage.getItem('darkMode') === 'true';
-  applyDarkMode();
 }

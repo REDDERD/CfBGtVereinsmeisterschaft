@@ -1,9 +1,6 @@
 // js/app.js
 // App Initialisierung
 
-// Dark Mode initialisieren (vor render, um Flash zu vermeiden)
-initDarkMode();
-
 try {
   initFirebaseListeners();
 } catch (error) {

@@ -3,6 +3,7 @@
 
 function Navigation() {
   const inArchive = state.archiveMode;
+  const showChallenges = isChallengesPageAvailable();
   const hasArchiveSeasons = (state.seasons || []).some(
     s => s.archiveVisible !== false && s.year !== state.liveActiveSeason
   );
@@ -47,7 +48,7 @@ function Navigation() {
               ${icons.users}
               <span class="font-medium">Doppel</span>
             </button>
-            ${!inArchive ? `
+            ${showChallenges ? `
               <button onclick="navigateTo('challenges')" class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 state.currentPage === "challenges" ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
               }">
@@ -107,9 +108,6 @@ function Navigation() {
                 `
               }
             ` : ''}
-            <button onclick="toggleDarkMode()" class="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors text-gray-700 hover:bg-gray-100" title="${state.darkMode ? 'Light Mode' : 'Dark Mode'}">
-              ${state.darkMode ? icons.sun : icons.moon}
-            </button>
           </div>
         </div>
       </div>
@@ -176,7 +174,7 @@ function Navigation() {
         <div class="absolute bottom-16 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 safe-area-bottom" onclick="event.stopPropagation()">
           <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
           <div class="grid grid-cols-3 gap-3">
-            ${!inArchive ? `
+            ${showChallenges ? `
               <button onclick="closeMobileMore(); navigateTo('challenges')" class="flex flex-col items-center gap-1.5 p-3 rounded-xl ${
                 state.currentPage === 'challenges' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
               }">
@@ -212,10 +210,6 @@ function Navigation() {
                 <span class="text-xs font-medium">Admin</span>
               </button>
             ` : ''}
-            <button onclick="closeMobileMore(); toggleDarkMode()" class="flex flex-col items-center gap-1.5 p-3 rounded-xl text-gray-700 hover:bg-gray-50">
-              ${state.darkMode ? icons.sun : icons.moon}
-              <span class="text-xs font-medium">${state.darkMode ? 'Light Mode' : 'Dark Mode'}</span>
-            </button>
           </div>
         </div>
       </div>

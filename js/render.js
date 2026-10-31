@@ -20,7 +20,7 @@ function render() {
       content = DoublesPage();
       break;
     case "challenges":
-      content = state.archiveMode ? HomePage() : ChallengesPage();
+      content = isChallengesPageAvailable() ? ChallengesPage() : HomePage();
       break;
     case "statistics":
       content = StatisticsPage();
@@ -46,8 +46,8 @@ function render() {
 
   // Archiv-Banner
   const archiveBanner = state.archiveMode ? `
-    <div class="bg-amber-100 dark:bg-amber-900 border-b-2 border-amber-400 dark:border-amber-600 px-4 py-2 flex items-center justify-between">
-      <span class="font-semibold text-amber-800 dark:text-amber-200 text-sm sm:text-base">
+    <div class="bg-amber-100 border-b-2 border-amber-400 px-4 py-2 flex items-center justify-between">
+      <span class="font-semibold text-amber-800 text-sm sm:text-base">
         Archiv: Saison ${state.archiveYear}
       </span>
       <button onclick="exitArchiveMode()" class="px-3 py-1 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700 transition-colors">

@@ -3,9 +3,9 @@
 // Analog zu knockout-service.js (Einzel), nur mit Teams statt Einzelspielern.
 //
 // Die Top 8 der Pyramide spielen nach fester Setzliste:
-//   VF A: 1 vs 8, VF B: 2 vs 7, VF C: 3 vs 6, VF D: 4 vs 5
-//   HF 1: Gew. A vs Gew. D, HF 2: Gew. B vs Gew. C
-//   Finale: Gew. HF 1 vs Gew. HF 2, Spiel um Platz 3: Verl. HF 1 vs Verl. HF 2
+//   Viertelfinale A: 1 vs 8, B: 2 vs 7, C: 3 vs 6, D: 4 vs 5
+//   Halbfinale 1: Gewinner A vs Gewinner D, Halbfinale 2: Gewinner B vs Gewinner C
+//   Finale: Gewinner beider Halbfinals, Spiel um Platz 3: Verlierer beider Halbfinals
 //
 // Zu jedem gesetzten Spieler wird je Spiel ein Partner zugelost, weiter kommt
 // nur der gesetzte Spieler (Spieler 1). Regeln (beide im Admin abschaltbar):
@@ -76,7 +76,7 @@ function getDoublesSeedPlayerId(place) {
 }
 
 /**
- * Kurzbezeichnung eines Spiels, z. B. "Viertelfinale A", "HF 2", "Finale".
+ * Bezeichnung eines Spiels, z. B. "Viertelfinale A", "Halbfinale 2", "Finale".
  */
 function getDoublesKnockoutMatchLabel(round, matchNum) {
   if (round === "quarter") return `Viertelfinale ${DOUBLES_KNOCKOUT_QUARTER_LETTERS[matchNum]}`;

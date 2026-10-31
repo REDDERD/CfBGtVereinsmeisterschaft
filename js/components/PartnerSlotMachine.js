@@ -35,7 +35,7 @@ function _buildSlotStrip(names, winnerName) {
  * Startet die Slotmaschine.
  * @param {Object} options
  * @param {string} options.title - z. B. "Partner für Max"
- * @param {string} options.subtitle - z. B. "VF A"
+ * @param {string} options.subtitle - z. B. "Viertelfinale A"
  * @param {string[]} options.names - alle möglichen Namen
  * @param {string} options.winnerName - der bereits ausgeloste Name
  * @param {Function} [options.onLanded] - wird beim Stillstand aufgerufen (darf async sein)

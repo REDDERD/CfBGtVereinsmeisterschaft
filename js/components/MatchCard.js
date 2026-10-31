@@ -78,8 +78,8 @@ function MatchCard(match, context = 'home') {
   const getKnockoutBadge = () => {
     if (!isKnockout) return '';
     const roundNames = {
-      'final': 'Finale', 'semifinal': 'HF', 'semi': 'HF',
-      'quarterfinal': 'VF', 'quarter': 'VF', 'round16': 'AF', 'thirdPlace': 'Pl.3'
+      'final': 'Finale', 'semifinal': 'Halbfinale', 'semi': 'Halbfinale',
+      'quarterfinal': 'Viertelfinale', 'quarter': 'Viertelfinale', 'round16': 'Achtelfinale', 'thirdPlace': 'Spiel um Platz 3'
     };
     const roundName = roundNames[match.round] || match.round;
     return `<span class="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-purple-100 text-purple-800 border border-purple-300">${roundName}</span>`;

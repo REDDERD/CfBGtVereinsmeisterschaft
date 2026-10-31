@@ -78,10 +78,10 @@ function KnockoutBracketView() {
         player2Id: p2,
         player1Name: p1
           ? getPlayerName(p1)
-          : `Gew. VF ${matchNum === 1 ? 1 : 3}`,
+          : `Gewinner Viertelfinale ${matchNum === 1 ? 1 : 3}`,
         player2Name: p2
           ? getPlayerName(p2)
-          : `Gew. VF ${matchNum === 1 ? 2 : 4}`,
+          : `Gewinner Viertelfinale ${matchNum === 1 ? 2 : 4}`,
       };
     }
     if (round === "thirdPlace") {
@@ -90,8 +90,8 @@ function KnockoutBracketView() {
       return {
         player1Id: p1,
         player2Id: p2,
-        player1Name: p1 ? getPlayerName(p1) : "Verl. HF 1",
-        player2Name: p2 ? getPlayerName(p2) : "Verl. HF 2",
+        player1Name: p1 ? getPlayerName(p1) : "Verlierer Halbfinale 1",
+        player2Name: p2 ? getPlayerName(p2) : "Verlierer Halbfinale 2",
       };
     }
     if (round === "final") {
@@ -100,8 +100,8 @@ function KnockoutBracketView() {
       return {
         player1Id: p1,
         player2Id: p2,
-        player1Name: p1 ? getPlayerName(p1) : "Gew. HF 1",
-        player2Name: p2 ? getPlayerName(p2) : "Gew. HF 2",
+        player1Name: p1 ? getPlayerName(p1) : "Gewinner Halbfinale 1",
+        player2Name: p2 ? getPlayerName(p2) : "Gewinner Halbfinale 2",
       };
     }
     return {
@@ -179,10 +179,10 @@ function KnockoutBracketView() {
         <div class="mb-4">
           <h4 class="font-bold text-gray-700 mb-2 text-sm sm:text-base">Viertelfinale</h4>
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-            ${renderKnockoutMatchCard("quarter", 1, "VF 1")}
-            ${renderKnockoutMatchCard("quarter", 2, "VF 2")}
-            ${renderKnockoutMatchCard("quarter", 3, "VF 3")}
-            ${renderKnockoutMatchCard("quarter", 4, "VF 4")}
+            ${renderKnockoutMatchCard("quarter", 1, "Viertelfinale 1")}
+            ${renderKnockoutMatchCard("quarter", 2, "Viertelfinale 2")}
+            ${renderKnockoutMatchCard("quarter", 3, "Viertelfinale 3")}
+            ${renderKnockoutMatchCard("quarter", 4, "Viertelfinale 4")}
           </div>
         </div>
 
@@ -190,8 +190,8 @@ function KnockoutBracketView() {
         <div class="mb-4">
           <h4 class="font-bold text-gray-700 mb-2 text-sm sm:text-base">Halbfinale</h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-            ${renderKnockoutMatchCard("semi", 1, "HF 1")}
-            ${renderKnockoutMatchCard("semi", 2, "HF 2")}
+            ${renderKnockoutMatchCard("semi", 1, "Halbfinale 1")}
+            ${renderKnockoutMatchCard("semi", 2, "Halbfinale 2")}
           </div>
         </div>
 
